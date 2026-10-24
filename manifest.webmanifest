@@ -1,0 +1,2 @@
+{"name":"Saltmarrow Deep","short_name":"Saltmarrow","description":"A gothic roguelike beneath a dying mining town.","start_url":"./","scope":"./","display":"fullscreen","display_override":["fullscreen","standalone"],"orientation":"any","background_color":"#090d10","theme_color":"#090d10","categories":["games"],
+ "icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},{"src":"icon-maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]}
