@@ -955,17 +955,23 @@ AB.clapper={name:'Drowned Clapper',icon:'bellic',act:'maneuver',kind:'none',univ
 /* ================= level generation ================= */
 function genLevel(){
   const map=new Array(W*H).fill(WALL),reg=new Array(W*H).fill(-1),rooms=[];let nreg=0;const boss=S.depth===MAXD;const bio=biomeOf(S.depth);
-  const carve=(x,y,r)=>{map[I(x,y)]=FLOOR;reg[I(x,y)]=r};
-  const addRoom=(x,y,w,h,ex)=>{const r=nreg++;const cave=!ex&&(bio==='fungal'||bio==='mine')&&Math.random()<0.45&&w>=7&&h>=5;
-    for(let j=y;j<y+h;j++)for(let i=x;i<x+w;i++){if(cave){const nx=(i-x+0.5)/w*2-1,ny=(j-y+0.5)/h*2-1;if(nx*nx+ny*ny>1.15&&(i===x||i===x+w-1||j===y||j===y+h-1))continue}carve(i,j,r)}
-    rooms.push(Object.assign({x,y,w,h,r,cx:x+(w>>1),cy:y+(h>>1),cave},ex||{}))};
+  const carve=(x,y,r)=>{map[I(x,y)]=FLOOR;reg[I(x,y)]=r};const resv=new Uint8Array(W*H);
+  const SHAPES={mine:['rect','rect','cave','round','octa','pillar','cave'],crypt:['rect','cross','octa','pillar','round','rect','pillar'],fungal:['cave','cave','round','cave','octa','rect'],drowned:['round','octa','pillar','rect','cross','cave']}[bio];
+  const addRoom=(x,y,w,h,ex)=>{const r=nreg++;const shape=ex||w<7||h<5?'rect':pick(SHAPES);const cx=x+(w>>1),cy=y+(h>>1);
+    const inShape=(i,j)=>{if(i===cx||j===cy)return true;const nx=(i-x+0.5)/w*2-1,ny=(j-y+0.5)/h*2-1;
+      switch(shape){case'round':return nx*nx+ny*ny<=1.08;case'cave':return nx*nx+ny*ny<=0.78+Math.random()*0.5;case'cross':return Math.abs(nx)<0.5||Math.abs(ny)<0.5;
+        case'octa':{const c=Math.max(1,Math.floor(Math.min(w,h)/3));const dx=Math.min(i-x,x+w-1-i),dy=Math.min(j-y,y+h-1-j);return dx+dy>=c}default:return true}};
+    for(let j=y;j<y+h;j++)for(let i=x;i<x+w;i++){resv[I(i,j)]=1;if(inShape(i,j))carve(i,j,r)}
+    if(shape==='pillar')for(let j=y+1;j<y+h-1;j++)for(let i=x+1;i<x+w-1;i++)if((i-x)%3===1&&(j-y)%3===1&&i!==cx&&j!==cy){map[I(i,j)]=WALL;reg[I(i,j)]=-1}
+    rooms.push(Object.assign({x,y,w,h,r,cx,cy,shape,cave:shape==='cave'},ex||{}))};
   if(boss)addRoom(23,15,17,13,{chapel:true});
   for(let t=0;t<320&&rooms.length<(boss?11:14);t++){
     const w=rr(2,5)*2+1,h=rr(2,4)*2+1,x=rr(0,(W-2-w)>>1)*2+1,y=rr(0,(H-2-h)>>1)*2+1;
     if(rooms.some(r=>x<r.x+r.w+1&&x+w+1>r.x&&y<r.y+r.h+1&&y+h+1>r.y))continue;addRoom(x,y,w,h)}
-  for(let y=1;y<H-1;y+=2)for(let x=1;x<W-1;x+=2){if(map[I(x,y)]!==WALL)continue;const r=nreg++;carve(x,y,r);const st=[[x,y]];let last=null;
-    while(st.length){const[cx,cy]=st[st.length-1];const opts=DIR4.filter(([dx,dy])=>{const nx=cx+dx*2,ny=cy+dy*2;return nx>0&&ny>0&&nx<W-1&&ny<H-1&&map[I(nx,ny)]===WALL});
-      if(opts.length){const d=(last&&opts.includes(last)&&Math.random()<0.6)?last:pick(opts);carve(cx+d[0],cy+d[1],r);carve(cx+d[0]*2,cy+d[1]*2,r);st.push([cx+d[0]*2,cy+d[1]*2]);last=d}else{st.pop();last=null}}}
+  const straight={crypt:0.85,drowned:0.75,mine:0.6,fungal:0.4}[bio];
+  for(let y=1;y<H-1;y+=2)for(let x=1;x<W-1;x+=2){if(map[I(x,y)]!==WALL||resv[I(x,y)])continue;const r=nreg++;carve(x,y,r);const st=[[x,y]];let last=null;
+    while(st.length){const[cx,cy]=st[st.length-1];const opts=DIR4.filter(([dx,dy])=>{const nx=cx+dx*2,ny=cy+dy*2;return nx>0&&ny>0&&nx<W-1&&ny<H-1&&map[I(nx,ny)]===WALL&&!resv[I(nx,ny)]&&!resv[I(cx+dx,cy+dy)]});
+      if(opts.length){const d=(last&&opts.includes(last)&&Math.random()<straight)?last:pick(opts);carve(cx+d[0],cy+d[1],r);carve(cx+d[0]*2,cy+d[1]*2,r);st.push([cx+d[0]*2,cy+d[1]*2]);last=d}else{st.pop();last=null}}}
   const roomReg=new Set(rooms.map(r=>r.r));const conns=[];
   for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){if(map[I(x,y)]!==WALL)continue;const rs=new Set();for(const[dx,dy]of DIR4){const g=reg[I(x+dx,y+dy)];if(g>=0)rs.add(g)}if(rs.size>=2)conns.push({x,y,rs:[...rs]})}
   const par=[...Array(nreg).keys()];const find=a=>{while(par[a]!==a){par[a]=par[par[a]];a=par[a]}return a};
@@ -974,8 +980,14 @@ function genLevel(){
   for(const c of conns){if(c.done||Math.random()>0.06)continue;if(DIR8.some(([dx,dy])=>map[I(c.x+dx,c.y+dy)]===DOOR))continue;openC(c)}
   const inRoom=(x,y)=>rooms.some(r=>x>=r.x&&x<r.x+r.w&&y>=r.y&&y<r.y+r.h);
   for(let pass=0;pass<12;pass++){const kill=[];for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=I(x,y);if((map[i]!==FLOOR&&map[i]!==DOOR)||inRoom(x,y))continue;let n=0;for(const[dx,dy]of DIR4)if(map[I(x+dx,y+dy)]!==WALL)n++;if(n<=1)kill.push(i)}if(!kill.length)break;kill.forEach(i=>map[i]=WALL)}
-  S.L={map,bio,seen:new Array(W*H).fill(0),smoke:new Array(W*H).fill(0),spore:new Array(W*H).fill(0),fire:new Array(W*H).fill(0),light:new Uint8Array(W*H),opq:new Uint8Array(W*H),items:[],mons:[],objs:[],deco:new Uint8Array(W*H)};
-  const L=S.L;
+  // natural biomes: erode corridors into rough tunnels and small caverns (rooms keep their walls so gates still hold)
+  const nearRoom=(x,y)=>rooms.some(r=>x>=r.x-1&&x<=r.x+r.w&&y>=r.y-1&&y<=r.y+r.h);
+  const ero={fungal:0.34,drowned:0.2,mine:0.16,crypt:0}[bio];
+  for(let pass=0;pass<2&&ero;pass++){const add=[];for(let y=2;y<H-2;y++)for(let x=2;x<W-2;x++){const i=I(x,y);if(map[i]!==WALL||nearRoom(x,y))continue;
+      if(DIR8.some(([dx,dy])=>map[I(x+dx,y+dy)]===DOOR))continue;let n=0,rg=-1;for(const[dx,dy]of DIR8){const j=I(x+dx,y+dy);if(map[j]===FLOOR){n++;rg=reg[j]}}
+      if(n>=2&&Math.random()<ero*n/4)add.push([i,rg])}for(const[i,rg]of add){map[i]=FLOOR;reg[i]=rg}}
+  S.L={map,bio,seen:new Array(W*H).fill(0),smoke:new Array(W*H).fill(0),spore:new Array(W*H).fill(0),fire:new Array(W*H).fill(0),light:new Uint8Array(W*H),opq:new Uint8Array(W*H),items:[],mons:[],objs:[],deco:new Uint8Array(W*H),decal:new Uint8Array(W*H),tset:bio+(S.depth%2===0?'2':'')};
+  const L=S.L;const DC=L.decal;
   const nonC=rooms.filter(r=>!r.chapel);
   let start=pick(nonC),stairsRoom=null;
   if(boss){const ch=rooms[0],d=bfsDist(ch.cx,ch.cy);start=nonC.reduce((a,b)=>d[I(b.cx,b.cy)]>d[I(a.cx,a.cy)]?b:a)}
@@ -991,7 +1003,7 @@ function genLevel(){
   const patch=(r,tile,p)=>{for(const[x,y]of cells(r))if(Math.random()<p&&!nearDoor(x,y)&&!(x===start.cx&&y===start.cy))map[I(x,y)]=tile};
   const blob=(r,tile,n)=>{const c=cells(r);if(!c.length)return;for(let k=0;k<n;k++){let[x,y]=pick(c);for(let s=0;s<6;s++){if(inb(x,y)&&map[I(x,y)]===FLOOR&&!nearDoor(x,y)&&!(x===start.cx&&y===start.cy))map[I(x,y)]=tile;const d=pick(DIR8);x+=d[0];y+=d[1];if(!inRoom(x,y))break}}};
   /* ---- room themes ---- */
-  const themes={mine:['storage','props','crystals','plain','plain','shrine','flooded'],crypt:['ossuary','pillars','chapel','plain','vault','ossuary'],fungal:['grove','nest','pods','grove','pool','plain'],drowned:['flooded','flooded','pillars','chapel','plain']}[bio];
+  const themes={mine:['storage','props','crystals','plain','shrine','flooded','rails','rails','camp','collapse','chasm'],crypt:['ossuary','pillars','chapel','plain','vault','ossuary','cathedral','cathedral','chasm','collapse'],fungal:['grove','nest','pods','grove','pool','garden','garden','chasm','plain'],drowned:['flooded','pillars','chapel','plain','cistern','cistern','cathedral','drain','chasm']}[bio];
   const nests=[],flooded=new Set();let shrineDone=false;
   let bellRoom=null;if([2,4,6].includes(S.depth)){const cands=nonC.filter(r=>r!==start&&r!==stairsRoom&&r.w>=7&&r.h>=5);const pool2=cands.length?cands:nonC.filter(r=>r!==start&&r!==stairsRoom);bellRoom=pool2.reduce((a,b)=>dm[I(b.cx,b.cy)]>dm[I(a.cx,a.cy)]?b:a,pool2[0]);if(bellRoom)bellRoom.bell=true}
   for(const r of nonC){if(r===bellRoom){r.theme='bell';placeSome(r,'brazier',2,{lit:true},corners);continue}if(r===start&&Math.random()<0.6){r.theme='plain';continue}
@@ -1010,9 +1022,20 @@ function genLevel(){
       case'grove':blob(r,GRASS,rr(3,5));placeSome(r,'shroom',rr(3,6),null);break;
       case'nest':nests.push(r);patch(r,WEB,0.3);patch(r,BONES,0.08);placeSome(r,'corpse',1,{of:'miner'});break;
       case'pods':placeSome(r,'pod',rr(2,4));blob(r,GRASS,2);placeSome(r,'shroom',2);break;
+      case'chasm':{if(boss||r.w<7||r.h<5||r===stairsRoom||!['rect','pillar'].includes(r.shape)){r.theme='plain';break}const ix=r.x+1,iy=r.y+1,iw=r.w-2,ih=r.h-2;
+        for(let j=iy;j<iy+ih;j++)for(let i=ix;i<ix+iw;i++){const nx=(i-ix+0.5)/iw*2-1,ny=(j-iy+0.5)/ih*2-1;if(nx*nx+ny*ny>0.95+Math.random()*0.15||map[I(i,j)]!==FLOOR)continue;if(j===r.cy){DC[I(i,j)]=11;continue}if(!(i===start.cx&&j===start.cy))map[I(i,j)]=PIT}break}
+      case'cistern':{flooded.add(r);for(let j=r.y+1;j<r.y+r.h-1;j++)for(let i=r.x+1;i<r.x+r.w-1;i++){const ring=Math.min(i-r.x,r.x+r.w-1-i,j-r.y,r.y+r.h-1-j);if(ring===1&&map[I(i,j)]===FLOOR&&i!==r.cx&&j!==r.cy)map[I(i,j)]=WATER}DC[I(r.cx,r.cy)]=15;break}
+      case'cathedral':{for(let j=r.y+1;j<r.y+r.h-1;j+=2)for(const i of[r.x+1,r.x+r.w-2])if(map[I(i,j)]===FLOOR&&free(i,j)&&!nearDoor(i,j)&&j!==r.cy){map[I(i,j)]=WALL;DC[I(i,j)]=30}
+        for(let j=r.y;j<r.y+r.h;j++)if(map[I(r.cx,j)]===FLOOR)DC[I(r.cx,j)]=9;if(free(r.cx,r.y)&&!nearDoor(r.cx,r.y))obj('brazier',r.cx,r.y,{lit:true});patch(r,BONES,0.03);break}
+      case'rails':{const y=r.cy;for(let i=r.x;i<r.x+r.w;i++)if(map[I(i,y)]===FLOOR)DC[I(i,y)]=7;for(const dir of[-1,1]){let i=dir<0?r.x-1:r.x+r.w;for(let k=0;k<10&&inb(i,y)&&(map[I(i,y)]===FLOOR||map[I(i,y)]===DOOR);k++,i+=dir)if(map[I(i,y)]===FLOOR)DC[I(i,y)]=7}
+        const cxs=shuffle(cells(r).filter(([x,yy])=>yy===y&&free(x,yy)&&!nearDoor(x,yy)));if(cxs.length)obj('cart',cxs[0][0],y);placeSome(r,'keg',1,null,corners);break}
+      case'camp':{const c=shuffle(cells(r).filter(([x,y])=>free(x,y)&&!nearDoor(x,y)));for(const[x,y]of c.slice(0,2))DC[I(x,y)]=14;placeSome(r,'brazier',1,{lit:false});placeSome(r,'keg',1,null,corners);placeSome(r,'corpse',1,{of:'miner'});break}
+      case'collapse':patch(r,RUBBLE,0.16);if(bio==='mine'&&Math.random()<0.6)placeSome(r,'support',1);break;
+      case'garden':{blob(r,GRASS,rr(2,4));placeSome(r,'shroom',rr(4,7));if(r.w>=7)blob(r,WATER,1);for(const[x,y]of cells(r))if(Math.random()<0.18&&!DC[I(x,y)])DC[I(x,y)]=19;break}
+      case'drain':{for(let i=r.x+1;i<r.x+r.w-1;i+=2)if(map[I(i,r.cy)]===FLOOR)DC[I(i,r.cy)]=15;blob(r,WATER,2);break}
     }
     if(bio!=='fungal'&&th==='plain'&&Math.random()<0.3)placeSome(r,'brazier',1,{lit:true},corners);
-    if(Math.random()<0.18&&r!==start){const x=r.x+1+rnd(Math.max(1,r.w-2)),y=r.y+1+rnd(Math.max(1,r.h-2));if(free(x,y)&&!nearDoor(x,y))map[I(x,y)]=PIT}
+    if(!boss&&Math.random()<0.18&&r!==start){const x=r.x+1+rnd(Math.max(1,r.w-2)),y=r.y+1+rnd(Math.max(1,r.h-2));if(free(x,y)&&!nearDoor(x,y))map[I(x,y)]=PIT}
   }
   // corridor grass and webs in the fungal hollows
   if(bio==='fungal')for(let i=0;i<W*H;i++){const x=i%W,y=(i/W)|0;if(map[i]===FLOOR&&!inRoom(x,y)&&Math.random()<0.05)map[i]=Math.random()<0.6?GRASS:WEB}
@@ -1088,10 +1111,21 @@ function genLevel(){
   for(let p=0;p<np;p++){for(let t=0;t<60;t++){const x=rr(1,W-2),y=rr(1,H-2);const k=pick(pool.filter(k=>!MON[k].aquatic));if(freeFor(k,x,y)&&dm[I(x,y)]>14){if(MON[k].ai==='pack')pack(k,x,y,'patrol',S.depth<=2?2:rr(2,3));else spawn(k,x,y,'patrol');break}}}
   // decoration seeds (purely visual)
   for(let i=0;i<W*H;i++)L.deco[i]=rnd(256);
+  dressLevel(L,rooms,inRoom);
   // guarantee the way on is never blocked by props
   const essential=['bell','lever','captive','merchant'];const reach=()=>{const d=bfsDist(P.x,P.y,true);const st=map.indexOf(STAIRS);if(st>=0&&d[st]<0)return false;
     for(const o of L.objs)if(essential.includes(o.type)&&!DIR8.some(([dx,dy])=>inb(o.x+dx,o.y+dy)&&d[I(o.x+dx,o.y+dy)]>=0))return false;return true};
   for(let g=0;g<40&&!reach();g++){const opts=L.objs.filter(o=>FEAT[o.type].block&&!essential.includes(o.type));if(!opts.length)break;L.objs.splice(L.objs.indexOf(pick(opts)),1)}
+  if(!reach())for(const o of L.objs.slice())if(FEAT[o.type].block&&(o.type==='merchant'||o.type==='captive')){const d=bfsDist(P.x,P.y,true);if(!DIR8.some(([dx,dy])=>inb(o.x+dx,o.y+dy)&&d[I(o.x+dx,o.y+dy)]>=0))continue;const c=[];for(let i=0;i<W*H;i++)if(map[i]===FLOOR&&d[i]>3&&!L.objs.some(q=>q.x===i%W&&q.y===((i/W)|0))&&DIR4.filter(([dx,dy])=>map[i+dx+dy*W]===FLOOR).length>=3)c.push(i);if(c.length){const i=pick(c);o.x=i%W;o.y=(i/W)|0}}
+  // last resort: dig a tunnel to anything that must be reachable
+  const digTo=(tx,ty)=>{const N=W*H,dist=new Float64Array(N).fill(Infinity),prev=new Int32Array(N).fill(-1),done=new Uint8Array(N);const s0=I(P.x,P.y);dist[s0]=0;
+    const cost=i=>{const t=map[i];if(t===WALL||t===PIT||t===CRACK)return 9;if(L.objs.some(o=>o.x===i%W&&o.y===((i/W)|0)&&FEAT[o.type].block))return 30;return 1};
+    for(;;){let u=-1,b=Infinity;for(let i=0;i<N;i++)if(!done[i]&&dist[i]<b){b=dist[i];u=i}if(u<0)break;done[u]=1;const ux=u%W,uy=(u/W)|0;if(ux===tx&&uy===ty)break;
+      for(const[dx,dy]of DIR4){const x=ux+dx,y=uy+dy;if(x<1||y<1||x>W-2||y>H-2)continue;const v=I(x,y);const nd=dist[u]+cost(v);if(nd<dist[v]){dist[v]=nd;prev[v]=u}}}
+    for(let v=prev[I(tx,ty)];v>=0&&v!==s0;v=prev[v]){if(map[v]===WALL||map[v]===PIT||map[v]===CRACK){map[v]=FLOOR;L.decal[v]=0}L.objs=L.objs.filter(o=>!(o.x===v%W&&o.y===((v/W)|0)&&FEAT[o.type].block&&!essential.includes(o.type)))}};
+  for(let g=0;g<4&&!reach();g++){const d=bfsDist(P.x,P.y,true);const st=map.indexOf(STAIRS);if(st>=0&&d[st]<0){digTo(st%W,(st/W)|0);continue}
+    for(const o of L.objs)if(essential.includes(o.type)&&!DIR8.some(([dx,dy])=>inb(o.x+dx,o.y+dy)&&d[I(o.x+dx,o.y+dy)]>=0)){const a=DIR8.map(([dx,dy])=>[o.x+dx,o.y+dy]).find(([x,y])=>inb(x,y)&&map[I(x,y)]===FLOOR)||[o.x+1,o.y];digTo(a[0],a[1]);break}}
+  {const ab=L.mons.find(m=>m.type==='abbot');if(ab){const d=bfsDist(P.x,P.y,true);if(!DIR8.some(([dx,dy])=>d[I(ab.x+dx,ab.y+dy)]>=0))digTo(ab.x,ab.y+1)}}
   rebuildOpq();computeLight();computeFov();
 }
 function rollGear(luck){return Math.random()<0.62?genWeapon(S.depth,rollRarity(S.depth,luck)):genTome(S.depth,rollRarity(S.depth,luck))}
@@ -1101,9 +1135,33 @@ function rollLoot(){const roll=rnd(100);if(roll<14)return{kind:'gear',item:rollG
 function computeLight(){const L=S.L;L.light.fill(0);
   const add=(x0,y0,r)=>{for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const x=x0+dx,y=y0+dy;if(!inb(x,y)||dx*dx+dy*dy>r*r+1)continue;if(los(x0,y0,x,y,true))L.light[I(x,y)]=Math.max(L.light[I(x,y)],r-Math.max(Math.abs(dx),Math.abs(dy))+1)}};
   for(const o of L.objs){if(o.type==='brazier'&&o.lit)add(o.x,o.y,4);else if(o.type==='crystal')add(o.x,o.y,2);else if(o.type==='shroom')add(o.x,o.y,1)}
-  for(let i=0;i<W*H;i++)if(L.fire[i]>0)add(i%W,(i/W)|0,2)}
+  for(let i=0;i<W*H;i++)if(L.fire[i]>0)add(i%W,(i/W)|0,2);
+  if(L.decal&&!L.town)for(let i=0;i<W*H;i++)if(L.decal[i]===30&&L.map[i]===WALL){const x=i%W,y=(i/W)|0;if(inb(x,y+1)&&!solid(L.map[I(x,y+1)]))add(x,y+1,2)}}
 const litAt=(x,y)=>S.L.light[I(x,y)]>=2;
 
+
+/* ---------- level dressing: floor decals and wall details (visual only, except wall torches which light the floor below) ---------- */
+const DECAL={crack:1,moss:2,puddle:3,blood:4,pebble:5,salt:6,rail:7,runner:9,candles:10,bridge:11,roots:12,lichen:13,bedroll:14,grate:15,skulls:16,runes:17,kelp:18,caps:19,
+  torch:30,niche:31,banner:32,chains:33,wallcap:34,drip:35,beam:36,vein:37};
+function vnoise(x,y,s){const h=(a,b)=>{let q=Math.imul(a+s*131,374761393)+Math.imul(b,668265263)>>>0;q=Math.imul(q^(q>>>13),1274126177)>>>0;return(q&1023)/1023};const xi=Math.floor(x),yi=Math.floor(y),fx=x-xi,fy=y-yi;const u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy);
+  return(h(xi,yi)*(1-u)+h(xi+1,yi)*u)*(1-v)+(h(xi,yi+1)*(1-u)+h(xi+1,yi+1)*u)*v}
+function dressLevel(L,rooms,inRoom){const DC=L.decal,map=L.map,bio=L.bio,seed=rnd(9999);const D=DECAL;
+  const objAt=(x,y)=>L.objs.some(o=>o.x===x&&o.y===y);const nWall=(x,y)=>DIR4.filter(([dx,dy])=>map[I(x+dx,y+dy)]===WALL).length;
+  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=I(x,y);if(DC[i])continue;const t=map[i];const n=vnoise(x/6,y/6,seed),r=Math.random();
+    if(t===FLOOR&&!objAt(x,y)){const nw=nWall(x,y);let d=0;
+      const band=(...opts)=>{let acc=0;for(const[ok,pr,id]of opts){if(!ok)continue;acc+=pr;if(r<acc)return id}return 0};
+      if(bio==='mine')d=band([1,0.05,D.pebble],[n>0.62,0.12,D.salt],[1,0.04,D.crack],[n<0.24,0.12,D.puddle]);
+      else if(bio==='crypt')d=band([1,0.05,D.crack],[nw>0,0.05,D.skulls],[1,0.012,D.runes],[n>0.64,0.12,D.moss],[1,0.008,D.blood]);
+      else if(bio==='fungal')d=band([n>0.42,0.2,D.moss],[1,0.05,D.lichen],[nw>0,0.1,D.roots],[1,0.03,D.caps]);
+      else d=band([n>0.46,0.2,D.puddle],[DIR8.some(([dx,dy])=>map[I(x+dx,y+dy)]===WATER),0.3,D.kelp],[1,0.06,D.moss],[1,0.03,D.crack]);
+      DC[i]=d}
+    else if(t===WALL&&inb(x,y+1)&&!solid(map[I(x,y+1)])&&map[I(x,y+1)]!==DOOR){const room=inRoom(x,y+1);let d=0;
+      if(bio==='mine')d=r<0.1?D.beam:r<0.2?D.vein:room&&r<0.23?D.torch:0;
+      else if(bio==='crypt')d=room&&r<0.07?D.torch:r<0.17?D.niche:r<0.2?D.chains:room&&r<0.22?D.banner:0;
+      else if(bio==='fungal')d=r<0.2?D.wallcap:r<0.3?D.roots:0;
+      else d=r<0.18?D.drip:room&&r<0.22?D.torch:r<0.25?D.chains:room&&r<0.27?D.banner:0;
+      DC[i]=d}}
+  for(const o of L.objs)if(o.type==='corpse')for(const[dx,dy]of DIR8){const j=I(o.x+dx,o.y+dy);if(map[j]===FLOOR&&!DC[j]&&Math.random()<0.35)DC[j]=D.blood}}
 /* ================= the town of Saltmarrow ================= */
 const BUILDINGS=[
   {key:'smith',name:'The Smithy',npc:'tobias',x:10,y:9,w:7,h:5,door:'s'},
@@ -1430,7 +1488,7 @@ async function exploreStep(dx,dy){
   noise(P.x,P.y,stepNoise(),true);
   await exploreTick();UI.render();return true}
 function smashWall(x,y){S.L.map[I(x,y)]=RUBBLE;S.L.seen[I(x,y)]=1;UI.fx('debris',{x,y});UI.fx('shake',{m:4});log('You smash through the cracked wall.','gold');noise(x,y,10);computeFov()}
-async function fallDown(){const P=S.P;log('You drop into the shaft…','bad');S.C=null;S.mode='explore';const d=rr(2,5);await descend(true);damage(P,d,null);if(!S.over)log(`You land hard. ${d} damage.`,'bad');UI.render()}
+async function fallDown(){const P=S.P;if(S.depth>=MAXD){log('The shaft is choked with rubble a few feet down. There is nowhere deeper to fall.','old');UI.render();return}log('You drop into the shaft…','bad');S.C=null;S.mode='explore';const d=rr(2,5);await descend(true);damage(P,d,null);if(!S.over)log(`You land hard. ${d} damage.`,'bad');UI.render()}
 async function descend(fell){if(S.mode==='combat'&&!fell){log('You can\'t take the stairs with enemies on you.','bad');return}
   if(!fell&&tileAt(S.P.x,S.P.y)!==STAIRS){log('There are no stairs here.','old');UI.render();return}
   if(S.L&&S.L.bell&&false)return;const prevBio=S.L?S.L.bio:null;
@@ -2057,7 +2115,7 @@ function floorPaint(p,v,B,bio){p(B.f,0,0,16,16);
   if(v===1){p(B.fl,3,2,4,1);p(B.fl,6,3,1,2)}
   if(v===3){if(bio==='fungal'){p('#3a7040',3,11,1,3);p('#4a8050',4,10);p('#2f5a3a',12,10,1,4);p(B.acc2,12,9)}else if(bio==='crypt'){p('#c8c0a8',9,4,3,1);p('#a8a088',10,5);p('#c8c0a8',3,12,2,1)}else if(bio==='mine'){p(B.acc,9,4,2,1);p(B.acc2,10,5)}else{p('#3a7040',3,11,1,3);p('#2f5a3a',12,10,1,4)}}}
 const TILESETS={};
-function tilesFor(bio){if(TILESETS[bio])return TILESETS[bio];const B=BPAL[bio];const F=(v)=>p=>floorPaint(p,v,B,bio);
+function tilesFor(key){if(TILESETS[key])return TILESETS[key];const bio=key.replace(/2$/,'');const B=BPAL[key]||BPAL[bio];const F=(v)=>p=>floorPaint(p,v,B,bio);
   const T={walls:[0,1,2,3].map(v=>tileC(p=>wallPaint(p,v,false,B,bio))),crack:tileC(p=>wallPaint(p,0,true,B,bio)),floors:[0,1,2,3].map(v=>tileC(F(v))),
   water:[0,1,2].map(f=>tileC(p=>{p(B.wa[0],0,0,16,16);for(const y of[2,6,10,14])for(let x=0;x<16;x++)if((x+f*3+y*2)%9<3)p(B.wa[1],x,y);p(B.wa[2],(f*5+3)%16,(f*3+5)%16);p(B.wa[1],(f*7+10)%16,(f*5+11)%16)})),
   pit:tileC(p=>{F(0)(p);p(B.fl,2,2,12,12);p('#020304',3,3,10,10);p('#05080a',3,3,10,2);p(B.wd,2,2,12,1)}),
@@ -2070,7 +2128,7 @@ function tilesFor(bio){if(TILESETS[bio])return TILESETS[bio];const B=BPAL[bio];c
   bones:tileC(p=>{F(1)(p);const b='#d8d0b8',d='#a8a088';p(b,2,4,5,1);p(b,1,3);p(b,1,5);p(b,7,3);p(b,7,5);p(b,9,10,1,4);p(b,8,9);p(b,10,9);p(b,8,14);p(b,10,14);p(b,4,10,3,3);p('#2a2a2a',4,11);p('#2a2a2a',6,11);p(d,12,3,3,1);p(d,11,6,2,1)}),
   gate:tileC(p=>{F(0)(p);for(const x of[1,5,9,13])p('#5a5a5e',x,0,2,16);for(const x of[1,5,9,13])p('#8a8a90',x,0,1,16);p('#3a3a3e',0,2,16,2);p('#3a3a3e',0,12,16,2);for(const x of[2,6,10,14])p('#2a2a2e',x,15,1,1)}),
   gateOpen:tileC(p=>{F(0)(p);for(const x of[1,5,9,13]){p('#5a5a5e',x,0,2,3);p('#8a8a90',x,0,1,3)}p('#3a3a3e',0,0,16,2)})};
-  return TILESETS[bio]=T}
+  return TILESETS[key]=T}
 const h4=(x,y)=>{let h=Math.imul(x,374761393)+Math.imul(y,668265263)>>>0;h=(h^(h>>>13))>>>0;h=Math.imul(h,1274126177)>>>0;const k=h%20;return k<14?0:k<16?1:k<18?2:3};
 
 /* ---------- the dark additions: heroes, horrors, bosses ---------- */
@@ -2180,6 +2238,62 @@ ICON_MASK.bellic=[".....##.....","....####....","...######...","...######...",".
 function interiorTiles(T0){T0.planks=[0,1,2,3].map(v=>tileC(p=>{p('#2e2016',0,0,16,16);for(let r=0;r<4;r++){p(['#3a2a1c','#36261a','#3e2c1e','#34241a'][(r+v)%4],0,r*4,16,3);p('#22160e',0,r*4+3,16,1);p('#22160e',(r*5+v*3)%16,r*4,1,3)}}));
   T0.inner=[0,1].map(v=>tileC(p=>{p('#2a2622',0,0,16,16);p('#3a342e',0,0,16,1);p('#1a1612',0,15,16,1);p('#4a3420',0,10,16,2);if(v)p('#3a3020',6,3,4,5)}))}
 {const tf=tilesFor;tilesFor=function(bio){const T0=tf(bio);if(bio==='town'&&!T0.planks)interiorTiles(T0);return T0}}
+/* ---------- environment art: wall faces, chasms, decals, a second palette for even depths ---------- */
+Object.assign(BPAL,{
+  mine2:{w:'#6a4e42',wl:'#8c6c5a',wd:'#33231c',acc:'#ecc8d4',acc2:'#b88a98',f:'#3a2a22',fa:'#43302a',fl:'#28190f',fd:'#5a4034',wa:['#2a2a2e','#4a4448','#a89a98'],beam:'#7a5a34',beamd:'#4a3418'},
+  crypt2:{w:'#4a5262',wl:'#6a7488',wd:'#20242e',acc:'#dcd4bc',acc2:'#8a8270',f:'#292d38',fa:'#313745',fl:'#191c24',fd:'#444b5c',wa:['#141c2c','#22344e','#8aa8d0'],beam:'#4a4038',beamd:'#2e2822'},
+  fungal2:{w:'#4a2a3e',wl:'#683c56',wd:'#22101c',acc:'#f07ad8',acc2:'#a03090',f:'#22161e',fa:'#2a1a25',fl:'#140c12',fd:'#4c2a42',wa:['#2a1030','#4a1f50','#e09ae0'],beam:'#4a3a2a',beamd:'#2a1e14'},
+  drowned2:{w:'#2c2c32',wl:'#48484f',wd:'#121216',acc:'#c8a048',acc2:'#8a6a28',f:'#1a1a1f',fa:'#212127',fl:'#0e0e12',fd:'#35353c',wa:['#101a26','#1c3048','#8ab0d0'],beam:'#4a4038',beamd:'#2a2420'}});
+const MOSS={mine:['#4a5a3a','#5e6e44'],crypt:['#3e4a3e','#52604a'],fungal:['#2f6a52','#3f8a62'],drowned:['#2a5a44','#3a7a54']};
+function envTiles(T,key){const bio=key.replace(/2$/,''),B=BPAL[key]||BPAL[bio];const mo=MOSS[bio];
+  const shade=(h,f)=>'#'+[1,3,5].map(k=>Math.round(parseInt(h.slice(k,k+2),16)*f).toString(16).padStart(2,'0')).join('');const tc=shade(B.wd,0.55),tl=shade(B.wd,0.85);
+  const top=v=>p=>{p(tc,0,0,16,16);const sp=[[[3,4],[11,9],[6,13]],[[9,2],[2,11],[13,13]],[[5,7],[12,4]],[[1,2],[8,10],[14,7]]][v];for(const[x,y]of sp){p(tl,x,y,3,1);p('#000',x,y+1,3,1)}};
+  const face=(v,cracked)=>p=>{p(B.wd,0,0,16,4);p(B.wl,0,3,16,1);p(B.w,0,4,16,12);
+    if(bio==='mine'||bio==='fungal'){for(const[x,y,w,h]of[[0,4,6,4],[6,4,10,3],[0,8,4,4],[4,7,7,5],[11,7,5,5],[0,12,9,3],[9,12,7,3]]){p(B.wl,x,y,w,1);p(B.wd,x,y+h-1,w,1);p(B.wd,x+w-1,y,1,h)}}
+    else{for(const y of[4,8,12]){p(B.wl,0,y,16,1);p(B.wd,0,y+3,16,1)}for(let k=0;k<3;k++){const off=(k%2?4:0)+(v%2?2:0);for(let x=off;x<16;x+=8)p(B.wd,x,4+k*4,1,3)}}
+    if(v===2)p(mo[0],1,14,4,1),p(mo[1],2,13,2,1),p(mo[0],11,14,3,1);if(v===3){p(B.wd,7,6,1,6);p(B.wl,8,6,1,6)}
+    p('#000',0,15,16,1);
+    if(cracked){const pts=[[8,4],[7,6],[9,8],[7,10],[8,12],[7,15]];for(let i=0;i<pts.length-1;i++){const[a,b]=pts[i],[c,d]=pts[i+1];const n=Math.max(Math.abs(c-a),Math.abs(d-b));for(let s=0;s<=n;s++){const x=Math.round(a+(c-a)*s/n),y=Math.round(b+(d-b)*s/n);p('#050505',x,y);p(B.wl,x+1,y)}}p('#050505',5,11);p('#050505',11,7)}};
+  T.top=[0,1,2,3].map(v=>tileC(top(v)));T.face=[0,1,2,3].map(v=>tileC(face(v,false)));T.crackFace=tileC(face(0,true));
+  T.pitVoid=tileC(p=>{p('#020304',0,0,16,16);p('#06090b',3,5);p('#06090b',11,11);p('#05070a',7,2)});
+  T.pitEdge=tileC(p=>{p('#020304',0,0,16,16);p(B.wd,0,0,16,5);p(B.w,0,0,16,1);p(B.fl,0,1,16,1);for(let x=0;x<16;x+=3)p('#000',x,3,2,2);p('#05070a',0,5,16,2)});
+  const D={};const dc=(id,fn)=>{D[id]=tileC(fn)};
+  dc(1,p=>{for(const[x,y]of[[3,5],[4,6],[5,6],[6,7],[7,7],[8,8],[8,9],[11,3],[12,4],[12,5]])p(B.fl,x,y)});
+  dc(2,p=>{p(mo[0],2,3,5,3);p(mo[1],3,2,3,1);p(mo[0],9,9,4,4);p(mo[1],10,9,2,1);p(mo[1],4,4);p(mo[0],12,6,2,2)});
+  dc(3,p=>{p(B.wa[0],3,5,10,6);p(B.wa[0],5,4,6,8);p(B.wa[1],4,6,3,1);p(B.wa[2],9,8,2,1)});
+  dc(4,p=>{p('#4a0e0c',4,5,6,4);p('#4a0e0c',6,4,3,7);p('#5e1410',5,6,2,2);p('#4a0e0c',11,10,2,2);p('#4a0e0c',2,11)});
+  dc(5,p=>{for(const[x,y]of[[3,4],[10,6],[6,11],[12,12]]){p(B.wl,x,y,2,2);p(B.wd,x,y+2,2,1)}});
+  dc(6,p=>{p(B.acc2,4,10,2,4);p(B.acc,5,8,1,5);p(B.acc,8,9,2,4);p(B.acc2,9,7,1,5);p('#fff',8,9);p(B.acc2,12,11,2,3)});
+  dc(7,p=>{for(let x=1;x<16;x+=4)p(B.beamd,x,4,2,9);p('#6a6a70',0,5,16,1);p('#9a9aa0',0,5,16,1);p('#6a6a70',0,11,16,1);p('#9a9aa0',0,11,16,1)});
+  dc(9,p=>{p('#5a1a1e',3,0,10,16);p('#7a2a2a',4,0,8,16);p('#8a6a28',3,0,1,16);p('#8a6a28',12,0,1,16);p('#5a1a1e',7,5,2,3);p(B.fl,5,12,2,2)});
+  dc(10,p=>{for(const[x,h]of[[4,5],[7,3],[11,4]]){p('#e8dcc0',x,14-h,2,h);p('#a89878',x,13,2,1)}p('#d8c8a0',3,14,10,1)});
+  dc(11,p=>{p('#020304',0,0,16,16);p(B.beamd,0,2,16,12);for(let x=0;x<16;x+=4){p(B.beam,x,3,3,10);p(B.beamd,x+2,3,1,10)}p('#8a7a5a',0,2,16,1);p('#8a7a5a',0,13,16,1)});
+  dc(12,p=>{const c='#5a4028',d='#3a2818';p(c,0,2,6,1);p(c,5,3,1,4);p(c,6,6,4,1);p(d,9,7,1,5);p(c,10,11,5,1);p(d,2,3,1,3)});
+  dc(13,p=>{for(const[x,y]of[[3,3],[12,5],[6,9],[10,12],[2,13]]){p(B.acc2,x,y,2,1);p(B.acc,x,y)}});
+  dc(14,p=>{p('#5a4a38',2,5,12,6);p('#7a6648',2,5,12,2);p('#4a3a2a',2,10,12,1);p('#8a2a2a',3,6,3,4)});
+  dc(15,p=>{p('#1a1c1e',3,3,10,10);for(let k=4;k<13;k+=3){p('#5a5a60',k,3,1,10);p('#5a5a60',3,k,10,1)}p('#7a7a80',3,3,10,1)});
+  dc(16,p=>{for(const[x,y]of[[3,8],[9,10]]){p('#d8d0b8',x,y,4,3);p('#d8d0b8',x+1,y+3,2,1);p('#1a1a1a',x+1,y+1);p('#1a1a1a',x+2,y+1)}});
+  dc(17,p=>{const c='rgba(185,160,232,.55)';for(let a=0;a<16;a++){const t=a/16*Math.PI*2;p(c,8+Math.round(Math.cos(t)*5),8+Math.round(Math.sin(t)*5))}p(c,8,3,1,11);p(c,4,8,9,1)});
+  dc(18,p=>{const c=mo[1],d=mo[0];for(const x of[3,7,12]){p(d,x,6,1,8);p(c,x+1,4,1,6);p(c,x-1,9,1,3)}});
+  dc(19,p=>{for(const[x,y,h]of[[4,12,3],[9,11,4],[12,13,2]]){p('#c8c0b0',x,y-h+1,1,h);p(B.acc2,x-1,y-h,3,1);p(B.acc,x,y-h)}});
+  // wall details (drawn over a face tile)
+  dc(30,p=>{p('#3a3a3a',7,9,2,5);p('#5a5a5a',6,8,4,1);p('#6a4424',7,6,2,3)});
+  dc(31,p=>{p('#06080a',5,6,6,8);p('#06080a',6,5,4,1);p('#d8d0b8',6,9,4,3);p('#1a1a1a',7,10);p('#1a1a1a',9,10);p('#a8a088',7,12,2,1)});
+  dc(32,p=>{p('#6a1a1e',4,4,8,9);p('#8a2a2a',5,4,6,8);p('#6a1a1e',4,13,2,2);p('#6a1a1e',8,13,2,1);p('#6a1a1e',11,13,1,2);p('#c8a048',7,7,2,2);p('#3a3a3a',3,4,10,1)});
+  dc(33,p=>{for(const x of[4,11])for(let y=4;y<15;y+=2){p('#5a5a60',x,y,1,1);p('#8a8a90',x+1,y+1,1,1)}});
+  dc(34,p=>{p(B.acc2,2,9,6,2);p(B.acc,3,8,4,1);p(B.acc2,9,12,5,2);p(B.acc,10,11,3,1);p('#fff',4,8)});
+  dc(35,p=>{p(B.wa[0],6,4,3,11);p(B.wa[1],7,6,1,7);p(B.wa[0],5,13,5,2)});
+  dc(36,p=>{p(B.beam,2,4,3,12);p(B.beam,11,4,3,12);p(B.beamd,4,4,1,12);p(B.beamd,13,4,1,12);p(B.beam,2,4,12,2);p(B.beamd,2,6,12,1)});
+  dc(37,p=>{const c=B.acc,d=B.acc2;for(let k=0;k<9;k++){p(d,3+k,13-k);if(k%2)p(c,4+k,13-k)}p('#fff',8,8)});
+  T.decal=D;
+  const sh=(fn)=>{const c=document.createElement('canvas');c.width=c.height=32;const g=c.getContext('2d');fn(g);return c};
+  T.aoTop=sh(g=>{const gr=g.createLinearGradient(0,0,0,12);gr.addColorStop(0,'rgba(0,0,0,.55)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,32,12)});
+  T.aoL=sh(g=>{const gr=g.createLinearGradient(0,0,7,0);gr.addColorStop(0,'rgba(0,0,0,.4)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,7,32)});
+  T.aoR=sh(g=>{const gr=g.createLinearGradient(32,0,25,0);gr.addColorStop(0,'rgba(0,0,0,.4)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(25,0,7,32)});
+  T.rim=B.wl}
+{const tf=tilesFor;tilesFor=function(key){const T0=tf(key);if(key!=='town'&&!T0.face)envTiles(T0,key);return T0}}
+const WALLISH=t=>t===WALL||t===CRACK||t===DOOR||t===OPEN||t===GATE||t===GATEOPEN;
+const OPENT=t=>!WALLISH(t);
 /* ---------- effects ---------- */
 const FX={floats:[],parts:[],rings:[],bolts:[],lights:[],amb:[],shake:{m:0,t:0}};
 let NOW=0;
@@ -2265,14 +2379,15 @@ function drawObj(o){const x=Math.round((o.rx!=null?o.rx:o.x)*T),y=Math.round((o.
     case'charge':ctx.drawImage(SPR.charge,x,y,T,T);if(Math.floor(NOW/150)%2){ctx.fillStyle='#fff2b0';ctx.fillRect(x+20,y,4,4)}ctx.fillStyle='#ffb347';ctx.font='700 11px monospace';ctx.fillText(Math.ceil(o.fuse/(S.mode==='combat'?3:1)),x+2,y+10);return;
     default:img=SPR[o.type]}
   if(img)ctx.drawImage(img,x,y,T,T)}
-function tileImg(TS,t,x,y,wf){if(S.L.interior){if(t===WALL)return TS.inner[(x*3+y)%5===0?1:0];if(t===FLOOR)return TS.planks[h4(x,y)]}if(S.L.town&&t===WALL){const i=I(x,y);if(!S.L.bld||!S.L.bld[i])return TS.cliff[(x+y)%2];const b=inb(x,y+1)?S.L.bld[I(x,y+1)]:0;return b?TS.roof[(x*3+y)%2]:TS.facade[(x*7+y*3)%3]}switch(t){case WALL:return TS.walls[h4(x,y)];case CRACK:return TS.crack;case WATER:return TS.water[(wf+x+y*2)%3];case PIT:return TS.pit;case DOOR:return TS.door;case OPEN:return TS.open;case STAIRS:return TS.stairs;case RUBBLE:return TS.rubble;
+function tileImg(TS,t,x,y,wf){if(S.L.interior){if(t===WALL)return TS.inner[(x*3+y)%5===0?1:0];if(t===FLOOR)return TS.planks[h4(x,y)]}if(S.L.town&&t===WALL){const i=I(x,y);if(!S.L.bld||!S.L.bld[i])return TS.cliff[(x+y)%2];const b=inb(x,y+1)?S.L.bld[I(x,y+1)]:0;return b?TS.roof[(x*3+y)%2]:TS.facade[(x*7+y*3)%3]}if(TS.face&&!S.L.town&&(t===WALL||t===CRACK||t===PIT)){const b=inb(x,y+1)?S.L.map[I(x,y+1)]:WALL;if(t===PIT){const a=inb(x,y-1)?S.L.map[I(x,y-1)]:WALL;return a===PIT?TS.pitVoid:TS.pitEdge}const op=OPENT(b);if(t===CRACK)return op?TS.crackFace:TS.crack;return op?TS.face[h4(x,y)]:TS.top[h4(x,y)]}switch(t){case WALL:return TS.walls[h4(x,y)];case CRACK:return TS.crack;case WATER:return TS.water[(wf+x+y*2)%3];case PIT:return TS.pit;case DOOR:return TS.door;case OPEN:return TS.open;case STAIRS:return TS.stairs;case RUBBLE:return TS.rubble;
   case GRASS:return TS.grass[(x*3+y)%2];case WEB:return TS.web;case BONES:return TS.bones;case GATE:return TS.gate;case GATEOPEN:return TS.gateOpen;default:return TS.floors[h4(x,y)]}}
-function draw(){const L=S.L,P=S.P,TS=tilesFor(L.bio);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.imageSmoothingEnabled=false;ctx.fillStyle='#040a0b';ctx.fillRect(0,0,VW,VH);
+function draw(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.imageSmoothingEnabled=false;ctx.fillStyle='#040a0b';ctx.fillRect(0,0,VW,VH);
   let sx=0,sy=0;if(FX.shake.m){const t=(NOW-FX.shake.t)/350;if(t<1){const m=FX.shake.m*(1-t);sx=(Math.random()-.5)*m*2;sy=(Math.random()-.5)*m*2}else FX.shake.m=0}
   const ox=Math.round(-camX+sx),oy=Math.round(-camY+sy);ctx.save();ctx.translate(ox,oy);
   const x0=Math.max(0,Math.floor(camX/T)-1),x1=Math.min(W-1,Math.ceil((camX+VW)/T)+1),y0=Math.max(0,Math.floor(camY/T)-1),y1=Math.min(H-1,Math.ceil((camY+VH)/T)+1);
   const wf=Math.floor(NOW/380);
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=I(x,y);if(!L.seen[i])continue;ctx.drawImage(tileImg(TS,L.map[i],x,y,wf),x*T,y*T,T,T)}
+  if(TS.face&&!L.town)drawDressing(L,TS,x0,x1,y0,y1);
   // fire
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=I(x,y);if(L.fire[i]>0&&L.seen[i]){ctx.fillStyle='rgba(255,120,40,.18)';ctx.fillRect(x*T,y*T,T,T);flame(x*T+10,y*T+T-4,1.6,i);flame(x*T+22,y*T+T-8,1.3,i+3)}}
   // smoke & spores
@@ -2325,6 +2440,10 @@ function draw(){const L=S.L,P=S.P,TS=tilesFor(L.bio);ctx.setTransform(dpr,0,0,dp
     else if(o.type==='altar'){light(cx,cy,T*2.6,0.85);warm.push([cx,cy,T*2.6,'#ffd36b',0.12])}
     else if(o.type==='cauldron'){light(cx,cy,T*1.8,0.7);warm.push([cx,cy,T*1.8,'#8ac87a',0.12])}
     else if(o.type==='desk'){light(cx,cy-6,T*2.4,0.8);warm.push([cx,cy-6,T*2.4,'#ffd890',0.1])}}
+  if(L.decal&&!L.town)for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=I(x,y);const d=L.decal[i];if(!d||!L.seen[i])continue;const cx=x*T+T/2;
+    if(d===30&&L.map[i]===WALL){const f=1+Math.sin(NOW/85+i)*0.05;light(cx,y*T+T*0.9,T*2.8*f,0.85);warm.push([cx,y*T+T*0.9,T*2.8*f,'#ff9a3a',0.13])}
+    else if(d===34||d===19){light(cx,y*T+T/2,T*1.2,0.35);warm.push([cx,y*T+T/2,T*1.3,(BPAL[L.tset]||BPAL[L.bio]).acc,0.08])}
+    else if(d===10&&vis[i]){light(cx,y*T+T/2,T*1.4,0.5);warm.push([cx,y*T+T/2,T*1.5,'#ffd36b',0.1])}}
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)if(L.fire[I(x,y)]>0){const cx=x*T+T/2,cy=y*T+T/2;light(cx,cy,T*2.4,0.9);warm.push([cx,cy,T*2.4,'#ff7a2a',0.14])}
   for(const m of L.mons)if(MT(m).light&&monVisible(m)){const p=wpos(m);light(p.x,p.y,T*3.5,0.9)}
   for(const l of FX.lights){const t=(NOW-l.t0)/l.dur;light(l.x,l.y,l.r,1-t)}
@@ -2366,6 +2485,21 @@ function drawLabels(){ctx.textAlign='center';ctx.font='700 13px "Grenze Gotisch"
   ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillText('The Lift Head',58*T+1,13*T-5);ctx.fillStyle='#e3c890';ctx.fillText('The Lift Head',58*T,13*T-6);ctx.textAlign='start'}
 function hexA(h,a){const n=parseInt(h.slice(1),16);return`rgba(${n>>16&255},${n>>8&255},${n&255},${a})`}
 
+
+/* ---------- level dressing: decals, ambient occlusion and edge rims ---------- */
+function drawDressing(L,TS,x0,x1,y0,y1){const map=L.map,DC=L.decal;
+  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=I(x,y);if(!L.seen[i])continue;const t=map[i];
+    if(t===WALL||t===CRACK){const b=inb(x,y+1)?map[I(x,y+1)]:WALL;const face=OPENT(b);
+      if(!face){ctx.fillStyle=TS.rim;if(inb(x-1,y)&&OPENT(map[I(x-1,y)]))ctx.fillRect(x*T,y*T,2,T);if(inb(x+1,y)&&OPENT(map[I(x+1,y)]))ctx.fillRect(x*T+T-2,y*T,2,T);if(inb(x,y-1)&&OPENT(map[I(x,y-1)]))ctx.fillRect(x*T,y*T,T,2)}
+      const d=DC&&DC[i];if(d&&face&&TS.decal[d]){ctx.drawImage(TS.decal[d],x*T,y*T,T,T);if(d===30)flame(x*T+T/2,y*T+13,1.4,i)}
+      continue}
+    if(t===PIT)continue;
+    const d=DC&&DC[i];if(d&&d<30&&TS.decal[d]){if(d===13||d===19||d===34){ctx.globalAlpha=0.75+Math.sin(NOW/700+i)*0.25}ctx.drawImage(TS.decal[d],x*T,y*T,T,T);ctx.globalAlpha=1;
+      if(d===10&&!REDUCE)for(const[fx,h]of[[4,5],[7,3],[11,4]]){ctx.fillStyle=Math.sin(NOW/110+fx+i)>0?'#ffd36b':'#ff9a3a';ctx.fillRect(x*T+fx*2+1,y*T+(14-h)*2-4,2,3)}}
+    if(inb(x,y-1)&&WALLISH(map[I(x,y-1)])&&t!==DOOR)ctx.drawImage(TS.aoTop,x*T,y*T);
+    if(inb(x-1,y)&&WALLISH(map[I(x-1,y)]))ctx.drawImage(TS.aoL,x*T,y*T);
+    if(inb(x+1,y)&&WALLISH(map[I(x+1,y)]))ctx.drawImage(TS.aoR,x*T,y*T);
+    if(t===WATER){const sh=0.18+Math.sin(NOW/600+x*0.7+y)*0.08;ctx.fillStyle=`rgba(200,230,240,${sh})`;if(inb(x,y-1)&&map[I(x,y-1)]!==WATER)ctx.fillRect(x*T,y*T,T,2);if(inb(x-1,y)&&map[I(x-1,y)]!==WATER)ctx.fillRect(x*T,y*T,2,T)}}}
 /* ---------- selection ---------- */
 const SEL={id:null,valid:[],cursor:null,hover:null,reach:null,cone:null,walk:null,inspect:null};
 function refreshOverlays(){SEL.reach=null;SEL.cone=null;if(!S||!S.L)return;
@@ -2635,7 +2769,7 @@ const SAVE_KEY='saltmarrow-run-v5';
 let saveTimer=null;
 UI.save=(clear)=>{try{if(clear||S.over){localStorage.removeItem(SAVE_KEY);return}clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{const s=JSON.parse(JSON.stringify(S,(k,v)=>['rx','ry','lunge','flashT','route'].includes(k)?undefined:v instanceof Uint8Array?Array.from(v):v));s.busy=false;localStorage.setItem(SAVE_KEY,JSON.stringify(s))}catch(e){}},200)}catch(e){}};
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');return s&&s.v===5&&s.L&&!s.over?s:null}catch(e){return null}}
-function resume(s){S=s;S.busy=false;const L=S.L;L.light=new Uint8Array(L.light||W*H);L.opq=new Uint8Array(L.opq||W*H);L.deco=new Uint8Array(L.deco||W*H);if(L.bld)L.bld=new Uint8Array(L.bld);if(S.gear)for(const t of S.gear.tomes)registerTome(t);S.P.rx=S.P.x;S.P.ry=S.P.y;rebuildOpq();computeLight();computeFov();
+function resume(s){S=s;S.busy=false;const L=S.L;L.light=new Uint8Array(L.light||W*H);L.opq=new Uint8Array(L.opq||W*H);L.deco=new Uint8Array(L.deco||W*H);L.decal=new Uint8Array(L.decal||W*H);if(L.bld)L.bld=new Uint8Array(L.bld);if(S.gear)for(const t of S.gear.tomes)registerTome(t);S.P.rx=S.P.x;S.P.ry=S.P.y;rebuildOpq();computeLight();computeFov();
   if(S.mode==='combat'&&S.C){S.C.phase='hero';beginHeroTurn()}$('overlay').hidden=true;camInit=false;UI.render();UI.toast(S.L.town?'Saltmarrow':S.depth===MAXD?'The Chapel':'Depth '+S.depth,S.L.town?'':BIOMES[S.L.bio].name)}
 
 /* ---------- overlays ---------- */
@@ -2869,7 +3003,7 @@ $('saveBtn').onclick=()=>UI.saveMenu();
 const PACES=['normal','fast','instant'];const paintPace=()=>{$('paceBtn').textContent='Pace: '+(META.pace||'normal')};
 $('paceBtn').onclick=()=>{META.pace=PACES[(PACES.indexOf(META.pace||'normal')+1)%3];saveMeta();paintPace()};
 setTimeout(()=>{paintPace();cloudInit()},50);
-window.__sm=()=>S;window.__dbg={UI,newRun,enterTown,descend,enterInterior,meta:()=>META,genWeapon,genTome,addDread,registerTome};window.__insp=(x,y)=>{openInspect(x,y,200,200);const h=insp.innerHTML;closeInspect();return h};window.__tip=(x,y)=>tileSummary(x,y);window.__cam=()=>({camX,camY});
+window.__sm=()=>S;window.__dbg={fov:()=>{computeLight();computeFov();UI.render()},reveal:()=>{S.L.seen.fill(1);vis.fill(1)},UI,newRun,enterTown,descend,enterInterior,meta:()=>META,genWeapon,genTome,addDread,registerTome};window.__insp=(x,y)=>{openInspect(x,y,200,200);const h=insp.innerHTML;closeInspect();return h};window.__tip=(x,y)=>tileSummary(x,y);window.__cam=()=>({camX,camY});
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
