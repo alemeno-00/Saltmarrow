@@ -341,6 +341,8 @@ body.mob .feed p{font-size:11.5px;background:rgba(9,13,16,.66)}
 .route{width:100%;height:56px;display:block}
 .routeL{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;margin-top:-6px}
 body.mob .routeL span:nth-child(2){display:none}
+.jmod{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:10px;border:1px solid currentColor;margin-left:6px;white-space:nowrap;font-family:var(--mono)}.jmod.good{color:var(--verdigris)}.jmod.bad{color:#e88a74}
+.jmods{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px}.jm{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:6px;background:var(--hull-2);border-left:3px solid currentColor;font-size:12px}.jm span{color:var(--bone)}.jm.good{color:var(--verdigris)}.jm.bad{color:#e88a74}
 .jlog p{margin:0 0 6px;font-size:12.5px;line-height:1.5}.jlog b{color:var(--bone);font-weight:500}
 .chip.expo{display:flex;align-items:center;gap:6px}
 .chip.expo .eye{width:12px;height:7px;border-radius:50%;border:1.5px solid currentColor;position:relative;display:inline-block}
@@ -2256,6 +2258,91 @@ async function autoExplore(){if(S.busy||S.mode!=='explore'||S.L.town||AUTO.on)re
         if(tileAt(P.x,P.y)===STAIRS&&t.why==='stairs'){AUTO.on=false;log('You reach the stairs.','gold');break}
         await new Promise(r=>setTimeout(r,HEADLESS?0:60))}seen0=Math.min(seen0,watch())}}
   finally{AUTO.on=false;UI.render()}}
+
+/* ---------- journey results carry into the next level ---------- */
+const JMODS={
+  followed:{name:'Followed',good:false,desc:'Something from the journey tracked you here. It is hunting near the stairs you arrived by.'},
+  watched:{name:'Watched',good:false,desc:'The thing that follows has your scent already. It will come much sooner.'},
+  dark:{name:'In the dark',good:false,desc:'Every brazier on this level is cold.'},
+  soaked:{name:'Soaked',good:false,desc:'Your lantern gutters and spits. You see one square less on this level.'},
+  sick:{name:'Aching',good:false,desc:'The journey took it out of you. +20 fatigue.'},
+  noisy:{name:'Heard you coming',good:false,desc:'Your arrival was loud. Everything near the stairs is already looking for you.'},
+  scouted:{name:'Scouted',good:true,desc:'You learned the shape of this level on the way down. Its layout is marked on your map.'},
+  shortcut:{name:'Shortcut',good:true,desc:'You know where the way down is. The stairs are marked.'},
+  cache:{name:'Supply cache',good:true,desc:'You spotted a dry cache on the way in. It sits right beside you.'},
+  ghost:{name:'Unseen arrival',good:true,desc:'You slipped in without a sound. Enemies are slower to notice you on this level.'},
+};
+const JLEG_MOD={bridge:{1:'sick',3:'cache'},flood:{1:'soaked',3:'cache'},lights:{1:'watched',3:'ghost'},tracks:{1:'followed',3:'scouted'},collapse:{1:'sick',3:'cache'},camp:{1:'sick',3:'cache'},
+  choir:{1:'noisy',3:'ghost'},lost:{1:'dark',3:'shortcut'},stranger:{1:'noisy',3:'scouted'},bats:{1:'noisy',3:'ghost'},drowned:{1:'soaked',3:'cache'}};
+{const l0=legResolve;legResolve=function(J,opt){const k=J.legs[J.i].k;const res=l0(J,opt);const m=JLEG_MOD[k]&&JLEG_MOD[k][res.tier];J.mods=J.mods||[];if(m&&!J.mods.includes(m)){J.mods.push(m);res.mod=m}return res}}
+{const e0=journeyEnd;journeyEnd=function(J){const msg=e0(J);S.nextMods=(J.mods||[]).slice();return msg}}
+function applyJourneyMods(){const mods=S.nextMods||[];S.nextMods=null;if(!mods.length||!S.L||S.L.town)return;const L=S.L,P=S.P;L.mods=mods.slice();
+  for(const k of mods){switch(k){
+    case'followed':{const pool=POOL[S.depth].filter(t=>!MON[t].aquatic&&!MON[t].boss&&MON[t].ai!=='swarm');if(!pool.length)break;const t=pick(pool);const d=bfsDist(P.x,P.y,false);const c=[];for(let i=0;i<W*H;i++)if(d[i]>=7&&d[i]<=14&&L.map[i]===FLOOR&&!occupied(i%W,(i/W)|0,null))c.push(i);if(!c.length)break;const i=pick(c);const st=Math.round((MON[t].stam+S.depth*2)*0.7*1.3);
+      L.mons.push({id:S.nextId++,type:t,x:i%W,y:(i/W)|0,rx:i%W,ry:(i/W)|0,stam:st,max:st,temp:0,conds:[],state:'sus',role:'patrol',fx:0,fy:1,sus:1,unseen:0,home:{x:i%W,y:(i/W)|0},inCombat:false,surprised:false,lost:0,mut:pick(Object.keys(MUTATIONS)),scaled:1,inv:{x:P.x,y:P.y}});break}
+    case'watched':L.turns=(L.turns||0)+170;break;
+    case'dark':for(const o of L.objs)if(o.type==='brazier')o.lit=false;computeLight();break;
+    case'soaked':L.soaked=1;break;
+    case'sick':fatigue(20);break;
+    case'noisy':for(const m of L.mons)if(cheb(m.x,m.y,P.x,P.y)<=14&&!MT(m).boss){m.state='sus';m.inv={x:P.x,y:P.y};m.sus=1}break;
+    case'scouted':for(let i=0;i<W*H;i++){if(L.map[i]===WALL){const x=i%W,y=(i/W)|0;if(!DIR8.some(([dx,dy])=>inb(x+dx,y+dy)&&L.map[I(x+dx,y+dy)]!==WALL))continue}L.seen[i]=1}break;
+    case'shortcut':{const s=L.map.indexOf(STAIRS);if(s>=0){const x=s%W,y=(s/W)|0;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)if(inb(x+dx,y+dy))L.seen[I(x+dx,y+dy)]=1}break}
+    case'cache':{const a=DIR8.map(([dx,dy])=>[P.x+dx,P.y+dy]).find(([x,y])=>inb(x,y)&&L.map[I(x,y)]===FLOOR&&!L.objs.some(o=>o.x===x&&o.y===y)&&!occupied(x,y,null));if(a)L.objs.push({type:'crate',x:a[0],y:a[1],id:S.nextId++,cache:true});break}
+    case'ghost':L.ghost=1;break}
+    const M=JMODS[k];log(`${M.name}: ${M.desc}`,M.good?'good':'bad')}
+  computeFov()}
+{const s0=susNeed;susNeed=function(){return s0()+(S.L&&S.L.ghost?1:0)}}
+{const f0=fovR;fovR=function(){return Math.max(2,f0()-(S.L&&S.L.soaked&&!S.L.town?1:0))}}
+
+/* ---------- containers to search ---------- */
+Object.assign(FEAT,{
+  crate:{name:'Crate',block:true,desc:'A mine crate, nailed shut. Something might still be inside.'},
+  cabinet:{name:'Tool locker',block:true,desc:'A dented iron locker. The foremen kept the good stuff in these.'},
+  urn:{name:'Burial urn',block:true,desc:'Old ashes and older offerings. Breaking it open is loud.'},
+  sack:{name:'Sack',block:true,desc:'A rotting sack of something. It shifts slightly when you look at it.'},
+  reliquary:{name:'Reliquary',block:true,desc:'A glass-fronted case of saints\' bones and the things the faithful left them.'},
+});
+const SEARCH_T={
+  crate:{noise:2,verb:'You prise the crate open',table:[[30,'supply'],[18,'silver'],[10,'gear'],[8,'ration']]},
+  cabinet:{noise:2,verb:'The locker door shrieks open',table:[[26,'supply'],[22,'gear'],[12,'draught'],[10,'page'],[10,'silver']]},
+  urn:{noise:5,verb:'You smash the urn',table:[[40,'silver'],[12,'trinket'],[10,'swarm'],[8,'gear']]},
+  sack:{noise:1,verb:'You slit the sack',table:[[30,'silver'],[25,'ration'],[10,'supply'],[8,'swarm']]},
+  reliquary:{noise:3,verb:'You break the glass',table:[[30,'silver'],[25,'tome'],[15,'page'],[10,'trinket']]},
+  barrel:{noise:2,verb:'You knock the lid off the barrel',table:[[30,'ration'],[20,'draught'],[15,'silver']]},
+  shelf:{noise:1,verb:'You go through the shelves',table:[[25,'tome'],[20,'page'],[20,'silver'],[15,'supply']]},
+};
+function searchRoll(o){const T=SEARCH_T[o.type];let r=Math.random()*100;if(o.cache)return['supply','gear','ration'];
+  for(const[w,k]of T.table){r-=w;if(r<0)return[k]}return[]}
+function searchLoot(k){switch(k){
+  case'supply':return pick([{kind:'charge'},{kind:'oil'},{kind:'ink'},{kind:'draught'}]);case'ration':return{kind:'ration'};case'draught':return{kind:'draught'};
+  case'silver':return{kind:'gold',amt:rr(3,8)*S.depth+rr(0,6)};case'gear':return{kind:'gear',item:genWeapon(S.depth,rollRarity(S.depth,gearSum('luck')))};
+  case'tome':return{kind:'gear',item:genTome(S.depth,rollRarity(S.depth,gearSum('luck')+4))};
+  case'trinket':{const free=Object.keys(TRINKETS).filter(t=>!S.trinkets.includes(t));return free.length?{kind:'trinket',t:pick(free)}:{kind:'gold',amt:rr(6,12)*S.depth}}
+  case'page':{const n=LORE.findIndex((p,i)=>!META.lore[i]&&p.d<=S.depth);return n>=0?{kind:'page',n}:{kind:'gold',amt:rr(4,9)*S.depth}}}return null}
+async function searchContainer(o){const P=S.P,T=SEARCH_T[o.type];o.searched=true;log(`${T.verb}.`,'old');noise(o.x,o.y,T.noise,T.noise<4);if(o.type==='urn'){UI.fx('debris',{x:o.x,y:o.y})}
+  const got=searchRoll(o);let any=false;
+  for(const k of got){if(k==='swarm'){const pool=POOL[S.depth].filter(t=>MON[t].ai==='swarm'||t==='rat'||t==='spider');const t=pool.length?pick(pool):'rat';let m=null;
+      for(const[dx,dy]of shuffle(DIR8.slice())){const x=o.x+dx,y=o.y+dy;if(inb(x,y)&&stepCost(tileAt(x,y),P)<Infinity&&!occupied(x,y,null)&&!(x===P.x&&y===P.y)){const st=Math.round((MON[t].stam+S.depth)*0.7);m={id:S.nextId++,type:t,x,y,rx:o.x,ry:o.y,stam:st,max:st,temp:0,conds:[],state:'alert',role:'guard',fx:0,fy:1,sus:3,unseen:0,home:{x,y},inCombat:false,surprised:false,lost:0,scaled:1};S.L.mons.push(m);break}}
+      log(`Something was nesting inside!`,'bad');if(m&&S.mode==='explore'){computeFov();await startCombat('spotted',m)}any=true;continue}
+    const it=searchLoot(k);if(it){giveLoot(it);any=true}}
+  if(!any)log(pick(['Nothing but rot and splinters.','Empty. Someone got here first.','Mouse droppings and a broken buckle.','Ash, and nothing else.']),'old');
+  if(o.type==='urn'){S.L.objs.splice(S.L.objs.indexOf(o),1);rebuildOpq()}return true}
+async function searchCorpse(o){o.searched=true;const r=Math.random();if(o.of==='miner'&&r<0.6){giveLoot(rollLoot());return true}
+  if(r<0.32){giveLoot(Math.random()<0.5?{kind:'gold',amt:rr(2,6)*S.depth}:rollLoot())}else log(pick([`The ${String(o.of||'thing').toLowerCase()} carried nothing you want.`,'Nothing of use. Your hands come away wet.','You find nothing, and wish you had not looked so closely.']),'old');return true}
+{const f0=featActions;featActions=function(o){const adj=cheb(o.x,o.y,S.P.x,S.P.y)<=1;
+  if(SEARCH_T[o.type]&&!S.L.town)return o.searched?[]:[{id:'search',label:o.type==='urn'?'Smash it open (loud)':'Search it',adj}];
+  if(o.type==='corpse'&&!o.searched)return[{id:'search',label:'Search the body',adj}];return f0(o)}}
+{const f0=featAct;featAct=async function(o,id){if(id==='search'){if(SEARCH_T[o.type])return searchContainer(o);if(o.type==='corpse')return searchCorpse(o)}return f0(o,id)}}
+function placeContainers(){const L=S.L,P=S.P;if(L.town||S.depth>=MAXD)return;const bio=L.bio;
+  const kinds={mine:['crate','crate','crate','cabinet','barrel','sack'],crypt:['urn','urn','urn','reliquary','reliquary','shelf'],fungal:['sack','sack','urn','crate','barrel'],drowned:['urn','urn','reliquary','barrel','crate']}[bio];
+  const near=(x,y)=>DIR8.some(([dx,dy])=>{const t=L.map[I(x+dx,y+dy)];return t===DOOR||t===GATE||t===STAIRS||t===OPEN});
+  const c=[];for(let i=0;i<W*H;i++){if(L.map[i]!==FLOOR)continue;const x=i%W,y=(i/W)|0;if(x<2||y<2||x>W-3||y>H-3||cheb(x,y,P.x,P.y)<3||near(x,y))continue;if(L.objs.some(o=>o.x===x&&o.y===y)||L.items.some(o=>o.x===x&&o.y===y)||occupied(x,y,null))continue;
+    const w4=DIR4.filter(([dx,dy])=>L.map[I(x+dx,y+dy)]===WALL).length,open8=DIR8.filter(([dx,dy])=>L.map[I(x+dx,y+dy)]!==WALL).length;if(w4>=1&&open8>=5)c.push(i)}
+  const want=rr(6,10);const placed=[];const ok=()=>{const d=bfsDist(P.x,P.y,true);const s=L.map.indexOf(STAIRS);if(s>=0&&d[s]<0)return false;const dc=bfsDist(P.x,P.y,false);for(const o of L.objs){const dd=o.type==='lever'?dc:d;if(['bell','lever','captive','merchant','passage'].includes(o.type)&&!DIR8.some(([dx,dy])=>inb(o.x+dx,o.y+dy)&&dd[I(o.x+dx,o.y+dy)]>=0))return false}return true};
+  for(const i of shuffle(c)){if(placed.length>=want)break;const x=i%W,y=(i/W)|0;if(placed.some(o=>cheb(o.x,o.y,x,y)<4))continue;const o={type:pick(kinds),x,y,id:S.nextId++};L.objs.push(o);if(!ok()){L.objs.pop();continue}placed.push(o)}
+  rebuildOpq()}
+{const g0=genLevel;genLevel=function(){g0();placeContainers()}}
+{const d0=descend;descend=async function(fell){await d0(fell);if(!S.over&&S.nextMods)applyJourneyMods()}}
 /* ================= heroes & runs ================= */
 function newHero(k){const c=CLASSES[k];const bm=c.stam+META.upg.stam*4,br=c.recov+META.upg.recov;
   return{id:'P',x:0,y:0,rx:0,ry:0,stam:bm,max:bm,baseMax:bm,temp:0,lvl:1,chars:Object.assign({},c.chars),recov:br,recovMax:br,baseRecov:br,res:0,lantern:true,hidden:false,defending:false,conds:[],fx:1,fy:0,stab:c.stab,webbed:0,dread:0,lens:META.upg.lamp?1:0}}
@@ -2560,6 +2647,19 @@ const HD_SKIP=new Set(['corpse']);
 for(const k of Object.keys(SPR)){if(HD_SKIP.has(k)||!SPR[k]||SPR[k].width!==16)continue;SPR_LO[k]=SPR[k];const ent=MON[k]||CLASSES[k]||k.startsWith('n_');SPR[k]=hdSprite(SPR[k],{soft:!ent});SPRW[k]=white(SPR[k])}
 ICON.ration=SPR.ration.toDataURL();
 for(const k of['riptide','shadow','storm','flag','occult'])if(SPR[k])ICON[k]=SPR[k].toDataURL();
+/* ---------- searchable containers: closed and opened looks ---------- */
+const PROP_PAINT={
+  crate:(p,open)=>{p('#2a1c10',2,5,12,10);p('#7a5a34',2,5,12,9);p('#8a6a3e',2,5,12,1);for(const x of[2,13])p('#5a3e20',x,5,1,9);p('#5a3e20',2,9,12,1);p('#6a4a28',3,6,1,7);p('#6a4a28',12,6,1,7);
+    if(open){p('#1a120a',3,6,10,3);p('#7a5a34',1,2,13,3);p('#8a6a3e',1,2,13,1);p('#5a3e20',1,4,13,1)}else{p('#5a3e20',3,6,9,1);p('#9a9aa0',4,7);p('#9a9aa0',11,7);p('#9a9aa0',4,12);p('#9a9aa0',11,12)}},
+  cabinet:(p,open)=>{p('#1a1a1e',3,1,10,15);p('#4a4e54',3,1,10,14);p('#5e636a',3,1,10,1);p('#3a3e44',8,2,1,12);p('#2a2e34',3,14,10,1);
+    if(open){p('#0a0a0c',4,2,4,12);p('#4a4e54',1,2,3,12);p('#5e636a',1,2,1,12);p('#8a6a3e',5,6,2,1);p('#c8c0b0',5,10,2,2)}else{p('#8a8a90',6,7,1,2);p('#8a8a90',10,7,1,2);for(const y of[3,4])p('#2a2e34',4,y,3,1)}},
+  urn:(p,open)=>{if(open)return;p('#3a2a20',5,2,6,1);p('#6a4a34',6,3,4,1);p('#8a5a3a',4,4,8,9);p('#a8744a',4,4,2,8);p('#6a4028',10,5,2,8);p('#5a3a24',5,13,6,2);p('#c8a060',4,7,8,1);p('#2a1a12',6,9,1,1);p('#2a1a12',9,9,1,1)},
+  sack:(p,open)=>{p('#5a4a32',3,7,10,8);p('#7a6646',4,6,8,8);p('#8a7656',5,6,3,6);p('#4a3a24',6,4,4,2);p('#3a2a18',7,3,2,1);p('#5a4a32',11,9,1,5);if(open){p('#1a120a',5,7,6,3);p('#c8a060',7,8,1,1)}},
+  reliquary:(p,open)=>{p('#2a2018',2,2,12,13);p('#6a5030',2,2,12,12);p('#8a6a3e',2,2,12,1);p('#c8a048',7,0,2,2);p('#1a1814',3,3,10,9);
+    if(open){p('#0a0a0a',3,3,10,9);p('#a8d0e0',4,4,1,1);p('#a8d0e0',10,9,1,1);p('#a8d0e0',6,11,1,1)}else{p('#4a5a66',3,3,10,9);p('#6a7a86',3,3,4,2);p('#d8d0b8',6,6,4,3);p('#1a1a1a',7,7);p('#1a1a1a',9,7);p('#d8d0b8',7,9,2,2);p('#c8a048',5,11,1,1);p('#c8a048',10,11,1,1)}},
+};
+for(const k in PROP_PAINT){SPR[k]=hdSprite(tileC(p=>PROP_PAINT[k](p,false)),{soft:true});SPRW[k]=white(SPR[k]);SPR[k+'Open']=hdSprite(tileC(p=>PROP_PAINT[k](p,true)),{soft:true})}
+for(const k of['barrel','shelf'])if(SPR[k]&&!SPR[k+'Open']){const c=document.createElement('canvas');c.width=c.height=32;const g=c.getContext('2d');g.drawImage(SPR[k],0,0);g.globalCompositeOperation='source-atop';g.fillStyle='rgba(0,0,0,.35)';g.fillRect(0,0,32,32);SPR[k+'Open']=c}
 /* ---------- hero paper-doll: 32px characters built in layers, carrying what you carry ---------- */
 const HERO_LOOK={
   riptide:{skin:'#d8a07a',skinD:'#a8704a',def:'maul',build:'broad',legs:['#3a3434','#262222'],boots:['#3a2a1e','#22180f'],
@@ -2992,6 +3092,9 @@ function drawIntent(){const L=S.L,P=S.P;
       case'stunned':ctx.font='700 10px monospace';ctx.fillText('z',bx-3,by+4);break;
       default:ctx.moveTo(bx-3,by+3);ctx.lineTo(bx,by-3);ctx.lineTo(bx+3,by+3);ctx.stroke()}
     if(txt){ctx.font='700 11px monospace';ctx.fillStyle='#f4ecd8';ctx.fillText(txt,bx+6,by+4)}}}
+/* searched containers look opened */
+{const d0=drawObj;drawObj=function(o){if(o.searched&&SPR[o.type+'Open']&&SEARCH_T[o.type]){const x=Math.round((o.rx!=null?o.rx:o.x)*T),y=Math.round((o.ry!=null?o.ry:o.y)*T);ctx.drawImage(SPR[o.type+'Open'],x,y,T,T);return}
+  d0(o);if(!o.searched&&SEARCH_T[o.type]&&!S.L.town&&vis[I(o.x,o.y)]&&!REDUCE){const a=0.35+Math.sin(NOW/500+o.id)*0.25;if(a>0.45){ctx.fillStyle=`rgba(255,240,200,${(a-0.45)*1.2})`;ctx.fillRect(Math.round(o.x*T)+22,Math.round(o.y*T)+6,2,2)}}}}
 /* emit animations from attacks */
 {const h0=heroAttack;heroAttack=async function(id,tx,ty){const ab=AB[id],P=S.P;try{const el=ab.el||weaponEl();const col=el?ELEM[el].col:'#f4ecd8';
     if(tx!=null&&(ab.kind==='melee'||ab.kind==='ranged')){const st=STYLE[id]||(ab.kind==='melee'?'slash':CASTERS.has(S.cls)||ab.tome?'cast':null);
@@ -3344,14 +3447,14 @@ UI.journey=J=>new Promise(resolve=>{const P=S.P;const bio=biomeOf(J.to);
       ${diceHTML()}<p class="say" id="lOut"></p><div class="row"><span class="purse">Stamina ${Math.max(0,P.stam)}/${P.max} · Fatigue ${Math.round(P.fat||0)} · Dread ${P.dread||0}</span><button class="btn primary" id="lOk" hidden>Onward</button></div>`,true);
     sfx('travel');ov.querySelectorAll('[data-o]').forEach(b=>b.onclick=async()=>{ov.querySelectorAll('[data-o]').forEach(x=>x.disabled=true);b.classList.add('primary');const res=legResolve(J,+b.dataset.o);
       if(res.r)await rollDice(res.r,`+ ${res.r.bonus}`);else{$('dtot').innerHTML=tierBadge(res.tier);sfx(res.tier===3?'triumph':'pass')}
-      $('lOut').textContent=res.txt;UI.render();if(S.over){resolve();return}const ok=$('lOk');ok.hidden=false;ok.onclick=leg})};
+      $('lOut').innerHTML=esc(res.txt)+(res.mod?` <span class="jmod ${JMODS[res.mod].good?'good':'bad'}">Next level: ${JMODS[res.mod].name}</span>`:'');UI.render();if(S.over){resolve();return}const ok=$('lOk');ok.hidden=false;ok.onclick=leg})};
   const done=()=>{const msg=journeyEnd(J);modal(`${head(null,'Journey\'s end',`${J.succ} of ${J.legs.length} legs went well`,true)}${route()}
-      <div class="jlog">${J.log.map(l=>`<p>${tierBadge(l.tier)} <b>${esc(l.title)}</b>: ${esc(l.txt)}</p>`).join('')}</div><p class="say">${esc(msg)}</p><div class="row"><span></span><button class="btn primary" id="jGo">Arrive at depth ${J.to}</button></div>`,true);
+      <div class="jlog">${J.log.map(l=>`<p>${tierBadge(l.tier)} <b>${esc(l.title)}</b>: ${esc(l.txt)}</p>`).join('')}</div><p class="say">${esc(msg)}</p>${(J.mods||[]).length?`<p class="sect">What you bring to depth ${J.to}</p><div class="jmods">${J.mods.map(k=>`<div class="jm ${JMODS[k].good?'good':'bad'}"><b>${JMODS[k].name}</b><span>${esc(JMODS[k].desc)}</span></div>`).join('')}</div>`:'<p class="purse">Nothing follows you down, good or bad.</p>'}<div class="row"><span></span><button class="btn primary" id="jGo">Arrive at depth ${J.to}</button></div>`,true);
     $('jGo').onclick=()=>{ov.hidden=true;ov.innerHTML='';resolve()}};
   leg()});
 
 /* stealth indicator on the map */
-{const h0=renderHud;renderHud=function(){h0();if(!S||!S.L||S.L.town)return;const e=exposure();if(!e)return;const c=document.createElement('span');c.className='chip expo '+e[1];c.innerHTML=`<i class="eye"></i>${e[0]}`;c.title='How visible you are';$('hudTl').appendChild(c)}}
+{const h0=renderHud;renderHud=function(){h0();if(!S||!S.L||S.L.town)return;for(const k of S.L.mods||[]){const M=JMODS[k];const c=document.createElement('span');c.className='chip '+(M.good?'good':'bad');c.textContent=M.name;c.title=M.desc;$('hudTl').appendChild(c)}const e=exposure();if(!e)return;const c=document.createElement('span');c.className='chip expo '+e[1];c.innerHTML=`<i class="eye"></i>${e[0]}`;c.title='How visible you are';$('hudTl').appendChild(c)}}
 document.addEventListener('pointerdown',ev=>{if(AUTO.on&&!ev.target.closest('[data-ab="autoexp"]'))AUTO.on=false},true);
 /* ---------- save / load ---------- */
 const SAVE_KEY='saltmarrow-run-v5';
@@ -3375,7 +3478,7 @@ function showHelp(back){const ov=$('overlay');closeInspect();hideTip();
     <section><h3>Keys</h3><dl><dt>WASD · arrows</dt><dd>Move (QEZC diagonals)</dd><dt>1–5</dt><dd>Class abilities</dd><dt>6 7 8 9 0</dt><dd>Shift, shove, hide, defend, dash</dd><dt>R X V F</dt><dd>Draught, charge, smoke bomb, firepot</dd><dt>T · B · L</dt><dd>Toss stone, catch breath, lantern</dd><dt>Space</dt><dd>End turn (or wait)</dd><dt>Tab · Enter · Esc</dt><dd>Cycle, confirm, cancel targets</dd><dt>&gt;</dt><dd>Descend stairs</dd></dl></section>
     <section><h3>Combat</h3><p>Each turn you get a <b>move</b>, a <b>maneuver</b> and a <b>main action</b>. Attacks roll 2d10 + a characteristic: 11 or less is tier 1, 12–16 tier 2, 17+ tier 3. Edges add 2, banes subtract 2; a double edge or bane shifts the tier. A natural 19–20 is a critical and gives you another main action.</p><p>Walking away from an adjacent enemy gives it a free strike. <b>Shift</b> to step away safely. Push foes into walls, carts, props, fire and shafts for extra damage.</p><p>Your heroic resource builds each turn. Winning fights adds <b>Victories</b>, which start you with more. Catch your breath with Recoveries.</p></section>
     <section><h3>Sneaking</h3><p>Attack an enemy that hasn't noticed you for a <b>sneak attack</b>: double damage (triple for the Cutpurse). Kill it outright and nobody else knows: no fight starts, and you earn half again the XP. If it survives, the fight begins with you acting first.</p><p>The bar over a suspicious enemy's head fills as it watches you. In shadow with your lantern shuttered it fills more slowly. The eye chip on the map tells you how exposed you are.</p><p>The Cutpurse can pick pockets (hold or right-click an unaware enemy next to you) and <b>Shadowstep</b> to an unlit square nearby.</p></section>
-    <section><h3>Survival</h3><p><b>Fatigue</b> builds as you explore and fight. Weary (60+) gives a bane on your rolls; exhausted (85+) gives two and slows you.</p><p><b>Make camp</b> (K) once per level when nothing is hunting you. Strike a flint to light the fire, choose two things to do, then face whatever comes in the night. A bigger fire rests you better but draws attention. Rations make for a proper meal.</p><p>Between the mines, crypts, hollows and vaults lies a <b>long descent</b>: a journey of several legs, each resolved with a 2d10 test. Some levels have an old side passage that skips a level the hard way.</p></section>
+    <section><h3>Survival</h3><p><b>Fatigue</b> builds as you explore and fight. Weary (60+) gives a bane on your rolls; exhausted (85+) gives two and slows you.</p><p><b>Make camp</b> (K) once per level when nothing is hunting you. Strike a flint to light the fire, choose two things to do, then face whatever comes in the night. A bigger fire rests you better but draws attention. Rations make for a proper meal.</p><p>Between the mines, crypts, hollows and vaults lies a <b>long descent</b>: a journey of several legs, each resolved with a 2d10 test. Some levels have an old side passage that skips a level the hard way. What happens on the road follows you: failures bring trouble (something tracks you down, the braziers are cold, the level knows you are coming), triumphs bring help (a supply cache, the map scouted, an unseen arrival).</p><p>Search crates, lockers, urns, sacks, reliquaries, shelves, barrels and bodies by walking into them. Urns are loud to break, and some sacks have something living in them.</p></section>
     <section><h3>Combat tells and growth</h3><p>On your turn, a badge over each enemy shows what it will do next and roughly how much it will hurt. A sapper that lights a fuse marks where the bomb will land, so get out of the squares.</p><p>Each level-up lets you choose one of three perks. <b>Explore</b> (O) walks you to the next unexplored spot and stops the moment anything stirs.</p></section>
     <section><h3>Stealth and the world</h3><p>Red cones show where enemies are looking. Your open lantern lets you see far but makes you easy to spot. Light from braziers and fires gives you away; tall growth, smoke and water hide you.</p><p>Toss stones to lure guards, shatter crystals for a big distraction, douse braziers to darken a room. Blast cracked walls and gates, bring timber props down on enemies, roll carts into them, burn webs and growth.</p><p>Wolves hunt in packs and surround you. Archers back away. Cultists heal their friends. Ghouls eat corpses. Learn them by inspecting.</p></section>
   </div><button class="btn primary" id="helpBack">Back</button></div>`;
