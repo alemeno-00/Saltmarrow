@@ -197,7 +197,7 @@ textarea.code{width:100%;min-height:90px;background:var(--hull-2);color:var(--bo
 .lore p{margin:0 0 10px}
 .qst{display:flex;flex-direction:column;gap:2px;font-size:12.5px;padding:8px 10px;background:var(--hull-2);border-radius:6px}
 .qst b{color:var(--lantern);font-weight:500}.qst .dn{color:var(--verdigris)}.qst .td{color:var(--dim)}
-.dread{height:6px}.dread i{background:var(--dread)!important}
+.bar2.dread{height:6px}.bar2.dread i{background:var(--dread)!important}
 .epi{font-family:var(--prose);font-size:17px;line-height:1.7;max-width:60ch;margin:0}
 .log p.dread{color:var(--dread)}.log p.whisper{color:#8a6aa8;font-style:italic;font-family:var(--prose);font-size:13.5px}
 /* overlays */
@@ -301,6 +301,16 @@ body.mob .say{font-size:16px}
   body.mob .tracker{top:6px;left:auto;right:8px;transform:none;align-items:flex-end}
 }
 
+/* desktop: fill the window */
+body.full{overflow:hidden;margin:0}
+body.full .wrap{max-width:none;height:100vh;height:100dvh;box-sizing:border-box;padding:10px 16px 12px}
+body.full .game{flex:1;min-height:0;grid-template-columns:minmax(0,1fr) 300px;align-items:stretch}
+body.full .left{min-height:0}
+body.full .stage{flex:1;min-height:0}
+body.full canvas{position:absolute;inset:0}
+body.full .panel{overflow-y:auto;min-height:0;scrollbar-width:thin;padding-right:2px}
+body.full .log{height:auto;max-height:16em}
+.zoomgrp{display:flex;gap:4px}
 /* message feed over the map */
 .feed{position:absolute;left:10px;bottom:10px;max-width:min(520px,68%);display:flex;flex-direction:column;align-items:flex-start;gap:3px;pointer-events:none;z-index:2;transition:bottom .2s}
 .feed p{margin:0;font-size:12px;line-height:1.4;padding:3px 8px;background:rgba(9,13,16,.74);border-radius:4px;max-width:100%;text-shadow:0 1px 0 #000;transition:opacity .8s ease,transform .25s ease;animation:feedIn .25s ease}
@@ -340,7 +350,7 @@ body.mob .routeL span:nth-child(2){display:none}
 <div class="wrap">
   <header>
     <h1>Saltmarrow <span>Deep</span></h1><button class="btn mobonly" id="menuBtn" aria-label="Menu">Menu</button>
-    <div class="hbtns"><button class="btn" id="paceBtn">Pace: normal</button><button class="btn" id="soundBtn">Sound: off</button><button class="btn" id="saveBtn">Save</button><button class="btn" id="journalBtn">Journal (J)</button><button class="btn" id="helpBtn">How to play (?)</button><button class="btn" id="feedBtn">Log on map: on</button><button class="btn mobonly" id="gearBtnM">Gear</button><button class="btn mobonly" id="padBtn">Arrows: off</button><button class="btn mobonly" id="zoomOut">Zoom out −</button><button class="btn mobonly" id="zoomIn">Zoom in +</button></div>
+    <div class="hbtns"><button class="btn" id="paceBtn">Pace: normal</button><button class="btn" id="soundBtn">Sound: off</button><button class="btn" id="saveBtn">Save</button><button class="btn" id="journalBtn">Journal (J)</button><button class="btn" id="helpBtn">How to play (?)</button><button class="btn" id="feedBtn">Log on map: on</button><button class="btn mobonly" id="gearBtnM">Gear</button><button class="btn mobonly" id="padBtn">Arrows: off</button><button class="btn mobonly" id="zoomOut">Zoom out −</button><button class="btn mobonly" id="zoomIn">Zoom in +</button><span class="zoomgrp deskonly"><button class="btn" id="zoomOutD" aria-label="Zoom out" title="Zoom out (−)">−</button><button class="btn" id="zoomInD" aria-label="Zoom in" title="Zoom in (+)">+</button></span><button class="btn deskonly" id="fsBtn">Fullscreen</button></div>
   </header>
   <div class="game">
     <div class="left">
@@ -2730,7 +2740,7 @@ const cv=$('cv'),ctx=cv.getContext('2d');
 const lc=document.createElement('canvas'),lctx=lc.getContext('2d');
 let VW=0,VH=0,dpr=1,camX=0,camY=0,camInit=false;
 let ZOOM=1;const PAN={x:0,y:0,px:-1,py:-1};
-function resize(){const st=$('stage');const w=Math.max(1,st.clientWidth);const mob=document.body.classList.contains('mob');const narrow=w<620;const h=mob?Math.max(160,st.clientHeight):Math.round(Math.min(narrow?w*1.1:w*0.62,narrow?560:640));const d0=window.devicePixelRatio||1;dpr=d0*ZOOM;
+function resize(){const st=$('stage');const w=Math.max(1,st.clientWidth);const mob=document.body.classList.contains('mob')||document.body.classList.contains('full');const narrow=w<620;const h=mob?Math.max(160,st.clientHeight):Math.round(Math.min(narrow?w*1.1:w*0.62,narrow?560:640));const d0=window.devicePixelRatio||1;dpr=d0*ZOOM;
   cv.width=Math.round(w*d0);cv.height=Math.round(h*d0);cv.style.height=h+'px';lc.width=cv.width;lc.height=cv.height;VW=w/ZOOM;VH=h/ZOOM;camInit=false}
 
 /* ---------- drawing ---------- */
@@ -3444,8 +3454,9 @@ function showIntro(){ov.innerHTML=`<div class="card" style="max-width:560px"><h2
 const UIP=(()=>{try{return JSON.parse(localStorage.getItem('saltmarrow-ui')||'{}')}catch(e){return{}}})();
 const saveUIP=()=>{try{localStorage.setItem('saltmarrow-ui',JSON.stringify(UIP))}catch(e){}};
 const isMob=()=>matchMedia('(pointer:coarse)').matches||innerWidth<620;
-function applyMob(){const on=isMob();document.body.classList.toggle('mob',on);document.body.classList.toggle('pad-on',on&&!!UIP.pad);
-  $('padBtn').textContent='Arrows: '+(UIP.pad?'on':'off');ZOOM=on?(UIP.zoom||1):1}
+function autoZoomD(){const w=$('stage').clientWidth||innerWidth;return Math.max(1,Math.min(2.5,Math.floor(w/(24*32)*4)/4))}
+function applyMob(){const on=isMob();const full=!on&&innerWidth>=860;document.body.classList.toggle('mob',on);document.body.classList.toggle('full',full);document.body.classList.toggle('pad-on',on&&!!UIP.pad);
+  $('padBtn').textContent='Arrows: '+(UIP.pad?'on':'off');ZOOM=on?(UIP.zoom||1):(UIP.zoomD||autoZoomD())}
 applyMob();
 const TOUCHY=()=>document.body.classList.contains('mob');
 
@@ -3456,7 +3467,13 @@ hb.addEventListener('click',ev=>{if(ev.target.closest('#zoomIn,#zoomOut,#padBtn,
 document.addEventListener('pointerdown',ev=>{if(hb.classList.contains('open')&&!hb.contains(ev.target)&&ev.target!==$('menuBtn'))hb.classList.remove('open')});
 $('gearBtnM').onclick=()=>{if(S&&S.L&&!S.L.town)UI.gear();else if(S)UI.cottage()};
 $('padBtn').onclick=()=>{UIP.pad=!UIP.pad;saveUIP();applyMob();setTimeout(resize,0)};
-function setZoom(z){ZOOM=Math.max(0.6,Math.min(2.2,z));UIP.zoom=ZOOM;saveUIP();resize()}
+function setZoom(z){const mob=document.body.classList.contains('mob');ZOOM=Math.round(Math.max(mob?0.6:0.75,Math.min(mob?2.2:3,z))*4)/4;if(mob)UIP.zoom=ZOOM;else UIP.zoomD=ZOOM;saveUIP();resize()}
+$('zoomInD').onclick=()=>setZoom(ZOOM+0.25);$('zoomOutD').onclick=()=>setZoom(ZOOM-0.25);
+cv.addEventListener('wheel',ev=>{if(document.body.classList.contains('mob'))return;ev.preventDefault();setZoom(ZOOM+(ev.deltaY<0?0.25:-0.25))},{passive:false});
+document.addEventListener('keydown',ev=>{if(ev.ctrlKey||ev.metaKey||!$('overlay').hidden)return;if(ev.key==='+'||ev.key==='='){setZoom(ZOOM+0.25)}else if(ev.key==='-'||ev.key==='_'){setZoom(ZOOM-0.25)}});
+const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement;
+$('fsBtn').onclick=async()=>{try{if(fsEl()){await(document.exitFullscreen||document.webkitExitFullscreen).call(document)}else{const d=document.documentElement;await(d.requestFullscreen||d.webkitRequestFullscreen).call(d)}}catch(e){log('Your browser would not go fullscreen here. Try F11, or open the game in its own tab.','old');UI.render()}};
+document.addEventListener('fullscreenchange',()=>{$('fsBtn').textContent=fsEl()?'Exit fullscreen':'Fullscreen';setTimeout(()=>{applyMob();resize()},80)});
 $('zoomIn').onclick=()=>setZoom(ZOOM*1.2);$('zoomOut').onclick=()=>setZoom(ZOOM/1.2);
 
 /* bottom sheet for hero, pack and log */
