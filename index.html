@@ -3017,7 +3017,7 @@ function draw(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio);ctx.setTransform(dp
   drawAtmos(ox,oy);
   ctx.save();ctx.translate(ox,oy);drawOverlays(x0,x1,y0,y1);if(L.town&&!L.interior)drawLabels();ctx.restore();
   // floats
-  ctx.textAlign='center';for(const f of FX.floats){const t=(NOW-f.t0)/1000;if(t<0)continue;ctx.globalAlpha=Math.max(0,1-t);ctx.font=(f.big?'700 15px ':'700 11px ')+'"Spline Sans Mono", monospace';const x=f.x+ox,y=f.y+oy-t*26;ctx.fillStyle='#040a0b';ctx.fillText(f.text,x+1,y+1);ctx.fillStyle=f.c;ctx.fillText(f.text,x,y)}ctx.globalAlpha=1;ctx.textAlign='start';
+  ctx.textAlign='center';for(const f of FX.floats){const t=(NOW-f.t0)/1000;if(t<0)continue;ctx.globalAlpha=Math.max(0,1-t);const pop=t<0.12?1+(0.12-t)*7:1;ctx.font='700 '+Math.round((f.huge?24:f.big?17:11)*pop)+'px "Spline Sans Mono", monospace';const x=f.x+ox,y=f.y+oy-t*(f.huge?18:26);ctx.fillStyle='#040a0b';ctx.fillText(f.text,x+1,y+1);ctx.fillStyle=f.c;ctx.fillText(f.text,x,y)}ctx.globalAlpha=1;ctx.textAlign='start';
   if(S.mode==='combat'&&S.C&&S.C.phase!=='hero'){ctx.fillStyle='rgba(194,83,62,.07)';ctx.fillRect(0,0,VW,VH)}}
 function drawOverlays(x0,x1,y0,y1){const P=S.P,L=S.L;
   if(SEL.cone){ctx.fillStyle='rgba(230,90,60,.16)';for(const i of SEL.cone){if(!vis[i])continue;ctx.fillRect((i%W)*T,((i/W)|0)*T,T,T)}}
@@ -3088,6 +3088,7 @@ const tc=t=>({x:t.x*T+T/2,y:t.y*T+T/2});
 drawSprite=function(img,imgW,e,size,alpha,flipOk){if(S&&e===S.P&&HERO_LOOK[S.cls]){const h=heroSprite(heroPose(e));img=h.img;imgW=h.w;size=Math.round((size||T)*1.25)}const p=wpos(e);let ox=0,oy=0;
   if(e.lunge){const t=(NOW-e.lunge.t0)/200;if(t<1){const s=Math.sin(t*Math.PI)*T*0.36;ox=e.lunge.dx*s;oy=e.lunge.dy*s}else e.lunge=null}
   if(e.kb){const t=(NOW-e.kb.t0)/240;if(t<1){const s=Math.sin(t*Math.PI)*T*0.16*(1-t*0.3);ox+=e.kb.dx*s;oy+=e.kb.dy*s}else e.kb=null}
+  if(e.windup){const t=(NOW-e.windup.t0)/e.windup.dur;if(t<1){const q=Math.sin(Math.min(1,t*1.2)*Math.PI/2)*T*0.2;ox-=e.windup.dx*q;oy-=e.windup.dy*q}else e.windup=null}
   let hop=0;if(e.hop){const t=(NOW-e.hop.t0)/e.hop.dur;if(t<1)hop=Math.sin(t*Math.PI)*e.hop.h;else e.hop=null}
   const live=e.stam==null||e.stam>0;const ph=NOW/(e.id==='P'||isP(e)?520:640)+(typeof e.id==='number'?e.id*1.7:0);
   const bob=REDUCE?0:Math.round(Math.sin(ph)*1.2);const br=REDUCE||!live?1:1+Math.sin(ph*0.8)*0.025;
@@ -3146,15 +3147,72 @@ function drawIntent(){const L=S.L,P=S.P;
 {const d0=drawObj;drawObj=function(o){if(o.searched&&SPR[o.type+'Open']&&SEARCH_T[o.type]){const x=Math.round((o.rx!=null?o.rx:o.x)*T),y=Math.round((o.ry!=null?o.ry:o.y)*T);ctx.drawImage(SPR[o.type+'Open'],x,y,T,T);return}
   d0(o);if(!o.searched&&SEARCH_T[o.type]&&!S.L.town&&vis[I(o.x,o.y)]&&!REDUCE){const a=0.35+Math.sin(NOW/500+o.id)*0.25;if(a>0.45){ctx.fillStyle=`rgba(255,240,200,${(a-0.45)*1.2})`;ctx.fillRect(Math.round(o.x*T)+22,Math.round(o.y*T)+6,2,2)}}}}
 /* emit animations from attacks */
-{const h0=heroAttack;heroAttack=async function(id,tx,ty){const ab=AB[id],P=S.P;try{const el=ab.el||weaponEl();const col=el?ELEM[el].col:'#f4ecd8';
-    if(tx!=null&&(ab.kind==='melee'||ab.kind==='ranged')){const st=STYLE[id]||(ab.kind==='melee'?'slash':CASTERS.has(S.cls)||ab.tome?'cast':null);
-      if(st==='cast')UI.fx('cast',{e:P,color:col});else if(st==='throw')UI.fx('throw',{from:P,to:{x:tx,y:ty},color:'#c8d2d6'});else if(st)UI.fx('swing',{from:P,to:{x:tx,y:ty},style:st,color:col})}
-    else if(ab.kind==='area'){UI.fx('cast',{e:P,color:col})}else if(ab.kind==='burst'){UI.fx('swing',{from:P,to:{x:P.x+1,y:P.y},style:'spin',color:col})}}catch(e){}
+{const h0=heroAttack;heroAttack=async function(id,tx,ty){const ab=AB[id],P=S.P;try{const el=ab.el||weaponEl();const col=el?ELEM[el].col:'#f4ecd8';let wind=0;
+    if(tx!=null&&(ab.kind==='melee'||ab.kind==='ranged')){const st=STYLE[id]||(ab.kind==='melee'?'slash':CASTERS.has(S.cls)||ab.tome?'cast':'throw');wind=flashAttack(P,{x:tx,y:ty},st,st==='cast'&&!el?'#8fe0f0':col)}
+    else if(ab.kind==='area'){wind=flashAttack(P,{x:tx,y:ty},'cast',el?col:'#8fe0f0')}else if(ab.kind==='burst'){wind=flashAttack(P,{x:P.x,y:P.y},'spin',col)}
+    if(wind)await UI.sleep(wind)}catch(e){}
   return h0(id,tx,ty)}}
 const BITERS=new Set(['rat','wolf','direwolf','ghoul','eel','bat','gaunt','deepone','spider']);
-{const m0=monsterAttack;monsterAttack=async function(m,ab,center){try{if(ab.kind==='melee'){UI.fx(BITERS.has(m.type)?'bite':'claw',{e:S.P,from:m})}else if(ab.kind==='area'&&center){UI.fx('throw',{from:m,to:center,color:'#3a3a3a',big:true})}else sfx('shoot')}catch(e){}return m0(m,ab,center)}}
+{const m0=monsterAttack;monsterAttack=async function(m,ab,center){try{let wind=0;if(ab.kind==='melee')wind=flashAttack(m,S.P,BITERS.has(m.type)?'bite':'claw','#e8503a');else if(ab.kind==='area'&&center){UI.fx('throw',{from:m,to:center,color:'#3a3a3a',big:true})}else{wind=flashAttack(m,S.P,'mcast',m.type==='cultist'||MT(m).ai==='caster'?'#b48ae8':'#c8d2d6');sfx('shoot')}if(wind)await UI.sleep(wind)}catch(e){}return m0(m,ab,center)}}
 {const d0=doUtility;doUtility=async function(id,tx,ty){try{if(tx!=null&&['stone','oil','ink','charge'].includes(id)&&cheb(tx,ty,S.P.x,S.P.y)>1){UI.fx('throw',{from:S.P,to:{x:tx,y:ty},color:id==='oil'?'#ffb347':id==='ink'?'#5a5a7a':'#c8c0b0',big:id!=='stone'});await UI.sleep(260)}}catch(e){}return d0(id,tx,ty)}}
 {const h0=heal;heal=function(a){h0(a);try{UI.fx('healfx',{e:S.P})}catch(e){}}}
+/* ---------- drawn-out, flashy attacks: wind-up, glowing strike, impact ---------- */
+FX.x=[];FX.imp=[];
+const PF=()=>META.pace==='fast'?0.35:META.pace==='instant'?0.08:1;
+const ASTYLE={slash:[200,620,0.6],smash:[300,800,0.6],thrust:[150,540,0.6],spin:[200,640,0.58],whip:[220,640,0.61],hook:[180,620,0.565],cast:[340,820,0.62],throw:[140,560,0.55],claw:[180,560,0.62],bite:[180,560,0.62],mcast:[200,600,0.62]};
+function flashAttack(att,tgt,style,col){if(UI.quiet||REDUCE)return 0;const P=ASTYLE[style]||ASTYLE.slash,pf=PF();const a=wpos(att),b={x:tgt.x*T+T/2,y:tgt.y*T+T/2};
+  const dx=Math.sign(tgt.x-att.x),dy=Math.sign(tgt.y-att.y);if(style!=='spin'&&style!=='cast'&&style!=='mcast')att.windup={t0:NOW,dur:P[0]*pf,dx,dy};if(style==='smash')att.hop={t0:NOW+P[0]*pf*0.2,dur:P[0]*pf*1.4,h:14};
+  FX.x.push({k:style,a,b,att,c:col||'#f4ecd8',t0:NOW,dur:P[1]*pf,imp:P[2],hit:false,crit:false,seed:Math.random()*6});FX.lastSwing={x:att.x,y:att.y,t:NOW+P[0]*pf};
+  try{sfx('windup',{style})}catch(e){}return P[0]}
+function impactFX(x,y,c,big,crit){FX.imp.push({x,y,c,t0:NOW,dur:crit?620:big?480:380,big,crit,rays:6+((Math.random()*5)|0),rot:Math.random()*6});
+  burst(x,y,crit?40:big?26:16,['#ffffff',c,'#fff2b0',c],crit?240:big?180:130,0.5,160,2);FX.lights.push({x,y,r:T*(crit?4:big?2.8:2),t0:NOW,dur:crit?500:320,c:crit?'#fff2b0':c});
+  FX.shake={m:crit?11:big?8:5,t:NOW};if(crit){FX.stop=Math.max(FX.stop,NOW+220);FX.flash={t0:NOW,dur:260}}}
+{const f0=UI.fx;UI.fx=(type,d)=>{if(type==='roll'&&d&&d.r&&isP(d.e)){const a=[...FX.x].reverse().find(q=>q.att===S.P&&!q.hit);if(a){a.crit=d.r.crit;a.big=d.r.tier===3}
+    if(d.r.crit)UI.fx('float',{e:S.P,text:'CRITICAL!',color:'#fff2b0',huge:true,delay:80})}
+  if(type==='float'&&d&&d.huge){const p=wpos(d.e);FX.floats.push({x:p.x,y:p.y-T*0.9,text:d.text,c:d.color,t0:NOW+(d.delay||0),huge:true});return}
+  f0(type,d)}}
+const glow=(c,a)=>hexA(c,Math.max(0,Math.min(1,a)));
+function arcTrail(cx,cy,r,a0,a1,c,w,alpha){const n=12;for(let k=0;k<n;k++){const q=k/n,aa=a0+(a1-a0)*q,ab=a0+(a1-a0)*(q+1/n);ctx.strokeStyle=glow(c,alpha*(0.15+0.85*q));ctx.lineWidth=w*(0.3+0.7*q);ctx.beginPath();ctx.arc(cx,cy,r,aa,ab);ctx.stroke()}
+  ctx.strokeStyle=glow('#ffffff',alpha*0.9);ctx.lineWidth=Math.max(1,w*0.35);ctx.beginPath();ctx.arc(cx,cy,r,a0+(a1-a0)*0.7,a1);ctx.stroke()}
+function drawFlashy(){const A=FX.x;ctx.save();ctx.globalCompositeOperation='lighter';
+  for(let i=A.length-1;i>=0;i--){const a=A[i];const t=(NOW-a.t0)/a.dur;if(t>1.05){A.splice(i,1);continue}if(t<0)continue;const w=ASTYLE[a.k][0]/ASTYLE[a.k][1];const imp=a.imp;
+    if(!a.hit&&t>=imp){a.hit=true;const tgt=a.k==='spin'?a.a:a.b;impactFX(tgt.x,tgt.y,a.c,a.big||a.k==='smash',a.crit)}
+    const ang=Math.atan2(a.b.y-a.a.y,a.b.x-a.a.x)||0;const s=Math.max(0,Math.min(1,(t-w)/(imp-w)));const after=Math.max(0,(t-imp)/(1-imp));
+    switch(a.k){
+      case'slash':case'claw':{const cx=a.a.x+(a.b.x-a.a.x)*0.6,cy=a.a.y+(a.b.y-a.a.y)*0.6;
+        if(t<w){const q=t/w;ctx.fillStyle=glow(a.c,q*0.8);ctx.beginPath();ctx.arc(a.a.x+Math.cos(ang-1.6)*T*0.5,a.a.y+Math.sin(ang-1.6)*T*0.5,2+q*3,0,7);ctx.fill();break}
+        if(a.k==='claw'){for(let k=0;k<3;k++){const kk=Math.max(0,Math.min(1,s*1.6-k*0.3));if(kk<=0)continue;const o=(k-1)*8;const x0=a.b.x-12+o,y0=a.b.y-14,x1=x0+24*kk,y1=y0+26*kk;
+            ctx.strokeStyle=glow(a.c,(1-after)*0.9);ctx.lineWidth=5-after*3;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();ctx.strokeStyle=glow('#ffffff',(1-after)*0.8);ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke()}break}
+        const st=ang-1.45,en=ang-1.45+2.9*s;arcTrail(cx,cy,T*0.62,st,en,a.c,7,(1-after));
+        if(after>0){ctx.strokeStyle=glow(a.c,(1-after)*0.35);ctx.lineWidth=12*(1-after);ctx.beginPath();ctx.arc(cx,cy,T*0.62,st,ang+1.45);ctx.stroke()}break}
+      case'smash':{if(t<imp){const q=t/imp;const hx=a.a.x,hy=a.a.y-T*0.55-Math.sin(Math.min(1,t/w)*Math.PI/2)*T*0.35;const g=ctx.createRadialGradient(hx,hy,1,hx,hy,T*(0.3+q*0.5));g.addColorStop(0,glow('#ffffff',0.6*q));g.addColorStop(0.4,glow(a.c,0.45*q));g.addColorStop(1,glow(a.c,0));ctx.fillStyle=g;ctx.fillRect(hx-T,hy-T,T*2,T*2);
+          if(t>w){const st=ang-2.6,en=st+(ang+0.15-st)*s;arcTrail(a.a.x,a.a.y-T*0.2,T*0.85,st,en,a.c,9,1)}}
+        else{for(let k=0;k<2;k++){const q=Math.min(1,after*1.4-k*0.25);if(q<=0)continue;ctx.strokeStyle=glow(k?'#ffffff':a.c,(1-q)*0.8);ctx.lineWidth=4-k*2;ctx.beginPath();ctx.ellipse(a.b.x,a.b.y+T*0.35,T*(0.3+q*1.6),T*(0.12+q*0.6),0,0,7);ctx.stroke()}
+          ctx.strokeStyle=glow('#e8dcc4',(1-after)*0.7);ctx.lineWidth=2;for(let k=0;k<8;k++){const an=k/8*Math.PI*2+a.seed;const r0=T*0.3,r1=T*(0.5+after*0.9);ctx.beginPath();ctx.moveTo(a.b.x+Math.cos(an)*r0,a.b.y+T*0.3+Math.sin(an)*r0*0.4);ctx.lineTo(a.b.x+Math.cos(an)*r1,a.b.y+T*0.3+Math.sin(an)*r1*0.4);ctx.stroke()}}break}
+      case'thrust':{const ex=a.a.x+(a.b.x-a.a.x)*(t<w?-0.1*t/w:Math.min(1,s)*0.95),ey=a.a.y+(a.b.y-a.a.y)*(t<w?-0.1*t/w:Math.min(1,s)*0.95);const ret=after>0?1-after:1;
+        ctx.strokeStyle=glow(a.c,0.8*ret);ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(a.a.x,a.a.y);ctx.lineTo(ex,ey);ctx.stroke();ctx.strokeStyle=glow('#ffffff',ret);ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(a.a.x,a.a.y);ctx.lineTo(ex,ey);ctx.stroke();
+        if(s>0&&after<0.5)for(let k=0;k<4;k++){const off=(k-1.5)*5;const nx=-Math.sin(ang)*off,ny=Math.cos(ang)*off;ctx.strokeStyle=glow(a.c,0.4*(1-after*2));ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(a.a.x+nx,a.a.y+ny);ctx.lineTo(a.a.x+nx+(ex-a.a.x)*0.7,a.a.y+ny+(ey-a.a.y)*0.7);ctx.stroke()}break}
+      case'spin':{if(t<w){ctx.strokeStyle=glow(a.c,t/w*0.6);ctx.lineWidth=2;ctx.beginPath();ctx.arc(a.a.x,a.a.y,T*0.5,0,7);ctx.stroke();break}const rr=T*(0.75+after*0.35);const en=-Math.PI/2+Math.PI*2.2*Math.min(1,s);arcTrail(a.a.x,a.a.y,rr,en-Math.PI*1.4,en,a.c,9,1-after);break}
+      case'whip':{const q=Math.min(1,s);const ex=a.a.x+(a.b.x-a.a.x)*q,ey=a.a.y+(a.b.y-a.a.y)*q;const mx=(a.a.x+ex)/2+Math.sin(t*25)*6,my=(a.a.y+ey)/2-T*(1-q)*1.2-(t<w?T*0.5*t/w:0);
+        for(const[c,lw]of[[a.c,5],['#ffffff',1.6]]){ctx.strokeStyle=glow(c,(1-after)*0.9);ctx.lineWidth=lw;ctx.beginPath();ctx.moveTo(a.a.x,a.a.y);ctx.quadraticCurveTo(mx,my,ex,ey);ctx.stroke()}
+        if(after>0&&after<0.4){ctx.fillStyle=glow('#fff2b0',1-after*2.5);ctx.beginPath();ctx.arc(a.b.x,a.b.y,4+after*20,0,7);ctx.fill()}break}
+      case'hook':{const q=t<imp?Math.min(1,s):1-after*0.9;const ex=a.a.x+(a.b.x-a.a.x)*q,ey=a.a.y+(a.b.y-a.a.y)*q;ctx.fillStyle=glow('#e8eef0',0.9);for(let k=0;k<=10;k++){const qq=k/10;ctx.fillRect(a.a.x+(ex-a.a.x)*qq-1.5,a.a.y+(ey-a.a.y)*qq-1.5+Math.sin(qq*9+t*20)*1.5,3,3)}
+        ctx.strokeStyle=glow(a.c,0.9);ctx.lineWidth=3;ctx.beginPath();ctx.arc(ex,ey,5,ang-0.5,ang+2.6);ctx.stroke();break}
+      case'cast':case'mcast':{const p=wpos(a.att);const ch=Math.min(1,t/w);const rr=T*(0.4+ch*0.4);ctx.strokeStyle=glow(a.c,0.85*(1-after));ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y+T*0.38,rr,rr*0.4,0,0,7);ctx.stroke();
+        ctx.beginPath();ctx.ellipse(p.x,p.y+T*0.38,rr*0.65,rr*0.26,0,0,7);ctx.stroke();for(let k=0;k<8;k++){const an=k/8*Math.PI*2+t*6;ctx.fillStyle=glow(a.c,1-after);ctx.fillRect(p.x+Math.cos(an)*rr-2,p.y+T*0.38+Math.sin(an)*rr*0.4-2,4,4)}
+        if(t<w)for(let k=0;k<10;k++){const an=k/10*Math.PI*2+a.seed+t*4,d=T*(1.2-ch*1.0)*(0.6+0.4*((k*37)%10)/10);ctx.fillStyle=glow('#ffffff',ch);ctx.fillRect(p.x+Math.cos(an)*d-1,p.y-T*0.1+Math.sin(an)*d-1,2,2)}
+        const g=ctx.createRadialGradient(p.x,p.y-T*0.1,1,p.x,p.y-T*0.1,T*(0.5+ch*0.7));g.addColorStop(0,glow('#ffffff',0.5*ch*(1-after)));g.addColorStop(0.35,glow(a.c,0.45*ch*(1-after)));g.addColorStop(1,glow(a.c,0));ctx.fillStyle=g;ctx.fillRect(p.x-T*1.5,p.y-T*1.6,T*3,T*3);
+        if(t>w&&t<imp){const q=s;const bx=a.a.x+(a.b.x-a.a.x)*q,by=a.a.y-T*0.1+(a.b.y-a.a.y+T*0.1)*q;ctx.fillStyle=glow('#ffffff',1);ctx.beginPath();ctx.arc(bx,by,4,0,7);ctx.fill();ctx.strokeStyle=glow(a.c,0.8);ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(a.a.x+(a.b.x-a.a.x)*Math.max(0,q-0.35),a.a.y-T*0.1+(a.b.y-a.a.y+T*0.1)*Math.max(0,q-0.35));ctx.lineTo(bx,by);ctx.stroke()}break}
+      case'throw':{if(t<w)break;const q=Math.min(1,s);const x=a.a.x+(a.b.x-a.a.x)*q,y=a.a.y+(a.b.y-a.a.y)*q-Math.sin(q*Math.PI)*T*0.4;if(t<imp){for(let k=1;k<5;k++){const qq=Math.max(0,q-k*0.06);ctx.fillStyle=glow(a.c,0.5-k*0.1);ctx.fillRect(a.a.x+(a.b.x-a.a.x)*qq-2,a.a.y+(a.b.y-a.a.y)*qq-Math.sin(qq*Math.PI)*T*0.4-2,4,4)}ctx.fillStyle='#ffffff';ctx.fillRect(x-2,y-2,4,4)}break}
+      case'bite':{const q=Math.min(1,s);const gap=10*(1-q);ctx.strokeStyle=glow('#ffffff',(1-after)*0.95);ctx.lineWidth=3;ctx.beginPath();ctx.arc(a.b.x,a.b.y-T*0.15-gap,T*0.4,Math.PI*0.12,Math.PI*0.88);ctx.stroke();ctx.beginPath();ctx.arc(a.b.x,a.b.y-T*0.15+gap,T*0.4,Math.PI*1.12,Math.PI*1.88);ctx.stroke();
+        ctx.fillStyle=glow('#ffffff',(1-after));for(let k=0;k<4;k++){ctx.fillRect(a.b.x-9+k*6,a.b.y-T*0.15-gap+T*0.2,2,4);ctx.fillRect(a.b.x-6+k*6,a.b.y-T*0.15+gap-T*0.28,2,4)}break}}}
+  for(let i=FX.imp.length-1;i>=0;i--){const m=FX.imp[i];const t=(NOW-m.t0)/m.dur;if(t>1){FX.imp.splice(i,1);continue}
+    const g=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,T*(m.crit?1.6:m.big?1.2:0.9)*(0.4+t));g.addColorStop(0,glow('#ffffff',0.9*(1-t)));g.addColorStop(0.3,glow(m.c,0.6*(1-t)));g.addColorStop(1,glow(m.c,0));ctx.fillStyle=g;ctx.fillRect(m.x-T*2,m.y-T*2,T*4,T*4);
+    ctx.strokeStyle=glow('#ffffff',(1-t)*0.9);ctx.lineWidth=2;for(let k=0;k<m.rays;k++){const an=m.rot+k/m.rays*Math.PI*2;const r0=T*0.2+t*T*0.4,r1=r0+T*(m.crit?1.1:m.big?0.8:0.55)*(1-t*0.5);ctx.beginPath();ctx.moveTo(m.x+Math.cos(an)*r0,m.y+Math.sin(an)*r0);ctx.lineTo(m.x+Math.cos(an)*r1,m.y+Math.sin(an)*r1);ctx.stroke()}
+    ctx.strokeStyle=glow(m.c,(1-t)*0.8);ctx.lineWidth=3;ctx.beginPath();ctx.arc(m.x,m.y,T*(0.3+t*(m.crit?1.4:0.9)),0,7);ctx.stroke()}
+  ctx.restore()}
+{const d0=drawAnims;drawAnims=function(){drawFlashy();d0()}}
+{const dr0=draw;draw=function(){dr0();if(FX.flash){const t=(NOW-FX.flash.t0)/FX.flash.dur;if(t<1){ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=`rgba(255,250,235,${0.35*(1-t)})`;ctx.fillRect(0,0,VW,VH)}else FX.flash=null}}}
 /* ---------- selection ---------- */
 const SEL={id:null,valid:[],cursor:null,hover:null,reach:null,cone:null,walk:null,inspect:null};
 function refreshOverlays(){SEL.reach=null;SEL.cone=null;if(!S||!S.L)return;
@@ -3891,6 +3949,7 @@ function sfx(t,d){if(!AU.on||!AU.ctx)return;switch(t){
   case'alert':tone(220,'sawtooth',0.07,0.5);tone(233,'sawtooth',0.07,0.5);noiseHit(150,0.5,0.12,0.4);break;
   case'descend':tone(41,'sine',0.25,1.6);noiseHit(120,0.4,0.1,1.4);break;
   case'shoot':sweep('triangle',320,140,0.06,0.18);break;
+  case'windup':{const st=d&&d.style;if(st==='cast'||st==='mcast'){sweep('sine',220,880,0.03,0.32);noiseHit(2600,5,0.015,0.3)}else if(st==='smash')sweep('noise',200,700,0.05,0.3);else sweep('noise',300,1200,0.03,0.16);break}
   case'voice':{const base={riptide:110,shadow:150,storm:95,flag:120,occult:170}[d&&d.cls]||130;for(let k=0;k<6;k++){const f=base*(1+Math.random()*0.35);tone(f,'sawtooth',0.018,0.09,k*0.085);tone(f*2.7,'sine',0.008,0.07,k*0.085)}break}
   }}
 function sweep(type,f0,f1,peak,dur){const C=AU.ctx,t=C.currentTime;const g=C.createGain();g.connect(AU.m);env(g,t,0.01,peak,dur);
