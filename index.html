@@ -312,6 +312,44 @@ html:has(body.full){overflow:hidden}
 body.full .panel{overflow-y:auto;min-height:0;scrollbar-width:thin;padding-right:2px}
 body.full .log{height:auto;max-height:16em}
 .zoomgrp{display:flex;gap:4px}
+/* desktop bottom HUD (Doom / Daggerfall / Baldur's Gate style) */
+body.full.bot .game{display:grid;grid-template-columns:520px minmax(0,1fr) 260px 300px;grid-template-rows:minmax(0,1fr) 112px 112px;gap:0;align-items:stretch}
+body.full.bot .left,body.full.bot .panel{display:contents}
+body.full.bot .stage{grid-column:1/-1;grid-row:1;border-radius:8px 8px 0 0;border-bottom:none}
+body.full.bot .controls{display:none}
+body.full.bot #heroBox{grid-column:1;grid-row:2/4;border-radius:0 0 0 8px}
+body.full.bot .bar{grid-column:2;grid-row:2/4}
+body.full.bot #gearBox{grid-column:3;grid-row:2}
+body.full.bot #satBox{grid-column:3;grid-row:3}
+body.full.bot #logBox{grid-column:4;grid-row:2/4;border-radius:0 0 8px 0}
+body.full.bot #heroBox,body.full.bot .bar,body.full.bot #gearBox,body.full.bot #satBox,body.full.bot #logBox{border:none;border-radius:0;min-height:0;overflow:auto;scrollbar-width:thin;
+  background:linear-gradient(180deg,#1a1610 0,#121518 6px,#0d1114 100%);border-top:2px solid #5a4528;box-shadow:inset 0 1px 0 #8a6a3a,inset 1px 0 0 #2a2218;padding:8px 12px}
+body.full.bot #heroBox{border-left:2px solid #5a4528;border-bottom-left-radius:8px}
+body.full.bot #logBox{border-right:2px solid #5a4528;border-bottom-right-radius:8px}
+body.full.bot #satBox{border-top:1px solid #2a2218;box-shadow:inset 1px 0 0 #2a2218}
+body.full.bot .game>.panel>.box,body.full.bot .bar{border-bottom:2px solid #5a4528}
+body.full.bot #heroBox{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:14px;align-content:start}
+body.full.bot #heroBox>.who{grid-row:1/span 9;align-self:start;max-width:230px}
+body.full.bot #heroBox .who .s{white-space:normal}
+body.full.bot #heroBox .row{font-size:12px}
+body.full.bot #satBox .it,body.full.bot #gearBox .it{padding:2px 5px;font-size:11.5px}
+body.full.bot #satBox .it img{width:20px;height:20px}
+body.full.bot #gearBox .btn{padding:5px 8px}
+body.full.bot #satchel .it[data-ab]:not([data-ab=tea]){display:none}
+body.full.bot #satBox .label span:last-child{display:none}
+body.full.bot #heroBox>:not(.who){grid-column:2}
+body.full.bot #heroBox .chars{margin-top:4px}
+body.full.bot #heroBox .chips{margin-top:4px}
+body.full.bot .who2 canvas.portrait{width:96px;height:96px}
+body.full.bot .who h2{font-size:22px}
+body.full.bot .bar{display:flex;flex-direction:column;gap:6px;padding:8px 10px}
+body.full.bot .slots{flex-wrap:wrap}
+body.full.bot .log{max-height:none;height:auto}
+body.full.bot .label{margin-bottom:4px}
+body.full.bot .inv{gap:3px}
+@media (max-width:1680px){body.full.bot .game{grid-template-columns:480px minmax(0,1fr) 250px}body.full.bot #logBox{display:none}body.full.bot #satBox,body.full.bot #gearBox{border-right:2px solid #5a4528}}
+@media (max-width:1440px){body.full.bot #heroBox .chars{display:none}}
+@media (max-width:1240px){body.full.bot .game{grid-template-columns:420px minmax(0,1fr) 220px}}
 /* status portrait */
 .who2{align-items:flex-start}
 .who2 canvas.portrait{width:96px;height:96px;image-rendering:pixelated;border-radius:6px;border:1px solid var(--line);flex:none;cursor:help;background:#0a0e10}
@@ -362,7 +400,7 @@ body.mob .routeL span:nth-child(2){display:none}
 <div class="wrap">
   <header>
     <h1>Saltmarrow <span>Deep</span></h1><button class="btn mobonly" id="menuBtn" aria-label="Menu">Menu</button>
-    <div class="hbtns"><button class="btn" id="paceBtn">Pace: normal</button><button class="btn" id="soundBtn">Sound: off</button><button class="btn" id="saveBtn">Save</button><button class="btn" id="journalBtn">Journal (J)</button><button class="btn" id="helpBtn">How to play (?)</button><button class="btn" id="feedBtn">Log on map: on</button><button class="btn mobonly" id="gearBtnM">Gear</button><button class="btn mobonly" id="padBtn">Arrows: off</button><button class="btn mobonly" id="zoomOut">Zoom out −</button><button class="btn mobonly" id="zoomIn">Zoom in +</button><span class="zoomgrp deskonly"><button class="btn" id="zoomOutD" aria-label="Zoom out" title="Zoom out (−)">−</button><button class="btn" id="zoomInD" aria-label="Zoom in" title="Zoom in (+)">+</button></span><button class="btn deskonly" id="fsBtn">Fullscreen</button></div>
+    <div class="hbtns"><button class="btn" id="paceBtn">Pace: normal</button><button class="btn" id="soundBtn">Sound: off</button><button class="btn" id="saveBtn">Save</button><button class="btn" id="journalBtn">Journal (J)</button><button class="btn" id="helpBtn">How to play (?)</button><button class="btn" id="feedBtn">Log on map: on</button><button class="btn mobonly" id="gearBtnM">Gear</button><button class="btn mobonly" id="padBtn">Arrows: off</button><button class="btn mobonly" id="zoomOut">Zoom out −</button><button class="btn mobonly" id="zoomIn">Zoom in +</button><span class="zoomgrp deskonly"><button class="btn" id="zoomOutD" aria-label="Zoom out" title="Zoom out (−)">−</button><button class="btn" id="zoomInD" aria-label="Zoom in" title="Zoom in (+)">+</button></span><button class="btn deskonly" id="layBtn">Layout: bottom</button><button class="btn deskonly" id="fsBtn">Fullscreen</button></div>
   </header>
   <div class="game">
     <div class="left">
@@ -3569,7 +3607,7 @@ const UIP=(()=>{try{return JSON.parse(localStorage.getItem('saltmarrow-ui')||'{}
 const saveUIP=()=>{try{localStorage.setItem('saltmarrow-ui',JSON.stringify(UIP))}catch(e){}};
 const isMob=()=>matchMedia('(pointer:coarse)').matches||innerWidth<620;
 function autoZoomD(){const w=$('stage').clientWidth||innerWidth;return Math.max(1,Math.min(2.5,Math.floor(w/(24*32)*4)/4))}
-function applyMob(){const on=isMob();const full=!on&&innerWidth>=860;document.body.classList.toggle('mob',on);document.body.classList.toggle('full',full);document.body.classList.toggle('pad-on',on&&!!UIP.pad);
+function applyMob(){const on=isMob();const full=!on&&innerWidth>=860;document.body.classList.toggle('mob',on);document.body.classList.toggle('full',full);document.body.classList.toggle('bot',full&&UIP.layout!=='side');const lb=$('layBtn');if(lb)lb.textContent='Layout: '+(UIP.layout==='side'?'side':'bottom');document.body.classList.toggle('pad-on',on&&!!UIP.pad);
   $('padBtn').textContent='Arrows: '+(UIP.pad?'on':'off');ZOOM=on?(UIP.zoom||1):(UIP.zoomD||autoZoomD())}
 applyMob();
 const TOUCHY=()=>document.body.classList.contains('mob');
@@ -3582,6 +3620,7 @@ document.addEventListener('pointerdown',ev=>{if(hb.classList.contains('open')&&!
 $('gearBtnM').onclick=()=>{if(S&&S.L&&!S.L.town)UI.gear();else if(S)UI.cottage()};
 $('padBtn').onclick=()=>{UIP.pad=!UIP.pad;saveUIP();applyMob();setTimeout(resize,0)};
 function setZoom(z){const mob=document.body.classList.contains('mob');ZOOM=Math.round(Math.max(mob?0.6:0.75,Math.min(mob?2.2:3,z))*4)/4;if(mob)UIP.zoom=ZOOM;else UIP.zoomD=ZOOM;saveUIP();resize()}
+$('layBtn').onclick=()=>{UIP.layout=UIP.layout==='side'?'bottom':'side';saveUIP();applyMob();setTimeout(resize,30)};
 $('zoomInD').onclick=()=>setZoom(ZOOM+0.25);$('zoomOutD').onclick=()=>setZoom(ZOOM-0.25);
 cv.addEventListener('wheel',ev=>{if(document.body.classList.contains('mob'))return;ev.preventDefault();setZoom(ZOOM+(ev.deltaY<0?0.25:-0.25))},{passive:false});
 document.addEventListener('keydown',ev=>{if(ev.ctrlKey||ev.metaKey||!$('overlay').hidden)return;if(ev.key==='+'||ev.key==='='){setZoom(ZOOM+0.25)}else if(ev.key==='-'||ev.key==='_'){setZoom(ZOOM-0.25)}});
