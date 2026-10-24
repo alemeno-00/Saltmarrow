@@ -139,7 +139,7 @@ canvas{display:block;width:100%;touch-action:manipulation;image-rendering:pixela
 .stat{font-size:11px;padding:1px 8px;border-radius:10px;border:1px solid var(--line);color:var(--violet)}
 .stat.good{color:var(--verdigris)}.stat.warn{color:var(--lantern)}.stat.bad{color:#e88a74}.stat.dim{color:var(--dim)}
 .inv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
-.it{display:flex;align-items:center;gap:6px;background:var(--hull-2);border:1px solid var(--line);border-radius:5px;padding:3px 6px;font-size:12px;cursor:pointer;text-align:left;width:100%}
+.it{box-sizing:border-box;display:flex;align-items:center;gap:6px;background:var(--hull-2);border:1px solid var(--line);border-radius:5px;padding:3px 6px;font-size:12px;cursor:pointer;text-align:left;width:100%}
 .it:hover:not(:disabled){border-color:var(--verdigris)}
 .it:disabled{opacity:.4;cursor:default}
 .it img{width:24px;height:24px;image-rendering:pixelated;flex:none}
@@ -240,7 +240,7 @@ body.mob .hbtns .btn{padding:12px 10px;font-size:13px}
 body.mob .game{display:flex;flex-direction:column;flex:1;min-height:0;gap:0;align-items:stretch}
 body.mob .left{flex:1;min-height:0;gap:0}
 body.mob .stage{flex:1;min-height:0;border-radius:0;border-left:none;border-right:none;border-top:none}
-body.mob canvas{position:absolute;inset:0;touch-action:none}
+body.mob #cv{position:absolute;inset:0;touch-action:none}
 body.mob .bar{border-radius:0;border-left:none;border-right:none;border-bottom:none;padding:6px 8px;gap:6px}
 body.mob .bar-top{min-height:36px;flex-wrap:nowrap}
 body.mob .bar-top .prompt{font-size:11.5px;line-height:1.35;flex:1;min-width:0}
@@ -307,7 +307,8 @@ body.full .wrap{max-width:none;height:100vh;height:100dvh;box-sizing:border-box;
 body.full .game{flex:1;min-height:0;grid-template-columns:minmax(0,1fr) 300px;align-items:stretch}
 body.full .left{min-height:0}
 body.full .stage{flex:1;min-height:0}
-body.full canvas{position:absolute;inset:0}
+body.full #cv{position:absolute;inset:0}
+html:has(body.full){overflow:hidden}
 body.full .panel{overflow-y:auto;min-height:0;scrollbar-width:thin;padding-right:2px}
 body.full .log{height:auto;max-height:16em}
 .zoomgrp{display:flex;gap:4px}
@@ -3296,7 +3297,7 @@ UI.perks=()=>{if(!S||!(S.perkQ>0))return;const ch=perkChoices();const P=S.P;
 
 /* camp: kindle the fire, choose what to do, then keep watch */
 UI.camp=()=>{const P=S.P;let hits=0,tries=0,zone=0.3+Math.random()*0.4,zw=0.2,speed=1.1,t0=performance.now(),raf=null,done=false;
-  modal(`${head(null,'Make camp','Strike the flint when the spark is in the glow. Three strikes.',true)}
+  modal(`${head(null,'Make camp','Strike the flint (or press Space) when the spark is in the glow. Three strikes.',true)}
     <canvas id="campCv" class="campcv" width="320" height="150"></canvas>
     <div class="kbar"><div class="kzone" id="kzone"></div><div class="kmark" id="kmark"></div></div>
     <div class="row"><span class="purse" id="kmsg">Fire: none yet</span><button class="btn primary" id="strike">Strike flint</button></div>`,true);
@@ -3310,7 +3311,8 @@ UI.camp=()=>{const P=S.P;let hits=0,tries=0,zone=0.3+Math.random()*0.4,zw=0.2,sp
     if(hits>0){for(let k=0;k<3+hits*3;k++){const s=hits;const h=(14+Math.sin(now/90+k*1.7)*6)*s*0.7,w=(10-k%3*3)*(0.6+s*0.2);const fx=W2/2+(k-(3+hits*3)/2)*4+Math.sin(now/140+k)*3;g.fillStyle=['#c2533e','#ff8a3a','#ffd36b','#fff2b0'][k%4];g.fillRect(fx-w/2,H2-34-h,w,h)}}
     for(const p of sparks){p.x+=p.vx;p.y+=p.vy;p.vy+=0.12;p.l--;g.fillStyle=p.l>10?'#fff2b0':'#ff8a3a';g.fillRect(p.x,p.y,2,2)}for(let i=sparks.length-1;i>=0;i--)if(sparks[i].l<=0)sparks.splice(i,1);
     if(!done)mk.style.left=(pos()*100)+'%';raf=requestAnimationFrame(drawFire)};drawFire();
-  const finish=()=>{done=true;const q=['No fire. A cold camp','A smoky, sullen fire','A steady fire','A roaring fire'][hits];msg.textContent=q+'.';
+  const kh=ev=>{if(ev.key===' '||ev.key==='Enter'){ev.preventDefault();const b=$('strike');if(b)b.click()}};document.addEventListener('keydown',kh);
+  const finish=()=>{done=true;document.removeEventListener('keydown',kh);const q=['No fire. A cold camp','A smoky, sullen fire','A steady fire','A roaring fire'][hits];msg.textContent=q+'.';
     $('strike').textContent='Continue';$('strike').onclick=()=>{campActs(hits,()=>{cancelAnimationFrame(raf)})}};
   $('strike').onclick=()=>{if(done)return;tries++;const p=pos();const hit=p>=zone&&p<=zone+zw;for(let k=0;k<(hit?18:5);k++)sparks.push({x:cv2.width/2+(Math.random()-.5)*20,y:cv2.height-40,vx:(Math.random()-.5)*4,vy:-Math.random()*4-1,l:20+rnd(20)});
     if(hit){hits++;sfx('flint');sfx('ignite')}else sfx('flint');msg.textContent=`${hit?'Caught!':'Missed.'} Fire: ${['none','a few embers','catching','burning'][hits]} · strike ${tries} of 3`;
