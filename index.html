@@ -351,6 +351,9 @@ body.full.bot .inv{gap:3px}
 @media (max-width:1440px){body.full.bot #heroBox .chars{display:none}}
 @media (max-width:1240px){body.full.bot .game{grid-template-columns:420px minmax(0,1fr) 220px}}
 /* status portrait */
+.pbubble{position:fixed;z-index:60;background:#f0e8d8;color:#1a1410;font-family:var(--prose);font-size:15px;line-height:1.4;padding:8px 12px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.6);pointer-events:none;width:max-content}
+.pbubble.go{animation:pb 4.2s ease forwards}
+@keyframes pb{0%{opacity:0;transform:translateY(6px)}6%{opacity:1;transform:none}85%{opacity:1}100%{opacity:0}}
 .who2{align-items:flex-start}
 .who2 canvas.portrait{width:96px;height:96px;image-rendering:pixelated;border-radius:6px;border:1px solid var(--line);flex:none;cursor:help;background:#0a0e10}
 body.mob .who2 canvas.portrait{width:144px;height:144px}
@@ -3693,7 +3696,7 @@ window.addEventListener('orientationchange',reflow);
 document.addEventListener('gesturestart',ev=>ev.preventDefault());
 /* ---------- status portrait: the hero's face shows their stamina, fatigue and dread ---------- */
 const PORT={cv:document.createElement('canvas'),mini:document.createElement('canvas'),hitT:-9999,blinkT:0,lastKey:'',dart:0};
-PORT.cv.width=PORT.cv.height=48;PORT.cv.className='portrait';PORT.mini.width=PORT.mini.height=48;PORT.mini.className='pmini';
+PORT.cv.width=PORT.cv.height=48;PORT.cv.className='portrait';PORT.cv.setAttribute('aria-label','Your hero. Click to hear how they are.');PORT.mini.width=PORT.mini.height=48;PORT.mini.className='pmini';
 const mixC=(a,b,t)=>{const p=h=>[1,3,5].map(k=>parseInt(h.slice(k,k+2),16));const A=p(a),B=p(b);return'#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('')};
 const shadeC=(h,f)=>mixC(h,f>1?'#ffffff':'#000000',f>1?f-1:1-f);
 function heroState(){const P=S.P;const r=Math.max(-1,P.stam)/P.max,f=P.fat||0,d=P.dread||0;
@@ -3766,13 +3769,57 @@ setInterval(portraitTick,90);
 function portraitTitle(){const P=S.P,st=heroState();return`Stamina ${Math.max(0,P.stam)}${P.temp?' +'+P.temp:''} / ${P.max} · Fatigue ${Math.round(P.fat||0)} / 100 · Dread ${P.dread||0} / 10`}
 {const r0=renderHero;renderHero=function(){r0();const box=$('heroBox');if(!box||!S||!S.P)return;const P=S.P,st=heroState();
   box.querySelectorAll('.bar2:not(.xp)').forEach(e=>e.remove());box.querySelectorAll('.row').forEach(row=>{const t=(row.firstElementChild&&row.firstElementChild.textContent)||'';if(/^(Stamina|Dread)/.test(t))row.remove()});
-  const who=box.querySelector('.who');if(who){const img=who.querySelector('img');if(img)img.replaceWith(PORT.cv);who.classList.add('who2');PORT.cv.title=portraitTitle();
+  const who=box.querySelector('.who');if(who){const img=who.querySelector('img');if(img)img.replaceWith(PORT.cv);who.classList.add('who2');PORT.cv.title=portraitTitle()+' · click to hear them';
     const info=who.querySelector('div');if(info&&!info.querySelector('.pstate')){const d=document.createElement('div');d.className='pstate';
       d.innerHTML=`<span style="color:${HURT_COL[st.hurt]}">${st.hurt}</span><span style="color:${st.f>=60?'#e3a548':st.f>=30?'var(--bone)':'var(--dim)'}">${st.tired}</span><span style="color:${st.d>=7?'var(--dread)':st.d>=4?'#b9a0e8':'var(--dim)'}">${st.mind}</span>`;info.appendChild(d)}}
   if(PORT.lastStam!=null&&P.stam<PORT.lastStam)PORT.hitT=performance.now();PORT.lastStam=P.stam;portraitTick()}}
 {const h0=renderHud;renderHud=function(){h0();const v=document.querySelector('#hudTl .chip.vit');if(!v||!S||!S.P)return;const st=heroState();
   const res=S.mode==='combat'?`<span style="color:var(--lantern)">${cls().res} ${S.P.res}</span>`:'';v.innerHTML='';v.appendChild(PORT.mini);const s=document.createElement('span');s.className='pwords';
   s.innerHTML=`<b style="color:${HURT_COL[st.hurt]}">${st.hurt}</b><i>${st.tired!=='Fresh'?st.tired:''}${st.tired!=='Fresh'&&st.mind!=='Calm'?' · ':''}${st.mind!=='Calm'?st.mind:''}</i>${res}`;v.appendChild(s);v.title=portraitTitle()}}
+/* ---------- click the portrait: the hero says how they are ---------- */
+const BARKS_P={
+  riptide:{dying:['Not... like this. Not in the dark.','Get up. Get up, you stupid lump.'],badly:['That one went deep. I can feel it in my teeth.','Still standing. Barely counts.'],
+    breaking:['The walls are breathing. Tell me the walls aren\'t breathing.','I keep hearing the shift bell. There\'s no shift down here.'],terrified:['I\'ve swung a pick forty years. Never been this scared of a sound.','Something\'s watching. Something big.'],
+    exhausted:['My arms are lead. Need to sit before I fall.','Can\'t lift the maul much longer. Need sleep.'],winded:['Breathing\'s gone ragged. Give me a minute.','Bleeding. Not the first time.'],
+    weary:['Long shift. Longer than most.','Could do with a fire and something hot.'],uneasy:['Don\'t like the feel of this place.','Too quiet. Mines are never this quiet.'],
+    bruised:['Took a knock. I\'ve had worse at the pub.','Few bruises. Keeps me honest.'],fresh:['Right. Let\'s break something.','Good stone down here. Shame about the company.'],
+    town:['Rain again. At least it\'s honest rain.','Pint first. Then the deep.'],combat:['Come on, then!','Get close. I like it close.'],hungry:['Stomach\'s growling louder than the ghouls.'],dark:['Can\'t see my own hands. Good. Nor can they.']},
+  shadow:{dying:['Well. This is embarrassing.','Somebody else gets my boots, I suppose.'],badly:['I\'m leaking. That\'s never a good sign.','Should\'ve stayed in the shadows.'],
+    breaking:['Who\'s there? No, really. Who\'s there?','Every shadow\'s got a face now. I hate that.'],terrified:['My hands are shaking. Bad for business.','Quiet. Something\'s listening.'],
+    exhausted:['I\'d steal a bed if I could find one.','Feet like stones. Can\'t sneak like this.'],winded:['Ah. That stung.','Bleeding on my good cloak.'],
+    weary:['Long night. They\'re all long down here.','I need a rest, and a better plan.'],uneasy:['This place has eyes. I don\'t like eyes.','Nobody\'s pockets are worth this.'],
+    bruised:['Scratch. Nothing a drink won\'t fix.','They got lucky.'],fresh:['Light feet, quick hands. Let\'s go.','Plenty down here worth taking.'],
+    town:['Saltmarrow. Every pocket already empty.','Keep your purse close, love.'],combat:['From the dark, then.','I\'d rather not be seen doing this.'],hungry:['I\'d trade my knife for a crust.'],dark:['Lovely. Pitch black. My kind of room.']},
+  storm:{dying:['The sky is going dark. Or is it me?','Not yet... the storm is not finished.'],badly:['The flesh is weak. The weather, less so.','I am too old to be bleeding this much.'],
+    breaking:['The thunder speaks in voices now. Many voices.','I see the shape behind the clouds. It sees me.'],terrified:['The air is wrong. Like before lightning, but colder.','Something vast turns over in its sleep.'],
+    exhausted:['My bones ache like a coming front.','I must rest, or the storm will spend itself on me.'],winded:['A sharp blow. The squall passes.','I have weathered worse. Not recently.'],
+    weary:['The lightning comes slower when I am tired.','Old knees, deep stairs.'],uneasy:['The pressure is dropping. Something approaches.','I do not like the stillness here.'],
+    bruised:['A bruise. Merely a passing shower.','They will regret that.'],fresh:['The air crackles. A good omen.','Let the deep hear thunder.'],
+    town:['Salt on the wind. Rain by evening.','The bells are restless today.'],combat:['Stand back. The weather is turning.','Feel the air change? That is me.'],hungry:['Even storms need feeding.'],dark:['No light. Then I shall make some.']},
+  flag:{dying:['Is this the absolution? It feels like nothing.','Not yet. My penance is not complete.'],badly:['Yes. More. I deserve more.','The wounds are honest. They do not lie.'],
+    breaking:['The saints are weeping. I can hear them weeping.','Their faces. I see their faces in the stone.'],terrified:['Faith, hold. Hold.','Something unholy walks here. Close.'],
+    exhausted:['The flesh fails before the spirit. Shameful.','I must kneel. Not to pray. To not fall.'],winded:['Pain is a lesson. I am learning.','This blood is an offering.'],
+    weary:['The road is long for the penitent.','Even a zealot must sleep.'],uneasy:['This place is unconsecrated. I feel it.','The dark here has never known a prayer.'],
+    bruised:['A small mortification.','Strike harder. I welcome it.'],fresh:['The lash is ready, and so am I.','Forward. Sin waits below.'],
+    town:['They pray for rain. I pray for strength.','Saltmarrow sins quietly. I hear it all.'],combat:['Repent!','Come and be judged.'],hungry:['Fasting is holy. This is just hunger.'],dark:['In darkness, faith is all the light I need.']},
+  occult:{dying:['The veil is thin. I can see the other side.','They are calling my name. I will not answer. Not yet.'],badly:['The mask is cracking. Do not look beneath it.','I am fraying at the edges.'],
+    breaking:['They are inside the mask with me now.','I see the shape of the thing beneath the mine. It is smiling.'],terrified:['Something is reading my thoughts. Slowly.','Do not speak. It is listening.'],
+    exhausted:['The visions blur when I am tired. That is dangerous.','I need sleep, but sleep has teeth here.'],winded:['Pain clarifies. A little.','My blood is darker than it should be.'],
+    weary:['The whispers are louder when I am weary.','Rest. Even seers must rest.'],uneasy:['The air tastes of old prayers.','Something stirs beyond sight.'],
+    bruised:['A minor wound. The omens did warn me.','It does not matter. Very little does.'],fresh:['The signs are favourable. For now.','I have seen this room before. In a dream.'],
+    town:['The townsfolk do not meet my eyes. Wise.','Saltmarrow dreams of drowning. Every night.'],combat:['I have already seen how this ends.','Your fate is written. Shall I read it?'],hungry:['Hunger sharpens the sight. Too sharp.'],dark:['In the dark I see more. That is the problem.']},
+};
+PORT.lastLine='';
+function heroBarkKey(){const P=S.P,st=heroState();if(S.L.town)return'town';if(P.stam<=0)return'dying';if(st.r<0.25)return'badly';if((P.dread||0)>=9)return'breaking';if((P.dread||0)>=7)return'terrified';
+  if((P.fat||0)>=85)return'exhausted';if(S.mode==='combat'&&Math.random()<0.5&&!winded(P))return'combat';if(winded(P))return'winded';if((P.fat||0)>=60)return'weary';
+  if(!(S.inv.ration>0)&&(P.fat||0)>=30&&Math.random()<0.6)return'hungry';if((P.dread||0)>=4)return'uneasy';if(!P.lantern&&!litAt(P.x,P.y)&&Math.random()<0.4)return'dark';if(st.r<0.75)return'bruised';return'fresh'}
+function heroBark(anchor){if(!S||!S.P||!S.L)return;const lines=(BARKS_P[S.cls]||BARKS_P.riptide)[heroBarkKey()]||['...'];let line=pick(lines);if(line===PORT.lastLine&&lines.length>1)line=lines.find(l=>l!==line);PORT.lastLine=line;
+  let b=document.getElementById('pbubble');if(!b){b=document.createElement('div');b.id='pbubble';b.className='pbubble';document.body.appendChild(b)}
+  b.textContent=`“${line}”`;b.hidden=false;b.classList.remove('go');void b.offsetWidth;b.classList.add('go');
+  const r=(anchor||PORT.cv).getBoundingClientRect();const bw=Math.min(280,innerWidth-24);b.style.maxWidth=bw+'px';
+  const bh=b.offsetHeight;let x=r.left+r.width/2-bw/2,y=r.top-bh-10;if(y<8)y=r.bottom+10;x=Math.max(12,Math.min(innerWidth-bw-12,x));b.style.left=x+'px';b.style.top=y+'px';
+  clearTimeout(PORT.bt);PORT.bt=setTimeout(()=>{b.hidden=true},4200);try{sfx('voice',{cls:S.cls})}catch(e){}log(`${cls().name}: “${line}”`,'whisper')}
+PORT.cv.addEventListener('click',ev=>{ev.stopPropagation();heroBark(PORT.cv)});PORT.cv.style.cursor='pointer';
 /* ---------- real-time exploration: the world moves on its own clock; combat stays turn-based ---------- */
 const RT={on:(()=>{try{return localStorage.getItem('saltmarrow-rt')!=='off'}catch(e){return true}})(),busy:false,inTicker:false,moved:false,last:0,period:300};
 window.RT=RT;
@@ -3844,6 +3891,7 @@ function sfx(t,d){if(!AU.on||!AU.ctx)return;switch(t){
   case'alert':tone(220,'sawtooth',0.07,0.5);tone(233,'sawtooth',0.07,0.5);noiseHit(150,0.5,0.12,0.4);break;
   case'descend':tone(41,'sine',0.25,1.6);noiseHit(120,0.4,0.1,1.4);break;
   case'shoot':sweep('triangle',320,140,0.06,0.18);break;
+  case'voice':{const base={riptide:110,shadow:150,storm:95,flag:120,occult:170}[d&&d.cls]||130;for(let k=0;k<6;k++){const f=base*(1+Math.random()*0.35);tone(f,'sawtooth',0.018,0.09,k*0.085);tone(f*2.7,'sine',0.008,0.07,k*0.085)}break}
   }}
 function sweep(type,f0,f1,peak,dur){const C=AU.ctx,t=C.currentTime;const g=C.createGain();g.connect(AU.m);env(g,t,0.01,peak,dur);
   if(type==='noise'){const s=C.createBufferSource();s.buffer=AU.noise;const b=C.createBiquadFilter();b.type='bandpass';b.Q.value=1.4;b.frequency.setValueAtTime(f0,t);b.frequency.exponentialRampToValueAtTime(f1,t+dur);s.connect(b);b.connect(g);s.start(t,Math.random());s.stop(t+dur+0.1)}
