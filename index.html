@@ -300,13 +300,22 @@ body.mob .say{font-size:16px}
   body.mob .inspect{left:auto!important;width:min(380px,60vw);max-height:100dvh;border-radius:14px 0 0 0}
   body.mob .tracker{top:6px;left:auto;right:8px;transform:none;align-items:flex-end}
 }
+
+/* message feed over the map */
+.feed{position:absolute;left:10px;bottom:10px;max-width:min(520px,68%);display:flex;flex-direction:column;align-items:flex-start;gap:3px;pointer-events:none;z-index:2;transition:bottom .2s}
+.feed p{margin:0;font-size:12px;line-height:1.4;padding:3px 8px;background:rgba(9,13,16,.74);border-radius:4px;max-width:100%;text-shadow:0 1px 0 #000;transition:opacity .8s ease,transform .25s ease;animation:feedIn .25s ease}
+.feed p.out{opacity:0}
+.feed p.old{color:var(--dim)}.feed p.bad{color:#e88a74}.feed p.good{color:var(--verdigris)}.feed p.gold{color:var(--lantern)}.feed p.roll{color:var(--violet)}.feed p.dread{color:var(--dread)}.feed p.whisper{color:#a88ac8;font-style:italic;font-family:var(--prose);font-size:13.5px}
+@keyframes feedIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+body.mob .feed{left:8px;bottom:8px;max-width:calc(100% - 16px)}
+body.mob .feed p{font-size:11.5px;background:rgba(9,13,16,.66)}
 </style>
 </head><body>
 
 <div class="wrap">
   <header>
     <h1>Saltmarrow <span>Deep</span></h1><button class="btn mobonly" id="menuBtn" aria-label="Menu">Menu</button>
-    <div class="hbtns"><button class="btn" id="paceBtn">Pace: normal</button><button class="btn" id="soundBtn">Sound: off</button><button class="btn" id="saveBtn">Save</button><button class="btn" id="journalBtn">Journal (J)</button><button class="btn" id="helpBtn">How to play (?)</button><button class="btn mobonly" id="gearBtnM">Gear</button><button class="btn mobonly" id="padBtn">Arrows: off</button><button class="btn mobonly" id="zoomOut">Zoom out −</button><button class="btn mobonly" id="zoomIn">Zoom in +</button></div>
+    <div class="hbtns"><button class="btn" id="paceBtn">Pace: normal</button><button class="btn" id="soundBtn">Sound: off</button><button class="btn" id="saveBtn">Save</button><button class="btn" id="journalBtn">Journal (J)</button><button class="btn" id="helpBtn">How to play (?)</button><button class="btn" id="feedBtn">Log on map: on</button><button class="btn mobonly" id="gearBtnM">Gear</button><button class="btn mobonly" id="padBtn">Arrows: off</button><button class="btn mobonly" id="zoomOut">Zoom out −</button><button class="btn mobonly" id="zoomIn">Zoom in +</button></div>
   </header>
   <div class="game">
     <div class="left">
@@ -315,7 +324,7 @@ body.mob .say{font-size:16px}
         <div class="hud-tl" id="hudTl"></div>
         <div class="tracker" id="tracker" hidden></div>
         <div id="toastHost"></div>
-        <div class="tipcard" id="tipCard" hidden></div>
+        <div class="feed" id="feed" aria-live="polite"></div><div class="tipcard" id="tipCard" hidden></div>
         <div class="tip" id="tip" hidden></div>
         <div class="inspect" id="inspect" hidden></div>
         <div class="overlay" id="overlay" hidden></div>
@@ -2651,6 +2660,17 @@ function renderHud(){const L=S.L;$('hudTl').innerHTML=L.town?`<span class="chip"
   tr.innerHTML=`<span class="chip rnd">Round <b>${C.round}</b> · ${C.phase==='hero'?'<b>Your turn</b>':'<span class="foe">Enemy turn</span>'} · Malice <span class="foe">${C.malice}</span></span><div class="order">${C.heroFirst?heroTok+foeToks:foeToks+heroTok}</div>`}
 UI.render=()=>{if(!S||!S.L)return;refreshOverlays();renderHero();renderGear();renderSatchel();renderBar();renderHud();UI.log();$('padMid').textContent=S.mode==='combat'?'end':'wait'};
 
+
+/* ---------- message feed: recent log lines float over the map and fade ---------- */
+const FEED={on:(()=>{try{return localStorage.getItem('saltmarrow-feed')!=='off'}catch(e){return true}})()};
+function feedPlace(){const f=$('feed'),c=$('tipCard');if(!f)return;f.style.bottom=(c&&!c.hidden?c.offsetHeight+18:document.body.classList.contains('mob')?8:10)+'px'}
+function feedPush(t,c){const f=$('feed');if(!f||!FEED.on||c==='guide'||!t)return;const p=document.createElement('p');p.className=c||'';p.textContent=t;f.appendChild(p);
+  while(f.children.length>5)f.firstChild.remove();const life=c==='bad'||c==='gold'||c==='dread'?6500:c==='old'?3200:4800;
+  setTimeout(()=>{p.classList.add('out');setTimeout(()=>p.remove(),850)},life);feedPlace()}
+{const l0=log;log=function(t,c){l0(t,c);try{feedPush(t,c)}catch(e){}}}
+{const t0=UI.tip;UI.tip=t=>{t0(t);feedPlace();const ok=$('tipOk');if(ok){const f=ok.onclick;ok.onclick=()=>{f&&f();feedPlace()}}}}
+function paintFeedBtn(){const b=$('feedBtn');if(b)b.textContent='Log on map: '+(FEED.on?'on':'off')}
+$('feedBtn').onclick=()=>{FEED.on=!FEED.on;try{localStorage.setItem('saltmarrow-feed',FEED.on?'on':'off')}catch(e){}if(!FEED.on)$('feed').innerHTML='';paintFeedBtn()};paintFeedBtn();
 /* ---------- modal screens ---------- */
 const ov=$('overlay');
 function modal(html,wide){closeInspect();hideTip();ov.innerHTML=`<div class="mdl${wide?' wide':''}">${html}</div>`;ov.hidden=false;const x=ov.querySelector('[data-close]');if(x)x.onclick=closeModal;return ov.firstChild}
