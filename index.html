@@ -5326,7 +5326,7 @@ UI.saveMenu=()=>{slotFlush();const act=activeSlot();const android=isAndroidApp()
   let run='';try{run=lsGet(SAVE_KEY)||''}catch(e){}const code=enc({v:1,meta:META,run});
   const el=modal(`${head(null,'Save & load',CLOUD.ref?'Your playing slot also syncs to your claude.ai account':'The game also saves itself as you play')}
     <p class="purse">Three save slots, like any other game. The slot marked Playing saves automatically every time something changes, and again on every new level. ${android?'':'Save to file keeps a copy you can move to another computer or back up.'}</p>
-    <div class="slots">${[1,2,3].map(card).join('')}</div><p class="purse" id="slotMsg"></p>
+    <div class="svslots">${[1,2,3].map(card).join('')}</div><p class="purse" id="slotMsg"></p>
     <details class="adv"><summary>Move a save with a code</summary><p class="purse">Copy this code into the Save & load screen on another device (phone, Mac, browser) to bring your playing slot across.</p>
     <textarea class="code" id="codeOut" readonly>${code}</textarea><div class="row"><span class="purse">${code.length.toLocaleString()} characters</span><button class="btn" id="copyCode">Copy code</button></div>
     <textarea class="code" id="codeIn" placeholder="Paste a save code here"></textarea><div class="row"><span class="purse" id="codeMsg">Loading a code replaces the slot you are playing.</span><button class="btn primary" id="loadCode">Load code</button></div></details>
@@ -5361,7 +5361,7 @@ document.addEventListener('keydown',ev=>{if((ev.metaKey||ev.ctrlKey)&&(ev.key===
 // save on the way out too
 addEventListener('pagehide',()=>{try{slotFlush()}catch(e){}});document.addEventListener('visibilitychange',()=>{if(document.hidden)try{slotFlush()}catch(e){}});
 {const st=document.createElement('style');st.textContent=`
-.slots{display:grid;gap:10px;margin:10px 0}.slot{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--hull-2)}.slot.on{border-color:var(--lantern)}
+.svslots{display:grid;gap:10px;margin:10px 0}.slot{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--hull-2)}.slot.on{border-color:var(--lantern)}
 .slot .sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}.slot .sn{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
 .slot .tag{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--lantern);border:1px solid currentColor;border-radius:9px;padding:1px 7px}
 .slot .sb{display:flex;flex-direction:column;gap:2px;font-size:13px}.slot .sb b{color:var(--bone);font-weight:600}.slot .dim{color:var(--dim);font-size:11.5px}
@@ -5634,6 +5634,59 @@ splash=function(done){const B=$('boot');if(!B){done&&done();return}if(HEADLESS){
 @media (prefers-reduced-motion:reduce){#boot .bst{transition:opacity .3s}#boot .brain{display:none}}`;document.head.appendChild(st)}
 {const s0=start;start=function(data){if(data&&data.S){const B=$('boot');if(B)B.remove()}return s0(data)}}
 {const t0=showTitle;showTitle=function(){const r=t0.apply(this,arguments);try{$('tipCard').hidden=true;$('toastHost').innerHTML=''}catch(e){}return r}}
+/* ---------- slimmer, quieter HUD: more map, less chrome ---------- */
+{const st=document.createElement('style');st.textContent=`
+/* shared */
+.chip{font-size:10.5px;padding:2px 7px;border-radius:3px;background:rgba(10,8,6,.62);border-color:rgba(74,60,42,.7);backdrop-filter:blur(2px)}
+.feed p{font-size:11px;line-height:1.3;padding:2px 7px;background:rgba(10,8,6,.55);border-radius:3px}
+.feed p:nth-last-child(n+5){display:none}
+.tipcard{background:rgba(16,13,10,.92);border-color:#7a5e30;padding:8px 10px;gap:6px;max-width:min(320px,calc(100% - 20px))}.tipcard p{font-size:12.5px!important;line-height:1.4}
+.tipcard .btn{padding:4px 10px;font-size:11.5px;min-height:0}
+.tracker .chip{font-size:10.5px}
+/* phone */
+body.mob header{position:absolute;top:max(6px,env(safe-area-inset-top,0px));right:max(6px,env(safe-area-inset-right,0px));z-index:25;background:none;border:none;padding:0;width:auto}
+body.mob header h1{display:none}
+body.mob #menuBtn{width:38px;height:38px;min-height:0;padding:0;justify-content:center;border-radius:50%;background:rgba(10,8,6,.62);border:1px solid rgba(120,94,48,.6);backdrop-filter:blur(3px)}
+body.mob #menuBtn span{display:none}
+body.mob .hud-tl{top:max(6px,env(safe-area-inset-top,0px));gap:3px}
+body.mob .hud-tl .vit{gap:6px;padding:2px 8px 2px 2px}
+body.mob .hud-tl .vit canvas{width:26px!important;height:26px!important}
+body.mob .tracker{top:max(6px,env(safe-area-inset-top,0px))}
+body.mob .tracker img,body.mob .tracker canvas{max-width:26px;max-height:26px}
+body.mob .feed{bottom:6px;max-width:calc(100% - 64px)}
+body.mob .feed p{font-size:10.5px}
+body.mob .feed p:nth-last-child(n+4){display:none}
+body.mob .tipcard{left:6px;right:6px;bottom:6px}
+body.mob .bar{padding:4px 6px 4px;gap:4px;background:linear-gradient(180deg,rgba(20,17,14,.97),#0e0c0a)}
+body.mob .bar-top{min-height:0;gap:6px}
+body.mob .bar-top .prompt{font-size:10px;line-height:1.25;max-height:2.6em;overflow:hidden;color:var(--dim)}
+body.mob .bar-top .prompt b{color:var(--lantern)}
+body.mob .bar-top .btn{min-height:0;padding:5px 9px;font-size:11px}
+body.mob .econ .pip,body.mob .econ .res{font-size:10.5px;padding:1px 7px}
+body.mob .endturn{padding:6px 12px!important;font-size:12px!important}
+body.mob .slots{flex-direction:row;flex-wrap:nowrap!important;overflow-x:auto;gap:6px;padding:2px 0}
+body.mob .grp{flex-wrap:nowrap!important;flex:none;padding-right:6px}
+body.mob .sl{width:46px;height:46px;gap:1px;padding:2px 1px;border-radius:5px}
+body.mob .sl img{width:20px;height:20px}
+body.mob .sl .nm{font-size:8.5px;max-width:44px}
+body.mob .sl .k{display:none}
+body.mob .sl .q{font-size:9px}
+body.mob .dock{padding:4px 6px max(4px,env(safe-area-inset-bottom,0px));gap:4px;background:#0e0c0a}
+body.mob .dock .btn{min-height:0;padding:7px 2px;font-size:11px;border-radius:4px}
+body.mob .btn{min-height:32px}
+/* desktop bottom HUD: lower and lighter */
+body.full.bot .game{grid-template-rows:minmax(0,1fr) 100px 100px!important}
+body.full.bot .sl{width:46px;height:44px;padding:2px 1px}body.full.bot .sl img{width:18px;height:18px}body.full.bot .sl .nm{font-size:8.5px}
+body.full.bot .bar{padding:6px 8px;gap:3px}body.full.bot .bar-top .prompt{font-size:10.5px}
+body.full.bot #heroBox,body.full.bot .bar,body.full.bot #gearBox,body.full.bot #satBox,body.full.bot #logBox{padding:6px 10px}
+body.full.bot #heroBox .row,body.full.bot #heroBox{font-size:11px}body.full.bot .who h2{font-size:19px}
+body.full.bot #portBox canvas.portrait{width:148px;height:148px}body.full.bot #portBox .pw{font-size:11px}
+body.full.bot .log p,body.full.bot #logBox{font-size:11px}
+body.full.bot .chars .c{padding:2px 4px}
+body:not(.mob) #menuBtn{padding:5px 10px;font-size:12px}
+@media (orientation:landscape){body.mob header{width:auto}body.mob .bar{padding-top:48px}}`;document.head.appendChild(st)}
+{const st=document.createElement('style');st.textContent=`body.mob .tracker{top:calc(max(6px,env(safe-area-inset-top,0px)) + 44px)!important;left:auto!important;right:6px;transform:none!important;align-items:flex-end}
+body.mob .tracker .chip{font-size:10px}`;document.head.appendChild(st)}
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
