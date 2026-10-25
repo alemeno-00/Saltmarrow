@@ -4188,7 +4188,7 @@ function confirmSel(x,y){if(!SEL.id)return;if(x==null){x=SEL.cursor.x;y=SEL.curs
   const id=SEL.id;SEL.id=null;SEL.valid=[];SEL.cursor=null;hideTip();useAbility(id,x,y)}
 
 /* ---------- small helpers ---------- */
-const MICON={};const monIcon=t=>MICON[t]||(MICON[t]=SPR[t].toDataURL());
+const MICON={};const monIcon=t=>MICON[t]||(MICON[t]=SPR[t]&&SPR[t].toDataURL?SPR[t].toDataURL():'');
 const ACT_COLOR={main:'#e3a548',maneuver:'#6fb5a0',move:'#7fb0e0'};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function tierLine(ab,ch){if(!ab.t)return'';const bands=['≤11','12–16','17+'];
@@ -4237,8 +4237,8 @@ function openInspect(x,y,cx,cy){if(!S||!S.L||!inb(x,y))return;const L=S.L,i=I(x,
     else if(S.mode==='explore'){const id=defaultAttack(x,y);if(id)acts.push({label:`${m.state==='alert'?'Attack':m.state==='idle'?'Sneak attack':'Ambush'} with ${AB[id].name}${m.state==='idle'?` (×${sneakMul()} damage)`:''}`,fn:()=>useAbility(id,x,y)});
       if(S.cls==='shadow'&&m.state!=='alert'&&!m.picked&&!MT(m).boss)acts.push({label:adj?'Pick its pocket (Agility)':'Pick its pocket (get next to it)',off:!adj,fn:()=>pickpocket(m)})}}
   else if(o||ground.length){const f=o||ground[0];const F=FEAT[f.type];const d=typeof F.desc==='function'?F.desc(f):F.desc;
-    const img=f.type==='corpse'?corpseSpr(f.mt).toDataURL():(f.type==='brazier'&&!f.lit?SPR.brazierCold:f.type==='coffin'&&f.open?SPR.coffinOpen:f.type==='chest'&&f.open?SPR.chestOpen:SPR[f.type]).toDataURL();
-    h=`<div class="hd"><img src="${img}" alt=""><div><h4>${F.name}</h4><div class="sub">${seen?'In view':'Remembered'}</div></div></div><p>${esc(d)}</p>`;
+    let img='';try{const cv=f.type==='corpse'?corpseSpr(f.mt):(f.type==='brazier'&&!f.lit?SPR.brazierCold:f.type==='coffin'&&f.open?SPR.coffinOpen:f.type==='chest'&&f.open?SPR.chestOpen:SPR[f.type]);img=cv&&cv.toDataURL?cv.toDataURL():''}catch(e){}
+    h=`<div class="hd">${img?`<img src="${img}" alt="">`:''}<div><h4>${F.name}</h4><div class="sub">${seen?'In view':'Remembered'}</div></div></div><p>${esc(d)}</p>`;
     for(const a of featActions(f))acts.push({label:a.label+(adj?'':' (get next to it)'),off:a.off||!adj||!seen,fn:()=>interact(f,a.id)})}
   else if(its.length){const it0=its[0];if(it0.kind==='gear'){const g=it0.item;h=`<div class="hd"><img src="${ICON[gearSpr(g)]}" alt=""><div><h4 style="color:${RARITY[g.rar].col}">${esc(itemTitle(g))}</h4><div class="sub">${RARITY[g.rar].name} ${kindName(g)}</div></div></div><p>${itemLines(g).map(esc).join('<br>')}</p>`}else h=`<div class="hd"><img src="${ICON[it0.kind]||''}" alt=""><div><h4>${itemName(it0)}</h4><div class="sub">${it0.kind==='page'?'A lore page':it0.kind==='quest'?'Something important':'Loot'}</div></div></div><p>Walk over it to pick it up.</p>`}
   else{const ti=TILE_INFO[t]||['Floor',''];h=`<div class="hd"><div><h4>${ti[0]}</h4><div class="sub">${(BIOMES[L.bio]||{name:L.interior?"Indoors":"Saltmarrow"}).name}</div></div></div>${ti[1]?`<p>${esc(ti[1])}</p>`:''}`;
@@ -4341,7 +4341,7 @@ function showNode(key,id){const dd=D[key],n=dd[id],N=NPCS[key];if(!n){closeModal
   const el=modal(`${head(ICON_N(N.spr),N.name,N.role)}<p class="say">${esc(t)}</p><div class="opts">${opts.map((o,i)=>`<button class="btn" data-i="${i}">${esc(o.l)}</button>`).join('')}</div>`);
   META.story.seen[key]=1;saveMeta();
   el.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const o=opts[+b.dataset.i];if(o.do)o.do();UI.save();if(o.lift){UI.lift();return}if(o.shop){UI.shop(o.shop);return}if(o.to){showNode(key,o.to);return}closeModal()})}
-const ICON_N=k=>MICON[k]||(MICON[k]=SPR[k].toDataURL());
+const ICON_N=k=>MICON[k]||(MICON[k]=SPR[k]&&SPR[k].toDataURL?SPR[k].toDataURL():'');
 UI.building=key=>{const b=BUILDINGS.find(b=>b.key===key);if(key==='archive'){UI.archive();return}if(key==='cottage'){UI.cottage();return}if(b&&b.npc){UI.talk(b.npc);return}};
 /* ---- item cards ---- */
 function card(it,btns,extra){const R=RARITY[it.rar];const lines=itemLines(it);
@@ -5359,7 +5359,7 @@ function rumble(x,y,secs,lv){const d=spOut(x,y,lv||1,16);if(!d)return null;const
     case'free':for(let k=0;k<5;k++)nz(d,{f:jit(1300),q:1.5,peak:0.08,dur:0.07,when:k*0.08});break;
     case'reclaim':for(let k=0;k<4;k++)nz(d,{f:jit(1800),q:2,peak:0.06,dur:0.06,when:k*0.1});break}}catch(e){}
   return f0(o,id)}}
-setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{busReset:()=>{for(const k in _buses)delete _buses[k]},footstep:(...a)=>footstep(...a),stepLvl,rollCart:(...a)=>rollCart(...a),shatter:(...a)=>shatter(...a),featAct:(...a)=>featAct(...a),doorSnd:(...a)=>doorSnd(...a),monStep:(...a)=>monStep(...a)})}catch(e){}},350);
+setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{SPR,FEAT,busReset:()=>{for(const k in _buses)delete _buses[k]},footstep:(...a)=>footstep(...a),stepLvl,rollCart:(...a)=>rollCart(...a),shatter:(...a)=>shatter(...a),featAct:(...a)=>featAct(...a),doorSnd:(...a)=>doorSnd(...a),monStep:(...a)=>monStep(...a)})}catch(e){}},350);
 /* ---------- save slots, a title screen, save files: saving like a normal game ---------- */
 const SLOTS=3,SLOT_K=n=>'saltmarrow-slot-'+n,ACT_K='saltmarrow-active';
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}},lsDel=k=>{try{localStorage.removeItem(k)}catch(e){}};
@@ -5495,8 +5495,8 @@ document.addEventListener('keydown',ev=>{if(!ev.shiftKey||ev.metaKey||ev.ctrlKey
 .sl.learned{box-shadow:inset 0 -2px 0 #b9a0e8}`;document.head.appendChild(st)}
 /* ---------- if something breaks, say so on screen instead of going black ---------- */
 {let shown=0;const show=(msg,src)=>{if(shown++>2)return;let b=$('errBox');if(!b){b=document.createElement('div');b.id='errBox';b.style.cssText='position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#2a1414;border:1px solid #c84a3a;color:#f0e0d0;border-radius:8px;padding:10px 12px;font:12px/1.4 var(--mono,monospace);max-height:40vh;overflow:auto';document.body.appendChild(b)}
-  b.innerHTML=`<b style="color:#ff9a7a">Something went wrong.</b> Screenshot this for Claude.<div style="margin:6px 0;word-break:break-word">${esc(String(msg)).slice(0,400)}<br><span style="opacity:.7">${esc(String(src||'')).slice(0,300)}</span></div><button class="btn" id="errReload">Reload latest version</button> <button class="btn" id="errClose">Hide</button>`;
-  $('errReload').onclick=()=>hardReload();$('errClose').onclick=()=>b.remove()};
+  b.innerHTML=`<b style="color:#ff9a7a">Something went wrong.</b> Your game is saved. Sending a report to the devs helps get it fixed.<div style="margin:6px 0;word-break:break-word">${esc(String(msg)).slice(0,400)}<br><span style="opacity:.7">${esc(String(src||'')).slice(0,300)}</span></div><button class="btn" id="errReport">Report to the devs</button> <button class="btn" id="errReload">Reload latest version</button> <button class="btn" id="errClose">Hide</button>`;
+  $('errReload').onclick=()=>hardReload();$('errReport').onclick=()=>{try{openBug('')}catch(e){}};$('errClose').onclick=()=>b.remove()};
   addEventListener('error',e=>show(e.message,(e.error&&e.error.stack||'').split('\n').slice(0,3).join(' | ')));addEventListener('unhandledrejection',e=>{const r=e.reason;if(r&&r.code)return;show(r&&r.message||r,r&&r.stack&&r.stack.split('\n').slice(0,3).join(' | '))})}
 // the frame loop keeps going even if one frame throws, and reports it
 {const d0=draw;let errT=0;draw=function(){try{d0()}catch(e){if(performance.now()-errT>5000){errT=performance.now();setTimeout(()=>{throw e})}}}}
@@ -5882,6 +5882,37 @@ applyTZ();
 .tzon.full.bot .game{grid-template-columns:minmax(0,.40fr) minmax(0,.66fr) 220px minmax(0,.40fr) minmax(0,.54fr)}
 .tzon:not(.bot):not(.mob) .panel .box>*,.tzon:not(.bot):not(.mob) .bar>*{zoom:var(--tz)}
 .tzon.mob .bar>*,.tzon.mob .panel>*{zoom:var(--tz)}`;document.head.appendChild(st)}
+/* ---------- bug reports: players send them to the devs as a GitHub issue, prefilled with what went wrong ---------- */
+const BUG_REPO='https://github.com/alemeno-00/Saltmarrow/issues/new';
+const BUGS={errs:[]};
+addEventListener('error',e=>{BUGS.errs.push({m:String(e.message||''),s:(e.error&&e.error.stack||'').split('\n').slice(0,5).join('\n'),t:Date.now()});if(BUGS.errs.length>5)BUGS.errs.shift()});
+addEventListener('unhandledrejection',e=>{const r=e.reason;if(r&&r.code)return;BUGS.errs.push({m:String(r&&r.message||r),s:(r&&r.stack||'').split('\n').slice(0,5).join('\n'),t:Date.now()});if(BUGS.errs.length>5)BUGS.errs.shift()});
+function bugPlatform(){const u=navigator.userAgent;if(/Electron/.test(u))return'Mac app';if(/; wv\)/.test(u)||window.Capacitor)return'Android app';if(window.claude||/claude\.ai|claudeusercontent/.test(location.host))return'Claude page';
+  if(matchMedia('(display-mode: standalone)').matches)return'Installed web app';return'Browser'}
+function bugInfo(){const L=S&&S.L,P=S&&S.P;const where=!S?'title screen':L&&L.town?(L.interior?'town · '+L.interior:'town'):'depth '+S.depth+(S.inSewer?' (sewer)':'')+(L&&L.bio?' · '+L.bio:'');
+  const lines=[`- Where: ${where}`,S&&S.cls?`- Delver: ${(CLASSES[S.cls]||{}).name||S.cls}${P?', level '+(P.lvl||1):''}`:'',`- Mode: ${S?S.mode:'menu'}`,`- Platform: ${bugPlatform()}`,`- Screen: ${innerWidth}×${innerHeight}${isMob()?' (phone layout)':''}`,`- Browser: ${navigator.userAgent}`].filter(Boolean);
+  const log=S&&S.log?S.log.slice(-8).map(l=>'> '+String(l.t).replace(/<[^>]+>/g,'')).join('\n'):'';
+  const errs=BUGS.errs.slice(-3).map(e=>e.m+(e.s?'\n'+e.s:'')).join('\n\n');
+  return{lines,log,errs}}
+function bugURL(what){const b=bugInfo();const title='Bug: '+(what?what.slice(0,70):b.errs?b.errs.split('\n')[0].slice(0,70):'something went wrong');
+  let body=`**What happened?**\n${what||'(describe what you were doing and what went wrong)'}\n\n**Details** (filled in by the game)\n${b.lines.join('\n')}\n`;
+  if(b.errs)body+=`\n**Error**\n\`\`\`\n${b.errs.slice(0,1800)}\n\`\`\`\n`;if(b.log)body+=`\n**Last log lines**\n${b.log.slice(0,1200)}\n`;
+  return{url:BUG_REPO+'?labels=bug&title='+encodeURIComponent(title)+'&body='+encodeURIComponent(body),text:title+'\n\n'+body}}
+function openBug(what){const r=bugURL(what);let w=null;try{w=window.open(r.url,'_blank');if(w)try{w.opener=null}catch(e){}}catch(e){}
+  if(!w&&!/Electron/.test(navigator.userAgent)){try{navigator.clipboard.writeText(r.text).catch(()=>{})}catch(e){}UI.toast&&UI.toast('Copied','Report copied. Send it to the devs')}}
+// "Report a bug" in Settings
+function showBugForm(){modal(`<div class="gm wide"><div class="gmh"><div class="gmt">Report a bug</div></div>
+  <p class="say" style="font-size:15px">Tell the devs what went wrong. The game adds where you are, your device and any errors, then opens a report page on GitHub (a free GitHub account is needed to send it).</p>
+  <textarea id="bugTxt" rows="5" style="width:100%;box-sizing:border-box;background:#0e0c0a;color:#ecdfc6;border:1px solid var(--rule,#4a3c28);border-radius:4px;padding:10px;font:15px/1.4 var(--ui,serif);resize:vertical" placeholder="What were you doing, and what happened?"></textarea>
+  <div class="gmf" style="gap:10px;display:flex;justify-content:center;margin-top:12px"><button data-b="send">Open report ▸</button><button data-b="copy">Copy details</button><button data-b="back">‹ Back</button></div></div>`,true);
+  ov.classList.add('gmov');const tx=$('bugTxt');setTimeout(()=>{try{tx.focus()}catch(e){}},50);tx.addEventListener('keydown',e=>e.stopPropagation());
+  ov.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{const g=b.dataset.b,v=tx.value.trim();
+    if(g==='send'){openBug(v);UI.toast&&UI.toast('Thank you','Your report helps fix the game')}
+    else if(g==='copy'){try{navigator.clipboard.writeText(bugURL(v).text).then(()=>UI.toast&&UI.toast('Copied','Paste it in a message to the devs')).catch(()=>{})}catch(e){}}
+    else showSettings()})}
+{const s0=showSettings;showSettings=function(from){s0(from);try{const h=[...ov.querySelectorAll('.sset h3')].find(x=>x.textContent==='Saves');if(!h)return;
+  h.parentElement.insertAdjacentHTML('afterend',`<section class="sset"><h3>Help</h3>${setRow('Report a bug','Something broken or odd? Send it to the devs','<button class="sv" id="bugBtn">Report <i>▸</i></button>')}</section>`);
+  $('bugBtn').onclick=()=>showBugForm()}catch(e){}}}
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
