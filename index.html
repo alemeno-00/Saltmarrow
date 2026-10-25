@@ -2697,6 +2697,53 @@ ITEM_NAMES.vkey='vault key';
 {const e0=exploreStep;exploreStep=async function(dx,dy){const P=S.P;if(S.mode==='explore'&&!S.busy&&(dx||dy)){const x=P.x+dx,y=P.y+dy;if(inb(x,y)&&tileAt(x,y)===WALL&&wpn()&&wpn().base==='pick'&&x>0&&y>0&&x<W-1&&y<H-1){S.busy=true;try{await digWall(x,y)}finally{S.busy=false}await exploreTick();UI.render();return false}}return e0(dx,dy)}}
 {const d0=descend;descend=async function(f){S.inv.vkey=0;return d0(f)}}
 {const f0=fovR;fovR=function(){return f0()+(S.L&&S.L.glow?1:0)}}
+/* ---------- learning new moves: every class has a pool to draw from as it levels ---------- */
+Object.assign(AB,{
+  // Saltbreaker
+  quake:{name:'Ground Slam',icon:'maul',cost:3,act:'main',kind:'burst',radius:1,stat:'M',t:[{d:2},{d:4,cond:'slowed'},{d:6,cond:'dazed'}],desc:'Bring the maul down so hard the floor buckles. Every adjacent enemy staggers.'},
+  headbutt:{name:'Headbutt',icon:'shove',cost:2,act:'maneuver',kind:'melee',range:1,stat:'M',t:[{d:1},{d:2,cond:'dazed'},{d:4,cond:'dazed'}],desc:'A maneuver, not your main action. Rings their skull and leaves them dazed.'},
+  chainlash:{name:'Chain Lash',icon:'chain',cost:2,act:'main',kind:'ranged',range:3,stat:'M',t:[{d:3,pull:1},{d:5,pull:2},{d:7,pull:2,cond:'slowed'}],desc:'Whip the chain out three squares, tear into the target and reel it in.'},
+  bloodrage:{name:'Blood Rage',icon:'heart',cost:0,act:'maneuver',kind:'none',desc:'Bite down and see red. Lose 3 stamina, gain 3 Ferocity.'},
+  caveblow:{name:'Cave-In',icon:'bone',cost:5,act:'main',kind:'melee',range:1,stat:'M',t:[{d:7,push:1},{d:11,push:2},{d:15,push:3,cond:'dazed'}],desc:'Forty years of breaking rock in one blow. Hurls the target back.'},
+  // Cutpurse
+  flurry:{name:'Flurry of Knives',icon:'dagger',cost:3,act:'main',kind:'burst',radius:1,stat:'A',t:[{d:3},{d:5,cond:'bleeding'},{d:7,cond:'bleeding'}],desc:'Blades everywhere at once. Cuts every adjacent enemy.'},
+  garrote:{name:'Garrote',icon:'chain',cost:2,act:'main',kind:'melee',range:1,stat:'A',hiddenDouble:true,t:[{d:3,cond:'slowed'},{d:5,cond:'dazed'},{d:8,cond:'dazed'}],desc:'A wire from behind. Double edge from hiding, and they cannot cry out.'},
+  caltrops:{name:'Caltrops',icon:'stone',cost:1,act:'maneuver',kind:'area',range:5,radius:1,stat:'A',t:[{d:1,cond:'slowed'},{d:2,cond:'slowed'},{d:3,cond:'slowed'}],desc:'Scatter iron spikes over a 3×3 area. Everything there is slowed.'},
+  venomdart:{name:'Venom Dart',icon:'dart',cost:2,act:'main',kind:'ranged',range:6,stat:'A',t:[{d:2,cond:'weakened'},{d:3,cond:'weakened'},{d:5,cond:'bleeding'}],desc:'A dart dipped in something from Nell\'s back shelf. Leaves the target weakened.'},
+  vanish:{name:'Vanish',icon:'moon',cost:2,act:'maneuver',kind:'none',desc:'A flick of ash and you are gone, even while watched. Smoke fills your square.'},
+  // Stormcaller
+  hail:{name:'Hailstorm',icon:'drop',cost:3,act:'main',kind:'area',range:10,radius:1,stat:'R',el:'frost',t:[{d:3},{d:5},{d:7,cond:'slowed'}],desc:'Ice hammers down on a 3×3 area. Puts out fires and slows.'},
+  forked:{name:'Forked Lightning',icon:'bolt',cost:2,act:'main',kind:'ranged',range:8,stat:'R',el:'lightning',t:[{d:4},{d:6},{d:9,cond:'dazed'}],desc:'A crack of lightning at one target. Double damage if they stand in water.'},
+  maelstrom:{name:'Maelstrom',icon:'wind',cost:4,act:'main',kind:'burst',radius:1,stat:'R',el:'frost',t:[{d:3,push:2},{d:5,push:2},{d:7,push:3}],desc:'A whirl of freezing wind throws every adjacent enemy away from you.'},
+  seafog:{name:'Sea Fog',icon:'cloud',cost:2,act:'maneuver',kind:'none',desc:'Call the fog off the dead sea. Thick mist all around you, and you are hidden in it.'},
+  ballstorm:{name:'Ball Lightning',icon:'bolt',cost:5,act:'main',kind:'area',range:10,radius:1,stat:'R',lightning:true,el:'lightning',t:[{d:6},{d:9},{d:12,cond:'dazed'}],desc:'A crackling sphere bursts over a 3×3 area. Ignites kegs and webs.'},
+  // Flagellant
+  brand:{name:'Holy Brand',icon:'sun',cost:2,act:'main',kind:'melee',range:1,stat:'P',el:'holy',t:[{d:4,cond:'weakened'},{d:6,cond:'weakened'},{d:9,cond:'dazed'}],desc:'Press a red-hot sigil into the flesh. The marked one weakens.'},
+  pillar:{name:'Pillar of Fire',icon:'flame',cost:4,act:'main',kind:'area',range:8,radius:1,stat:'P',el:'fire',t:[{d:4},{d:7},{d:10}],desc:'Fire falls from nowhere onto a 3×3 area and sets it burning.'},
+  offering:{name:'Blood Offering',icon:'heart',cost:3,act:'maneuver',kind:'none',desc:'Pray through the pain. Heal 8 and calm 1 Dread.'},
+  rebuke:{name:'Rebuke',icon:'shield',cost:2,act:'main',kind:'burst',radius:2,stat:'P',el:'holy',t:[{d:1,push:1},{d:2,push:2},{d:3,push:2,cond:'weakened'}],desc:'A shout of scripture. Every enemy within 2 is driven back.'},
+  judgement:{name:'Judgement',icon:'sun',cost:5,act:'main',kind:'melee',range:1,stat:'P',el:'holy',t:[{d:8},{d:12},{d:16,cond:'dazed'}],desc:'The full weight of the chapel in one blow.'},
+  // Occultist
+  leech:{name:'Life Leech',icon:'heart',cost:2,act:'main',kind:'ranged',range:6,stat:'I',el:'blood',t:[{d:3},{d:5},{d:7}],desc:'Draw the warmth out of a creature. You heal a third of the damage.'},
+  whispers:{name:'Maddening Whispers',icon:'eye',cost:3,act:'main',kind:'area',range:8,radius:1,stat:'I',el:'void',t:[{d:1,cond:'dazed'},{d:2,cond:'dazed'},{d:4,cond:'dazed'}],desc:'Let them hear what you hear. Everything in a 3×3 area is dazed.'},
+  hex:{name:'Hex',icon:'eye2',cost:1,act:'maneuver',kind:'ranged',range:8,stat:'I',el:'void',t:[{d:0,cond:'weakened'},{d:1,cond:'weakened'},{d:2,cond:'bleeding'}],desc:'A maneuver. Curse one target so its blows land softly.'},
+  rift:{name:'Void Rift',icon:'swirl',cost:4,act:'main',kind:'area',range:8,radius:1,stat:'I',el:'void',t:[{d:4,out:1},{d:6,out:1},{d:9,out:2}],desc:'Tear a hole in a 3×3 area. Whatever survives is flung out of it.'}});
+const MOVE_POOL={riptide:['quake','headbutt','chainlash','bloodrage','caveblow'],shadow:['flurry','garrote','caltrops','venomdart','vanish'],storm:['hail','forked','maelstrom','seafog','ballstorm'],flag:['brand','pillar','offering','rebuke','judgement'],occult:['leech','whispers','hex','rift']};
+const LEARN_AT=[2,3,5];
+const MOVE_UTIL=['bloodrage','vanish','seafog','offering'];
+// the class's move list is its base kit plus whatever this hero has learned
+for(const k in CLASSES){const base=CLASSES[k].abilities.slice();Object.defineProperty(CLASSES[k],'abilities',{configurable:true,get(){return S&&S.cls===k&&S.learned&&S.learned.length?base.concat(S.learned):base},set(v){base.length=0;base.push(...v)}})}
+function moveChoices(){const pool=(MOVE_POOL[S.cls]||[]).filter(id=>!(S.learned||[]).includes(id));return shuffle(pool.slice()).slice(0,2)}
+function learnMove(id){S.learned=S.learned||[];if(!S.learned.includes(id))S.learned.push(id);S.moveQ=Math.max(0,(S.moveQ||0)-1);log(`You learn a new move: ${AB[id].name}. ${AB[id].desc}`,'good');UI.save&&UI.save();UI.render&&UI.render()}
+{const g0=gainXp;gainXp=function(n){const b=S.P?S.P.lvl:1;g0(n);if(S.P)for(let l=b+1;l<=S.P.lvl;l++)if(LEARN_AT.includes(l)&&moveChoices().length)S.moveQ=(S.moveQ||0)+1;
+  if(HEADLESS)while(S.moveQ>0){const c=moveChoices();if(!c.length){S.moveQ=0;break}learnMove(c[0])}}}
+{const u0=abUsable;abUsable=function(id){if(MOVE_UTIL.includes(id)&&S.mode!=='combat')return{ok:false,why:'Combat only'};return u0(id)}}
+{const d0=doUtility;doUtility=async function(id,tx,ty){const P=S.P;switch(id){
+  case'bloodrage':damage(P,3,null);if(S.over)return;P.res+=3;log('You bite down until you taste blood. The red comes up behind your eyes.','good');UI.fx&&UI.fx('float',{e:P,text:'+3 '+cls().res,color:'#e8503a'});computeFov();return;
+  case'vanish':makeSmoke(P.x,P.y,0,6);P.hidden=true;P.lantern=false;log('A flick of ash and you are simply not there.','good');UI.fx&&UI.fx('float',{e:P,text:'hidden',color:'#869690'});computeFov();return;
+  case'seafog':makeSmoke(P.x,P.y,2,9);P.hidden=true;P.lantern=false;log('Fog rolls in off a sea that is not there. You vanish inside it.','good');computeFov();return;
+  case'offering':heal(8);easeDread(1);log('You pray through the pain, and the pain answers.','good');computeFov();return}
+  return d0(id,tx,ty)}}
 /* ================= heroes & runs ================= */
 function newHero(k){const c=CLASSES[k];const bm=c.stam+META.upg.stam*4,br=c.recov+META.upg.recov;
   return{id:'P',x:0,y:0,rx:0,ry:0,stam:bm,max:bm,baseMax:bm,temp:0,lvl:1,chars:Object.assign({},c.chars),recov:br,recovMax:br,baseRecov:br,res:0,lantern:true,hidden:false,defending:false,conds:[],fx:1,fy:0,stab:c.stab,webbed:0,dread:0,lens:META.upg.lamp?1:0}}
@@ -3870,7 +3917,7 @@ function renderBar(){const c=cls(),P=S.P,top=$('barTop'),sl=$('slots');if(S.over
     top.innerHTML=`<div class="econ"><span class="pip move${mv>0?'':' used'}">Move ${mv>0?mv:0}</span><span class="pip man${C.act.man?'':' used'}">Maneuver</span><span class="pip main${C.act.main?'':' used'}">Main</span><span class="res">${c.res} ${P.res}</span></div><button class="btn primary endturn" id="endTurn" ${hero&&!S.busy?'':'disabled'}>${hero?'End turn':'Enemy turn…'}</button>`}
   else top.innerHTML=`<div class="prompt">${contextHint()}</div><span style="display:flex;gap:6px"><button class="btn" id="lanternBtn">${P.lantern?'Shutter lantern':'Open lantern'} · L</button><button class="btn primary" id="descBtn" ${tileAt(P.x,P.y)===STAIRS&&!S.busy?'':'disabled'}>Descend · &gt;</button></span>`;
   const early=firstDelve()&&!(META.tips&&META.tips.unlock);
-  const g1=c.abilities.filter((id,i)=>!early||i<2).map((id,i)=>slot(id,i<5?i+1:null,{short:SHORT[id]})).join('')+(relic('clapper')?slot('clapper',null,{short:'Clapper'}):'')+S.gear.tomes.map(t=>slot('tome_'+t.id,null,{short:t.sp.el.replace(/^./,x=>x.toUpperCase())})).join('');
+  const g1=c.abilities.filter((id,i)=>!early||i<2||(S.learned||[]).includes(id)).map((id,i)=>slot(id,i<5?i+1:null,{short:SHORT[id]})).join('')+(relic('clapper')?slot('clapper',null,{short:'Clapper'}):'')+S.gear.tomes.map(t=>slot('tome_'+t.id,null,{short:t.sp.el.replace(/^./,x=>x.toUpperCase())})).join('');
   const g2=(S.mode==='explore'?slot('autoexp','O',{short:'Explore'})+slot('camp','K',{short:'Camp'}):'')+(S.mode==='combat'&&!early?[['shift',6],['shove',7],['hide',8],['defend',9],['dash',0]].map(([id,k])=>slot(id,k)).join(''):'')+slot('breath','B',{short:'Breathe',q:P.recov})+slot('stone','T',{short:'Stone'})+(hasC(P,'grabbed')?slot('escape',null,{short:'Break free'}):'');
   const g3=[['draught','R'],['charge','X'],['ink','V'],['oil','F']].map(([id,k])=>slot(id,k,{short:SHORT[id],q:S.inv[id]||0})).join('');
   sl.innerHTML=`<div class="grp">${g1}</div><div class="grp">${g2}</div><div class="grp">${g3}</div>`;
@@ -4108,7 +4155,7 @@ function showHelp(back){const ov=$('overlay');closeInspect();hideTip();
     <section><h3>Sneaking</h3><p>Attack an enemy that hasn't noticed you for a <b>sneak attack</b>: double damage (triple for the Cutpurse). Kill it outright and nobody else knows: no fight starts, and you earn half again the XP. If it survives, the fight begins with you acting first.</p><p>The bar over a suspicious enemy's head fills as it watches you. In shadow with your lantern shuttered it fills more slowly. The eye chip on the map tells you how exposed you are.</p><p>The Cutpurse can pick pockets (hold or right-click an unaware enemy next to you) and <b>Shadowstep</b> to an unlit square nearby.</p></section>
     <section><h3>Survival</h3><p><b>Fatigue</b> builds as you explore and fight. Weary (60+) gives a bane on your rolls; exhausted (85+) gives two and slows you.</p><p><b>Make camp</b> (K) once per level when nothing is hunting you. Strike a flint to light the fire, choose two things to do, then face whatever comes in the night. A bigger fire rests you better but draws attention. Rations make for a proper meal.</p><p>Between the mines, crypts, hollows and vaults lies a <b>long descent</b>: a journey of several legs, each resolved with a 2d10 test. Some levels have an old side passage that skips a level the hard way. What happens on the road follows you: failures bring trouble (something tracks you down, the braziers are cold, the level knows you are coming), triumphs bring help (a supply cache, the map scouted, an unseen arrival).</p><p>Search crates, lockers, urns, sacks, reliquaries, shelves, barrels and bodies by walking into them. Urns are loud to break, and some sacks have something living in them.</p></section>
     <section><h3>Living levels</h3><p>Most levels have a <b>situation</b> shown at the top of the map: a ritual to break (kill the celebrants or snuff the candles), a marked beast to hunt, a vault needing three keys, a flood to stop at its valve, or a cave-in to brace with the old jack.</p><p><b>Traps</b> hide on plates and tripwires. You may spot them as you pass (Intuition and an open lantern help; the Cutpurse spots most). Step around them, disarm them, or lure enemies across. <b>Rotten floors</b> give way a moment after something heavy steps on them.</p><p><b>Firedamp</b> pockets explode from any spark, <b>oil</b> burns in sheets, <b>chandeliers</b> come down on a thrown stone, <b>sluices</b> flood rooms, and <b>boulders</b> roll down long tunnels. Monster factions hate each other: make noise near rival groups and let them fight.</p><p><b>Secret rooms</b> hide behind thick walls. A cold draught, a knock on the wall (hold or right-click it) or a miner's note gives them away. Blast through with charges (one per layer of rock), dig with a pick, or solve the lever and brazier puzzles: their plaques give the order.</p><p>You will meet <b>people and things</b> down there. Choices are rolled like journeys.</p></section>
-    <section><h3>Combat tells and growth</h3><p>On your turn, a badge over each enemy shows what it will do next and roughly how much it will hurt. A sapper that lights a fuse marks where the bomb will land, so get out of the squares.</p><p>Each level-up lets you choose one of three perks. <b>Explore</b> (O) walks you to the next unexplored spot and stops the moment anything stirs.</p></section>
+    <section><h3>Combat tells and growth</h3><p>On your turn, a badge over each enemy shows what it will do next and roughly how much it will hurt. A sapper that lights a fuse marks where the bomb will land, so get out of the squares.</p><p>Each level-up lets you choose one of three perks. At levels 2, 3 and 5 you also <b>learn a new move</b> from your class's pool: pick one of two. Learned moves sit at the end of your bar and fire with Shift+1, Shift+2 and Shift+3. <b>Explore</b> (O) walks you to the next unexplored spot and stops the moment anything stirs.</p></section>
     <section><h3>Stealth and the world</h3><p>Red cones show where enemies are looking. Your open lantern lets you see far but makes you easy to spot. Light from braziers and fires gives you away; tall growth, smoke and water hide you.</p><p>Toss stones to lure guards, shatter crystals for a big distraction, douse braziers to darken a room. Blast cracked walls and gates, bring timber props down on enemies, roll carts into them, burn webs and growth.</p><p>Wolves hunt in packs and surround you. Archers back away. Cultists heal their friends. Ghouls eat corpses. Learn them by inspecting.</p></section>
   </div><button class="btn primary" id="helpBack">Back</button></div>`;
   ov.hidden=false;$('helpBack').onclick=()=>{if(back)back();else ov.hidden=true}}
@@ -4931,9 +4978,33 @@ body.full.bot #portBox canvas.portrait{width:176px;height:176px;display:block;bo
 body.full.bot #portBox .pw{display:flex;gap:10px;font-size:12.5px;font-family:var(--mono);letter-spacing:.02em}
 body.full.bot #heroBox{grid-template-columns:minmax(0,1fr)}body.full.bot #heroBox>.who{grid-row:auto;max-width:none}body.full.bot #heroBox>:not(.who){grid-column:1}
 body.full.bot #heroBox .pstate{display:none}
+body.full.bot .bar>*{flex-shrink:0}body.full.bot .sl{width:54px;height:50px;gap:2px;padding:3px 2px 2px}body.full.bot .sl img{width:20px;height:20px}body.full.bot .bar{gap:4px}body.full.bot .bar-top{gap:6px}body.full.bot .bar-top .prompt{font-size:11.5px;line-height:1.35}body.full.bot .bar-top .btn{padding:5px 9px;font-size:12px}
 @media (max-width:1680px){body.full.bot #logBox{display:block}}
 @media (max-width:1360px){body.full.bot .game{grid-template-columns:minmax(0,.42fr) minmax(0,.58fr) 196px minmax(0,1fr)}body.full.bot #logBox{display:none}body.full.bot #portBox canvas.portrait{width:156px;height:156px}}
 `;document.head.appendChild(st)}
+/* ---------- learning screen, hotkeys and labels for learned moves ---------- */
+Object.assign(STYLE,{quake:'smash',caveblow:'smash',headbutt:'thrust',chainlash:'hook',garrote:'hook',venomdart:'throw',brand:'smash',judgement:'smash',flurry:'spin',maelstrom:'spin',rebuke:'spin'});
+Object.assign(SHORT,{quake:'Slam',headbutt:'Headbutt',chainlash:'Lash',bloodrage:'Rage',caveblow:'Cave-in',flurry:'Flurry',garrote:'Garrote',caltrops:'Caltrops',venomdart:'Venom',vanish:'Vanish',
+  hail:'Hail',forked:'Forked',maelstrom:'Maelstrom',seafog:'Fog',ballstorm:'Ball',brand:'Brand',pillar:'Pillar',offering:'Offering',rebuke:'Rebuke',judgement:'Judge',leech:'Leech',whispers:'Whispers',hex:'Hex',rift:'Rift'});
+const ACTN={main:'Main action',maneuver:'Maneuver',move:'Move'};const CONDN={slowed:'slowed',dazed:'dazed',weakened:'weakened',bleeding:'bleeding'};
+function tierText(t){const a=[];if(t.d)a.push(t.d+' dmg');if(t.push)a.push('push '+t.push);if(t.pull)a.push('pull '+t.pull);if(t.out)a.push('fling '+t.out);if(t.cond)a.push(CONDN[t.cond]||t.cond);return a.join(', ')||'no damage'}
+function moveCard(id){const ab=AB[id],c=cls();const where=ab.kind==='burst'?`all within ${ab.radius}`:ab.kind==='area'?`3×3 area, range ${ab.range}`:ab.kind==='ranged'?`range ${ab.range}`:ab.kind==='melee'?(ab.range>1?`reach ${ab.range}`:'adjacent'):'yourself';
+  return`<button class="mvcard" data-m="${id}"><div class="mvh"><img src="${iconURL(ab.icon,ACT_COLOR[ab.act]||'#e2d9c6')}" alt=""><div><b>${esc(ab.name)}</b><span>${ACTN[ab.act]||''} · ${ab.cost?ab.cost+' '+c.res:'free'} · ${where}${ab.el?' · '+ab.el:''}</span></div></div>
+    <p>${esc(ab.desc)}</p>${ab.t?`<ol class="tiers">${ab.t.map((t,i)=>`<li><i>T${i+1}</i>${esc(tierText(t))}</li>`).join('')}</ol>`:''}</button>`}
+UI.learn=()=>{if(!S||!(S.moveQ>0))return;const ch=moveChoices();if(!ch.length){S.moveQ=0;return}
+  modal(`${head(ICON[S.cls],'A new move','Your hands remember something new. Choose one to keep for this delve.',true)}<div class="mvcards">${ch.map(moveCard).join('')}</div>
+    <p class="purse">Learned moves go on your bar after your class moves. Keys: Shift+1, Shift+2 and so on.</p>`);
+  try{sfx('levelup')}catch(e){}ov.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{learnMove(b.dataset.m);if(S.moveQ>0)UI.learn();else closeModal()})};
+{let pend=false;const r0=UI.render;UI.render=()=>{r0();if(!S||S.over||!(S.moveQ>0)||S.perkQ>0||S.busy||S.mode!=='explore'||pend||!$('overlay').hidden)return;pend=true;setTimeout(()=>{pend=false;if(S.moveQ>0&&!(S.perkQ>0)&&$('overlay').hidden&&S.mode==='explore'&&!S.busy&&!S.over)UI.learn()},600)}}
+// Shift+number fires a learned move
+document.addEventListener('keydown',ev=>{if(!ev.shiftKey||ev.metaKey||ev.ctrlKey||!S||!S.L||!$('overlay').hidden)return;const m=/^Digit([1-9])$/.exec(ev.code);if(!m)return;const id=(S.learned||[])[+m[1]-1];if(id){ev.preventDefault();ev.stopPropagation();selectAb(id)}},true);
+{const rb=renderBar;renderBar=function(){rb();try{(S.learned||[]).forEach((id,i)=>{const b=document.querySelector(`#slots .sl[data-ab="${id}"]`);if(b){let k=b.querySelector('.k');if(!k){k=document.createElement('span');k.className='k';b.prepend(k)}k.textContent='⇧'+(i+1)}b&&b.classList.add('learned')})}catch(e){}}}
+{const st=document.createElement('style');st.textContent=`.mvcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:10px 0}
+.mvcard{text-align:left;display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--hull-2);color:var(--bone);cursor:pointer;font:inherit}
+.mvcard:hover,.mvcard:focus-visible{border-color:var(--lantern);background:#1a1e22}.mvh{display:flex;gap:10px;align-items:center}.mvh img{width:36px;height:36px;image-rendering:pixelated;background:#0c1012;border-radius:6px;padding:4px;border:1px solid var(--line)}
+.mvh b{display:block;font-size:15px;color:var(--lantern)}.mvh span{font-size:11px;color:var(--dim);font-family:var(--mono)}.mvcard p{margin:0;font-size:13px;line-height:1.45}
+.tiers{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}.tiers i{font-style:normal;color:var(--bone);margin-right:6px}
+.sl.learned{box-shadow:inset 0 -2px 0 #b9a0e8}`;document.head.appendChild(st)}
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
