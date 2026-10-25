@@ -5054,9 +5054,18 @@ document.addEventListener('keydown',ev=>{if(!ev.shiftKey||ev.metaKey||ev.ctrlKey
 .mvh b{display:block;font-size:15px;color:var(--lantern)}.mvh span{font-size:11px;color:var(--dim);font-family:var(--mono)}.mvcard p{margin:0;font-size:13px;line-height:1.45}
 .tiers{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}.tiers i{font-style:normal;color:var(--bone);margin-right:6px}
 .sl.learned{box-shadow:inset 0 -2px 0 #b9a0e8}`;document.head.appendChild(st)}
+/* ---------- if something breaks, say so on screen instead of going black ---------- */
+{let shown=0;const show=(msg,src)=>{if(shown++>2)return;let b=$('errBox');if(!b){b=document.createElement('div');b.id='errBox';b.style.cssText='position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#2a1414;border:1px solid #c84a3a;color:#f0e0d0;border-radius:8px;padding:10px 12px;font:12px/1.4 var(--mono,monospace);max-height:40vh;overflow:auto';document.body.appendChild(b)}
+  b.innerHTML=`<b style="color:#ff9a7a">Something went wrong.</b> Screenshot this for Claude.<div style="margin:6px 0;word-break:break-word">${esc(String(msg)).slice(0,400)}<br><span style="opacity:.7">${esc(String(src||'')).slice(0,300)}</span></div><button class="btn" id="errReload">Reload latest version</button> <button class="btn" id="errClose">Hide</button>`;
+  $('errReload').onclick=()=>hardReload();$('errClose').onclick=()=>b.remove()};
+  addEventListener('error',e=>show(e.message,(e.error&&e.error.stack||'').split('\n').slice(0,3).join(' | ')));addEventListener('unhandledrejection',e=>{const r=e.reason;if(r&&r.code)return;show(r&&r.message||r,r&&r.stack&&r.stack.split('\n').slice(0,3).join(' | '))})}
+// the frame loop keeps going even if one frame throws, and reports it
+{const d0=draw;let errT=0;draw=function(){try{d0()}catch(e){if(performance.now()-errT>5000){errT=performance.now();setTimeout(()=>{throw e})}}}}
+async function hardReload(){try{slotFlush()}catch(e){}try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();for(const r of rs)await r.unregister()}if(window.caches){for(const k of await caches.keys())await caches.delete(k)}}catch(e){}location.reload()}
+{const hb=document.querySelector('.hbtns');if(hb&&!$('hardBtn')&&location.protocol.startsWith('http')&&!window.claude){const b=document.createElement('button');b.className='btn';b.id='hardBtn';b.textContent='Get latest version';b.onclick=()=>hardReload();hb.appendChild(b)}}
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
 </script>
-<script>if('serviceWorker' in navigator&&location.protocol.startsWith('http'))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+<script>if('serviceWorker' in navigator&&location.protocol.startsWith('http')){const T0=Date.now();addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(r=>r.update()).catch(()=>{}));let had=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!had){had=true;return}if(Date.now()-T0<30000&&!sessionStorage.getItem('sm-reloaded')){sessionStorage.setItem('sm-reloaded','1');location.reload()}})}</script>
 </body></html>
