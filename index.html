@@ -740,6 +740,7 @@ const AFFIX={
   push:{cost:2,max:1,txt:()=>'+1 to every push and pull'},free:{cost:1,max:2,txt:v=>`+${v*2} free strike damage`},resKill:{cost:2,max:1,txt:()=>'+1 heroic resource per kill'},
   el:{cost:2,max:1,txt:(v,it)=>`Attacks deal ${it.el} damage`},recov:{cost:2,max:1,txt:()=>'+1 Recovery'},light:{cost:1,max:1,txt:()=>'+1 lantern radius'},
   steady:{cost:2,max:1,txt:()=>'Dread rises more slowly'},quiet:{cost:1,max:1,txt:()=>'Quieter footsteps'},
+  armor:{cost:2,max:2,txt:v=>`+${v} armour`},stealthR:{cost:2,max:1,txt:()=>'Enemies spot you a square later'},
 };
 const CURSE={
   dreadKill:{w:3,txt:'Each kill raises your Dread'},noHide:{w:3,txt:'You cannot hide'},blood:{w:3,txt:'Your attacks cost 1 stamina'},
@@ -749,7 +750,7 @@ const CURSE={
 const NOUNS={maul:['Breaker','Sledge','Ruin'],hook:['Hook','Gaff','Chain'],pick:['Pick','Tooth','Delver'],knife:['Knife','Needle','Whisper'],xbow:['Bolt','Arbalest','Sting'],rod:['Rod','Spire','Conductor'],censer:['Censer','Thurible','Lamp'],scourge:['Scourge','Lash','Penance'],fetish:['Fetish','Effigy','Knot']};
 const OWNERS=['Hollis','Marrow','Old Crane','the Foreman','Sister Wenna','Ashby','the Drowned Prior','Corvane','Mother Sallow','Edda Thorn'];
 const VERBS=['Hungers','Remembers','Weeps','Listens','Dreams','Counts the Dead','Waits'];
-const SUFFIX={dmg:'of Ruin',t3:'of the Killing Stroke',roll:'of Certainty',stam:'of the Ox',speed:'of the Hare',stab:'of the Anchor',drain:'of the Leech',critBleed:'of Red Weeping',push:'of the Landslide',free:'of Spite',resKill:'of the Harvest',el:'',recov:'of Second Wind',light:'of the Lamp',steady:'of Calm',quiet:'of Hush'};
+const SUFFIX={dmg:'of Ruin',t3:'of the Killing Stroke',roll:'of Certainty',stam:'of the Ox',speed:'of the Hare',stab:'of the Anchor',drain:'of the Leech',critBleed:'of Red Weeping',push:'of the Landslide',free:'of Spite',resKill:'of the Harvest',el:'',recov:'of Second Wind',light:'of the Lamp',steady:'of Calm',quiet:'of Hush',armor:'of the Bulwark',stealthR:'of the Unseen'};
 const WORN=['Pitted','Rust-flecked','Notched','Salt-cracked','Patched'];
 function rollRarity(d,luck){const r=Math.random()*100-(luck||0);const e=4+d*2,s=12+d*2,f=34;if(r<e)return'eldritch';if(r<e+s)return'storied';if(r<e+s+f)return'fine';return'worn'}
 function genWeapon(d,rar,base){rar=rar||rollRarity(d);base=base||pick(Object.keys(WBASE));const R=RARITY[rar];let budget=R.b+Math.floor(d/2);
@@ -762,7 +763,7 @@ function weaponName(it){const B=WBASE[it.base],noun=pick(NOUNS[it.base]);const k
   if(it.rar==='fine')return`${B.name.replace(/^./,c=>c.toUpperCase())} ${top==='el'?'of '+it.el:SUFFIX[top]||''}`.trim();
   if(it.rar==='storied'){const o=pick(OWNERS);return`${o.replace(/^./,c=>c.toUpperCase())}'s ${noun}`}
   return`The ${noun} That ${pick(VERBS)}`}
-function itemValue(it){if(it.kind==='tome')return 30+it.sp.cost*18+it.d*6+(it.rar==='eldritch'?40:0);let v=15+it.d*5;for(const k in it.aff)v+=it.aff[k]*AFFIX[k].cost*10;if(it.curse)v-=CURSE[it.curse].w*6;return Math.max(10,v)}
+function itemValue(it){if(it.kind==='armor'){let v=12+it.d*4+(ABASE[it.base].base.armor||0)*12;for(const k in it.aff)v+=it.aff[k]*AFFIX[k].cost*10;return Math.max(10,v)}if(it.kind==='tome')return 30+it.sp.cost*18+it.d*6+(it.rar==='eldritch'?40:0);let v=15+it.d*5;for(const k in it.aff)v+=it.aff[k]*AFFIX[k].cost*10;if(it.curse)v-=CURSE[it.curse].w*6;return Math.max(10,v)}
 /* spells */
 const SHAPES={bolt:{act:'main',kind:'ranged',range:8,mul:1.5,base:2},area:{act:'main',kind:'area',range:8,radius:1,mul:1.15,base:1},burst:{act:'main',kind:'burst',radius:1,mul:1.3,base:2},ward:{act:'maneuver',kind:'none'},blink:{act:'maneuver',kind:'step'}};
 const EL_WORDS={fire:['Black Fire','Cinders','the Pyre'],frost:['Hollow Frost','the Long Winter','Rime'],lightning:['the Storm','Sky-Iron','the Bright Wound'],holy:['Saint Hollis','the Lamp','Ash and Light'],void:['the Under-Dark','the Sleeper','No Light'],blood:['the Vein','Red Psalms','the Tithe']};
@@ -782,17 +783,56 @@ function tomeAb(it){const sp=it.sp;const ab={name:it.name,icon:{fire:'flame',fro
 /* equipment stat lookup */
 function wpn(){return S&&S.gear?S.gear.weapon:null}
 function gearSum(k){const w=wpn();let v=0;if(w&&w.ident!==false){v+=(w.aff[k]||0);const b=WBASE[w.base].base;if(b[k])v+=b[k]}else if(w){v+=(w.aff[k]||0);const b=WBASE[w.base].base;if(b[k])v+=b[k]}
+  for(const a of armPieces()){v+=(a.aff[k]||0);const b=ABASE[a.base];if(b&&b.base[k])v+=b.base[k]}
   if(S.bless&&S.bless[k])v+=S.bless[k];if(S.kitEff&&S.kitEff[k])v+=S.kitEff[k];if(S.gear&&S.gear.relic){const e=RELICS[S.gear.relic.r].eff;if(e[k])v+=e[k]}return v}
 const curse=k=>{const w=wpn();return !!(w&&w.curse===k)};
 const suited=()=>{const w=wpn();return !!(w&&WBASE[w.base].cls===S.cls)};
 function weaponEl(){const w=wpn();if(!w)return null;return WBASE[w.base].base.el||w.el||null}
-function itemLines(it){const out=[];if(it.kind==='relic')return[RELICS[it.r].desc];if(it.kind==='tome'){const a=tomeAb(it);out.push(`${a.act==='main'?'Main action':'Maneuver'} · costs ${it.sp.cost} heroic resource`);out.push(a.desc);if(a.t)out.push('Tiers: '+a.t.map(t=>t.d+(t.cond?' '+t.cond:'')+(t.push?' push '+t.push:'')+(t.pull?' pull '+t.pull:'')).join(' / '));return out}
+function itemLines(it){const out=[];if(it.kind==='relic')return[RELICS[it.r].desc];if(it.kind==='armor'){const B=ABASE[it.base];out.push(B.note);for(const k in it.aff)out.push(AFFIX[k].txt(it.aff[k],it));return out}if(it.kind==='tome'){const a=tomeAb(it);out.push(`${a.act==='main'?'Main action':'Maneuver'} · costs ${it.sp.cost} heroic resource`);out.push(a.desc);if(a.t)out.push('Tiers: '+a.t.map(t=>t.d+(t.cond?' '+t.cond:'')+(t.push?' push '+t.push:'')+(t.pull?' pull '+t.pull:'')).join(' / '));return out}
   const B=WBASE[it.base];out.push(B.note+(B.cls?` · suits the ${CLASSES[B.cls]?CLASSES[B.cls].name:''} (+1 damage)`:''));
   if(!it.ident){out.push('Unidentified. Equip it, or have Sister Agathe read it, to learn its nature.');return out}
   for(const k in it.aff)out.push(AFFIX[k].txt(it.aff[k],it));if(it.curse)out.push('Curse: '+CURSE[it.curse].txt);return out}
-const kindName=it=>it.kind==='tome'?'tome':it.kind==='relic'?'relic':WBASE[it.base].name;
+const kindName=it=>it.kind==='tome'?'tome':it.kind==='relic'?'relic':it.kind==='armor'?ABASE[it.base].name:WBASE[it.base].name;
 const itemTitle=it=>it.ident===false?`Unidentified ${kindName(it)}`:it.name;
 
+
+/* ---------- armour & clothing: five slots, shown on your delver ---------- */
+const ASLOTS=['head','body','hands','feet','cloak'];
+const ASLOT_N={head:'Head',body:'Body',hands:'Hands',feet:'Feet',cloak:'Cloak'};
+const ABASE={
+  cap:{slot:'head',name:'leather cap',base:{armor:1},note:'1 armour'},
+  lamp:{slot:'head',name:"miner's helmet",base:{armor:1,light:1},note:'1 armour · +1 lantern radius'},
+  sallet:{slot:'head',name:'iron sallet',base:{armor:2},note:'2 armour',minD:3},
+  hood:{slot:'head',name:'dark hood',base:{stealthR:1},note:'Enemies spot you a square later'},
+  veil:{slot:'head',name:'mourning veil',base:{steady:1},note:'Dread rises more slowly'},
+  jerkin:{slot:'body',name:'leather jerkin',base:{armor:1},note:'1 armour'},
+  oilskin:{slot:'body',name:'oilskin coat',base:{armor:1,stam:1},note:'1 armour · +4 max stamina'},
+  brigandine:{slot:'body',name:'brigandine',base:{armor:2},note:'2 armour',minD:2},
+  mail:{slot:'body',name:'mail hauberk',base:{armor:3,noisy:1},note:'3 armour · clinks when you move (louder footsteps)',minD:4},
+  vestments:{slot:'body',name:'padded vestments',base:{armor:1,recov:1},note:'1 armour · +1 Recovery'},
+  gloves:{slot:'hands',name:'work gloves',base:{free:1},note:'+2 free strike damage'},
+  gauntlets:{slot:'hands',name:'iron gauntlets',base:{armor:1},note:'1 armour',minD:2},
+  wraps:{slot:'hands',name:'silk wraps',base:{roll:1},note:'+1 to power rolls',minD:3},
+  boots:{slot:'feet',name:'hobnail boots',base:{armor:1},note:'1 armour'},
+  felt:{slot:'feet',name:'felt boots',base:{quiet:1},note:'Quieter footsteps'},
+  sabatons:{slot:'feet',name:'iron sabatons',base:{armor:1,stab:1,noisy:1},note:'1 armour · +1 stability · loud on stone',minD:3},
+  waders:{slot:'feet',name:'fen waders',base:{wade:1},note:'Water no longer makes your steps louder'},
+  cloak:{slot:'cloak',name:"traveller's cloak",base:{stam:1},note:'+4 max stamina'},
+  shroud:{slot:'cloak',name:'grave shroud',base:{stealthR:1},note:'Enemies spot you a square later'},
+  oilcloth:{slot:'cloak',name:'oilcloth cape',base:{armor:1},note:'1 armour'},
+  bearskin:{slot:'cloak',name:'bearskin',base:{stam:2},note:'+8 max stamina',minD:3},
+};
+const ANOUN={head:['Helm','Crown','Cowl'],body:['Coat','Mantle','Hauberk'],hands:['Grip','Hands','Fists'],feet:['Treads','Steps','Boots'],cloak:['Cloak','Shroud','Wings']};
+const AFF_ARM=['armor','stam','stab','recov','light','steady','quiet','stealthR','speed'];
+function armPieces(){const a=S&&S.gear&&S.gear.arm;if(!a)return[];const out=[];for(const k of ASLOTS)if(a[k])out.push(a[k]);return out}
+function armorTotal(){return gearSum('armor')}
+function genArmor(d,rar,base){rar=rar||rollRarity(d);if(!base){const ok=Object.keys(ABASE).filter(k=>!ABASE[k].minD||d>=ABASE[k].minD);base=pick(ok)}
+  const B=ABASE[base];let budget=Math.max(0,RARITY[rar].b-2+Math.floor(d/3));
+  const it={id:'i'+Math.random().toString(36).slice(2,9),kind:'armor',slot:B.slot,base,rar,aff:{},ident:true,d};
+  let guard=0;while(budget>0&&guard++<40){const opts=AFF_ARM.filter(k=>(it.aff[k]||0)<AFFIX[k].max&&AFFIX[k].cost<=budget&&!(k==='speed'&&B.slot!=='feet')&&!(k==='light'&&B.slot!=='head'));if(!opts.length)break;const k=pick(opts);it.aff[k]=(it.aff[k]||0)+1;budget-=AFFIX[k].cost}
+  const keys=Object.keys(it.aff).sort((a,b)=>it.aff[b]*AFFIX[b].cost-it.aff[a]*AFFIX[a].cost),top=keys[0],nm=B.name.replace(/^./,c=>c.toUpperCase());
+  it.name=rar==='worn'?`${pick(WORN)} ${B.name}`:rar==='fine'?`${nm} ${top?SUFFIX[top]||'':''}`.trim():rar==='storied'?`${pick(OWNERS).replace(/^./,c=>c.toUpperCase())}'s ${pick(ANOUN[B.slot])}`:`The ${pick(ANOUN[B.slot])} That ${pick(VERBS)}`;
+  it.value=itemValue(it);return it}
 /* ================= meta progression (persists between dives) ================= */
 const META_KEY='saltmarrow-meta-v1';
 function freshMeta(){return{v:1,silver:0,stash:[],upg:{stam:0,recov:0,prov:0,lamp:0},classes:{riptide:1,shadow:1,storm:1},deepest:0,bestiary:{},lore:{},
@@ -1242,7 +1282,7 @@ function genLevel(){
   {const ab=L.mons.find(m=>m.type==='abbot');if(ab){const d=bfsDist(P.x,P.y,true);if(!DIR8.some(([dx,dy])=>d[I(ab.x+dx,ab.y+dy)]>=0))digTo(ab.x,ab.y+1)}}
   rebuildOpq();computeLight();computeFov();
 }
-function rollGear(luck){return Math.random()<0.62?genWeapon(S.depth,rollRarity(S.depth,luck)):genTome(S.depth,rollRarity(S.depth,luck))}
+function rollGear(luck){const r=Math.random();return r<0.45?genWeapon(S.depth,rollRarity(S.depth,luck)):r<0.77?genArmor(S.depth,rollRarity(S.depth,luck)):genTome(S.depth,rollRarity(S.depth,luck))}
 function rollLoot(){const roll=rnd(100);if(roll<14)return{kind:'gear',item:rollGear()};const free=Object.keys(TRINKETS).filter(k=>!S.trinkets.includes(k)&&!(S.L&&S.L.items.some(i=>i.t===k)));
   if(roll<30)return{kind:'gold',amt:rr(3,6)*S.depth+rr(1,6)};if(roll<48)return{kind:'draught'};if(roll<62)return{kind:'charge'};if(roll<74)return{kind:'ink'};if(roll<88)return{kind:'oil'};
   if(free.length&&!(S.L&&S.L.items.some(i=>i.kind==='trinket')))return{kind:'trinket',t:pick(free)};return{kind:'gold',amt:rr(4,9)*S.depth}}
@@ -1314,7 +1354,7 @@ function npcTick(){if(!S.L.npcs)return;for(const n of S.L.npcs){if(!n.r||Math.ra
   if(cheb(x,y,n.home.x,n.home.y)>n.r||!inb(x,y)||S.L.map[I(x,y)]!==FLOOR||occupied(x,y,null)||npcAt(x,y)||(S.P.x===x&&S.P.y===y))continue;n.fx=Math.sign(d[0])||n.fx;n.x=x;n.y=y}}
 function townHero(){const k=S&&S.cls&&classOpen(S.cls)?S.cls:'riptide';const P=newHero(k);return P}
 function enterTown(why){const cls0=S&&S.cls?S.cls:'riptide';
-  S={v:5,cls:cls0,depth:0,turn:0,mode:'explore',P:null,L:null,C:null,log:S&&S.log?S.log.slice(-30):[],victories:0,xp:0,gold:0,inv:{},trinkets:[],kills:0,nextId:1,over:false,won:false,pitWarn:-1,busy:false,gear:{weapon:null,tomes:[]},bag:[],bless:null};
+  S={v:5,cls:cls0,depth:0,turn:0,mode:'explore',P:null,L:null,C:null,log:S&&S.log?S.log.slice(-30):[],victories:0,xp:0,gold:0,inv:{},trinkets:[],kills:0,nextId:1,over:false,won:false,pitWarn:-1,busy:false,gear:{weapon:null,tomes:[],arm:{}},bag:[],bless:null};
   S.P=townHero();genTown();S.P.x=53;S.P.y=16;S.P.rx=53;S.P.ry=16;S.P.lantern=true;S.P.dread=0;computeFov();
   if(why==='death'){log('You wake on the cold floor of the chapel. You do not remember the climb. Your pack is gone.','dread');UI.toast('Saltmarrow','You do not remember the climb')}
   else if(why==='bell'){log('The lift groans up out of the dark. Rain, gas lamps, and the smell of the sea.','gold');UI.toast('Saltmarrow','You made it back')}
@@ -1324,16 +1364,16 @@ function enterTown(why){const cls0=S&&S.cls?S.cls:'riptide';
 const startDepths=()=>[1,3,5,7].filter(d=>d===1||META.deepest>=d-1);
 function newRun(cls,startD,loadout){const sup=META.supplies||(META.supplies={draught:0,charge:0,ink:0,oil:0,tea:0});
   S={v:5,cls,depth:startD,turn:0,mode:'explore',P:null,L:null,C:null,log:[],victories:0,xp:0,gold:0,inv:(loadout.omens||[]).includes('famine')?{draught:0,charge:0,ink:0,oil:0,tea:0}:{draught:1+META.upg.prov,charge:1,ink:1,oil:1,tea:0},trinkets:[],kills:0,nextId:1,over:false,won:false,pitWarn:-1,busy:false,omens:loadout.omens||[],kit:loadout.kit||null,kitEff:loadout.kit?Object.assign({},KITS[loadout.kit].eff):null,
-    gear:{weapon:null,tomes:[]},bag:[],bless:loadout.bless?Object.assign({},BLESS[loadout.bless].eff):null,blessName:loadout.bless||null,startDepth:startD};
+    gear:{weapon:null,tomes:[],arm:{}},bag:[],bless:loadout.bless?Object.assign({},BLESS[loadout.bless].eff):null,blessName:loadout.bless||null,startDepth:startD};
   if(!S.omens.includes('famine'))for(const k in sup){S.inv[k]=(S.inv[k]||0)+sup[k];sup[k]=0}
-  for(const id of loadout.items||[]){const i=META.stash.findIndex(it=>it.id===id);if(i<0)continue;const it=META.stash.splice(i,1)[0];if(it.kind==='relic'&&!S.gear.relic)S.gear.relic=it;else if(it.kind==='weapon'&&!S.gear.weapon)S.gear.weapon=it;else if(it.kind==='tome'&&S.gear.tomes.length<2)S.gear.tomes.push(it);else S.bag.push(it)}
+  for(const id of loadout.items||[]){const i=META.stash.findIndex(it=>it.id===id);if(i<0)continue;const it=META.stash.splice(i,1)[0];if(it.kind==='relic'&&!S.gear.relic)S.gear.relic=it;else if(it.kind==='weapon'&&!S.gear.weapon)S.gear.weapon=it;else if(it.kind==='tome'&&S.gear.tomes.length<2)S.gear.tomes.push(it);else if(it.kind==='armor'&&!S.gear.arm[it.slot])S.gear.arm[it.slot]=it;else S.bag.push(it)}
   S.P=newHero(cls);const lv=1+Math.floor((startD-1)/2);while(S.P.lvl<lv){S.xp=XPT[S.P.lvl];gainXp(0)}
   for(const t of S.gear.tomes)registerTome(t);if(S.gear.weapon)S.gear.weapon.ident=true;refreshHero();S.P.stam=S.P.max;S.P.recov=S.P.recovMax;
   if(S.omens.includes('lightless'))S.P.lantern=false;
   META.runs++;saveMeta();genLevel();if(firstDelve())tip('start');
   log(`The lift drops you into ${BIOMES[S.L.bio].name.toLowerCase()}. Depth ${S.depth}. The cable creaks back up without you.`,'gold');UI.toast(BIOMES[S.L.bio].name,`Depth ${S.depth}`);UI.save();UI.render()}
 function registerTome(it){AB['tome_'+it.id]=tomeAb(it)}
-function carriedItems(){const out=[...S.bag];if(S.gear.weapon)out.push(S.gear.weapon);if(S.gear.relic)out.push(S.gear.relic);out.push(...S.gear.tomes);return out}
+function carriedItems(){const out=[...S.bag];if(S.gear.weapon)out.push(S.gear.weapon);if(S.gear.relic)out.push(S.gear.relic);out.push(...S.gear.tomes);out.push(...armPieces());return out}
 async function ringBell(){if(S.mode==='combat'){log('Not with enemies on you.','bad');return}
   if(S.L.mons.some(m=>MT(m).boss&&!MT(m).final&&m.type!=='stalker')){log('The bell will not ring. Its guardian still lives.','bad');UI.render();return}
   UI.fx('ring',{x:S.P.x,y:S.P.y,r:12});log('You haul on the bell rope. The note rolls up the shaft, and far above, the winch begins to turn.','gold');
@@ -1423,7 +1463,7 @@ function noise(x,y,r,quiet){if(r<=0)return;if(!quiet)UI.fx('ring',{x,y,r});
   for(let h=0;h<q.length;h++){const n=q[h],cx=n%W,cy=(n/W)|0;for(const[dx,dy]of DIR8){const nx=cx+dx,ny=cy+dy;if(!inb(nx,ny))continue;const ni=I(nx,ny),t=S.L.map[ni];if(t===WALL||t===CRACK)continue;const nd=d[n]+(t===DOOR?3:1);if(nd>r||(d[ni]>=0&&d[ni]<=nd))continue;d[ni]=nd;q.push(ni)}}
   for(const m of S.L.mons){if(m.inCombat||m.state==='alert')continue;const v=d[I(m.x,m.y)];if(v>=0&&v<=r){m.state='sus';m.inv={x,y};m.look=0;m.route=null;faceTo(m,x,y)}}}
 function stepNoise(){const P=S.P,t=tileAt(P.x,P.y);let r=P.lantern?3:1;if(!P.lantern&&S.cls==='shadow')r=0;if(P.cork)r--;if(t===WATER)r++;
-  if(t===BONES)r+=4;if(t===GRASS&&S.cls!=='shadow')r+=1;if(curse('loud'))r+=2;if(gearSum('quiet'))r--;if(S.L.town)return 0;return Math.max(0,r)}
+  if(t===BONES)r+=4;if(t===GRASS&&S.cls!=='shadow')r+=1;if(curse('loud'))r+=2;if(gearSum('quiet'))r--;r+=gearSum('noisy');if(t===WATER&&gearSum('wade'))r--;if(S.L.town)return 0;return Math.max(0,r)}
 
 /* ================= hazards: fire, spores, smoke ================= */
 const burnable=t=>t===GRASS||t===WEB;
@@ -1613,7 +1653,7 @@ async function descend(fell){if(S.mode==='combat'&&!fell){log('You can\'t take t
   UI.save();UI.render()}
 
 /* ================= damage, death, xp ================= */
-function damage(e,amt,src){if(amt<=0||e.dead||S.over)return;let a=amt;if(e.temp){const u=Math.min(e.temp,a);e.temp-=u;a-=u}
+function damage(e,amt,src){if(amt<=0||e.dead||S.over)return;if(isP(e)&&amt>1){const ar=armorTotal();if(ar>0){const cut=Math.min(ar,Math.floor(amt*0.4));if(cut>0){amt-=cut;e.lastBlock=cut}}}let a=amt;if(e.temp){const u=Math.min(e.temp,a);e.temp-=u;a-=u}
   const wasW=winded(e);e.stam-=a;UI.fx('hit',{e,amt});
   if(isP(e)){const C=S.C;
     if(C&&S.cls==='riptide'){if(!C.flags.hurt){C.flags.hurt=1;e.res++}if(!wasW&&winded(e)&&!C.flags.wind){C.flags.wind=1;e.res++}}
@@ -3157,7 +3197,7 @@ Object.assign(ICON_MASK,{
 });
 for(const k in SPR_DATA)if(!SPR[k]){SPR[k]=mk(SPR_DATA[k][0],SPR_DATA[k][1]);SPRW[k]=white(SPR[k])}
 for(const k of['flag','occult','page','quest','tea','tome','w_blunt','w_hook','w_blade','w_ranged','w_focus'])ICON[k]=SPR[k].toDataURL();
-const gearSpr=it=>it.kind==='tome'?'tome':it.kind==='relic'?'relic':WBASE[it.base].spr;
+const gearSpr=it=>it.kind==='tome'?'tome':it.kind==='relic'?'relic':it.kind==='armor'?'a_'+it.base:WBASE[it.base].spr;
 /* ---------- the town ---------- */
 BPAL.town={w:'#24242a',wl:'#34343c',wd:'#121216',acc:'#ffd890',acc2:'#6a5a4a',f:'#26282c',fa:'#2e3034',fl:'#17181b',fd:'#383a40',wa:['#0e1a22','#1e3040','#6a8aa0'],beam:'#3a2a1a',beamd:'#20160c'};
 function townTiles(T0){const B=BPAL.town;
@@ -3288,12 +3328,56 @@ const HERO_LOOK={
 const RARE_COL={worn:['#6a5a4a','#4a3e32','#8a7a62'],fine:['#8a949a','#5a6268','#c0c8cc'],storied:['#8a949a','#5a6268','#e0c060'],eldritch:['#4a3a5a','#2a1e36','#b48ae8'],relic:['#8a949a','#5a6268','#e0c060']};
 function heroLookKey(){const P=S&&S.P;if(!P)return null;const w=S.gear&&S.gear.weapon;const t=(S.gear&&S.gear.tomes||[]).map(x=>x.rar).join(',');
   return[S.cls,w?w.base:'',w?w.rar:'',w&&w.el?w.el:(w&&w.aff&&w.aff.el?w.aff.el:''),t,P.lantern?1:0,S.gear&&S.gear.relic?1:0].join('|')}
-function makeHero(cls,o){const L=HERO_LOOK[cls]||HERO_LOOK.riptide;const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');const OX=8,OY=12;
+/* ---- armour art: bag icons and what it looks like worn ---- */
+const ATPL={
+  cap:["","","","",".....oooooo.....","....oLLLLLLo....","...oLLlLLLLLo...","...oLLLLLLLLo...","...oLLLLLLLLo...","..oooooooooooo..","..oDDDDDDDDDDo..","...oooooooooo..."],
+  lamp:["","","......oooo......",".....oYWWYo.....","....ooYYYYoo....","...oMMooooMMo...","..oMMMMMMMMMMo..","..oMMmMMMMMMMo..","..oMMMMMMMMMMo..",".oooooooooooooo.",".oBBBBBBBBBBBBo.","..oooooooooooo.."],
+  sallet:["","","",".....oooooo.....","....oIIIIIIo....","...oIIiIIIIIo...","...oIIIIIIIIo...","...oIIIIIIIIo...","...okkkkkkkko...","...oIIIIIIIIo...","..oIIIIIIIIIIIo.","..ooooooooooooo."],
+  hood:["","","......oooo......",".....oCCCCo.....","....oCCcCCCo....","...oCCCCCCCCo...","...oCCooooCCo...","...oCokkkkoCo...","...oCokkkkoCo...","..oCCCokkoCCCo..","..oCCCCooCCCCo..","..oCCCCCCCCCCo..","...oooooooooo..."],
+  body:["","....oooooooo....","..ooJJJooJJJoo..",".oJJJJJJJJJJJJo.",".oJjJJJJbJJJJJo.",".oJjJoJJJJJoJJo.",".oJJJoJJbJJoJJo.",".oJJJoJJJJJoJJo.",".oJJJoJJbJJoJJo.",".oJJJoJJJJJoJJo.",".oooooJJbJJooooo","....oJJJJJJo....","....oJJJJJJo....","....oooooooo...."],
+  robe:["","....oooooooo....","..ooJJJooJJJoo..",".oJJJJJJJJJJJJo.",".oJjJJJJbJJJJJo.",".oJjJoJJJJJoJJo.",".oJJJoJJbJJoJJo.",".oJJJoJJJJJoJJo.",".oooooJJJJJooooo","....oJJJJJJo....","...oJJJJJJJJo...","...oJjJJJJJJo...","..oJJJJJJJJJJo..","..oooooooooooo.."],
+  hands:["","","...ooo.....ooo..","..oGGGo...oGGGo.",".ooGGGo..ooGGGo.","oGoGGGo.oGoGGGo.","oGGGGGo.oGGGGGo.","oGgGGGo.oGgGGGo.","oGGGGGo.oGGGGGo.",".oGGGo...oGGGo..",".oCCCo...oCCCo..",".ooooo...ooooo.."],
+  feet:["","","...oooo...oooo..","...oBBo...oBBo..","...oBBo...oBBo..","...oBbo...oBbo..","...oBBo...oBBo..","...oBBo...oBBo..","...oBBoo..oBBoo.","...oBBBBo.oBBBBo","...oSSSSo.oSSSSo","...oooooo.oooooo"],
+  cloak:["",".....oooooo.....","....oKKKKKKo....","....oKoAAoKo....","...oKKKKKKKKo...","...oKKKKKKKKo...","..oKKkKKKKKKKo..","..oKKkKKKKKKKo..","..oKKKKKKKKKKo..",".oKKKkKKKKKKKKo.",".oKKKKKKKKKKKKo.",".oKkKKKKKKKKkKo.","oKKKKKKKKKKKKKKo","oooooooooooooooo"],
+};
+const APAL={
+  cap:['cap',{L:'#6a4a2a',l:'#8a6a44',D:'#3a2816'}],lamp:['lamp',{Y:'#e8c860',W:'#fff6c0',M:'#b89030',m:'#e0c870',B:'#6a4a20'}],sallet:['sallet',{I:'#8a8e94',i:'#c8ccd0',k:'#141414'}],
+  hood:['hood',{C:'#34463a',c:'#4a5e4e',k:'#0e0c0a'}],veil:['hood',{C:'#2a2030',c:'#40324a',k:'#120c16'}],
+  jerkin:['body',{J:'#6a4a2a',j:'#8a6a40',b:'#3a2a18'}],oilskin:['body',{J:'#5a5a36',j:'#7a7a50',b:'#2a2a1a'}],brigandine:['body',{J:'#4a2a26',j:'#6a3a32',b:'#d8b04a'}],
+  mail:['body',{J:'#7a7e84',j:'#a8acb2',b:'#4a4e54'}],vestments:['robe',{J:'#6a6052',j:'#8a806e',b:'#c8b060'}],
+  gloves:['hands',{G:'#7a5a38',g:'#9a7a50',C:'#4a3420'}],gauntlets:['hands',{G:'#8a8e94',g:'#c8ccd0',C:'#5a5e64'}],wraps:['hands',{G:'#c8bca0',g:'#e4dcc4',C:'#8a7a5a'}],
+  boots:['feet',{B:'#4a3020',b:'#6a4830',S:'#1e140c'}],felt:['feet',{B:'#5a5a5e',b:'#78787c',S:'#3a3a3e'}],sabatons:['feet',{B:'#7a7e84',b:'#b8bcc2',S:'#3a3e44'}],waders:['feet',{B:'#3a4a3a',b:'#4e604e',S:'#1a221a'}],
+  cloak:['cloak',{K:'#4a3a2a',k:'#3a2c1e',A:'#c8a040'}],shroud:['cloak',{K:'#bab29a',k:'#9a927c',A:'#6a6a6a'}],oilcloth:['cloak',{K:'#3a4038',k:'#2a3028',A:'#8a8a8a'}],bearskin:['cloak',{K:'#5a3e26',k:'#7a5a3a',A:'#e8e0d0'}],
+};
+for(const k in APAL){const[t,pal]=APAL[k];pal.o='#0a0806';const rows=ATPL[t].slice();while(rows.length<16)rows.unshift('');const off=Math.max(0,Math.floor((16-ATPL[t].length)/2));const r2=[];for(let i=0;i<16;i++)r2.push(ATPL[t][i-off]||'');SPR['a_'+k]=mk(r2,pal);SPRW['a_'+k]=white(SPR['a_'+k]);ICON['a_'+k]=SPR['a_'+k].toDataURL()}
+const ashade=(h,f)=>{const n=parseInt(h.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;r=Math.max(0,Math.min(255,r*f|0));g=Math.max(0,Math.min(255,g*f|0));b=Math.max(0,Math.min(255,b*f|0));return'#'+((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1)};
+// rarity tints the trim of worn pieces
+const ATRIM={worn:null,fine:'#c0c8cc',storied:'#e0c060',eldritch:'#b48ae8'};
+function armLook(L,arm){if(!arm)return L;const D=Object.create(L);
+  if(arm.body){const p=APAL[arm.body.base][1];D.torso=[p.J,ashade(p.J,0.72),p.j];D.over=null;D.scars=false;if(L.build==='robe')D.trim=ATRIM[arm.body.rar]||p.b}
+  if(arm.hands){D.gloves=APAL[arm.hands.base][1].G}
+  if(arm.feet){const p=APAL[arm.feet.base][1];D.boots=[p.b,p.B]}
+  if(arm.cloak){const p=APAL[arm.cloak.base][1];D.cloak=[p.K,p.k]}
+  return D}
+function armHead(P,h){const p=APAL[h.base][1],t=ATRIM[h.rar];
+  switch(h.base){
+    case'cap':P.rect(11,3,9,3,p.L);P.rect(12,3,6,1,p.l);P.rect(10,5,11,1,p.D);break;
+    case'lamp':P.rect(11,2,9,1,p.M);P.rect(10,3,11,3,p.M);P.rect(11,3,4,1,p.m);P.rect(9,5,13,1,p.B);P.rect(18,3,2,2,p.Y);P.px(19,3,p.W);if(t)P.px(12,2,t);break;
+    case'sallet':P.rect(10,2,10,6,p.I);P.rect(11,2,8,1,p.i);P.rect(14,7,6,1,p.k);P.rect(14,8,6,1,p.I);P.rect(8,7,3,2,p.I);P.px(8,8,ashade(p.I,0.7));if(t)P.rect(12,4,1,3,t);break;
+    case'hood':case'veil':{const dk=ashade(p.C,0.7);P.rect(10,2,10,5,p.C);P.rect(10,2,10,1,p.c);P.rect(10,7,4,6,p.C);P.rect(9,5,2,8,dk);P.rect(19,5,1,3,dk);if(h.base==='veil'){P.rect(14,9,6,4,dk);P.px(17,8,'#140c08');P.px(18,8,'#140c08')}if(t)P.rect(10,2,1,5,t);break}}}
+function armBody(P,b,tx0,tw){const p=APAL[b.base][1],t=ATRIM[b.rar];
+  if(b.base==='mail'){for(let y=14;y<21;y++)for(let x=tx0+1;x<tx0+tw-1;x++)if((x+y)%2===0)P.px(x,y,p.j);P.rect(tx0,21,tw,1,p.b)}
+  else if(b.base==='brigandine'){for(const[x,y]of[[tx0+2,15],[tx0+tw-3,15],[tx0+2,18],[tx0+tw-3,18],[tx0+4,16],[tx0+tw-5,17]])P.px(x,y,p.b)}
+  else if(b.base==='oilskin'){P.rect(tx0+Math.floor(tw/2),13,1,8,p.b)}
+  else if(b.base==='jerkin'){P.px(tx0+Math.floor(tw/2),15,p.b);P.px(tx0+Math.floor(tw/2),17,p.b)}
+  if(t)P.rect(tx0,13,tw,1,t)}
+function makeHero(cls,o){const L=armLook(HERO_LOOK[cls]||HERO_LOOK.riptide,o.arm);const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');const OX=8,OY=12;
   const P={px:(x,y,col)=>{x=(x|0)+OX;y=(y|0)+OY;if(x<0||y<0||x>47||y>47)return;g.fillStyle=col;g.fillRect(x,y,1,1)},rect:(x,y,w,h,col)=>{g.fillStyle=col;g.fillRect((x|0)+OX,(y|0)+OY,w|0,h|0)},
     line(x0,y0,x1,y1,col){x0|=0;y0|=0;x1|=0;y1|=0;const dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1;let e=dx+dy;for(;;){this.px(x0,y0,col);if(x0===x1&&y0===y1)break;const e2=2*e;if(e2>=dy){e+=dy;x0+=sx}if(e2<=dx){e+=dx;y0+=sy}}}};
   const pose=o.pose||'idle',walk=pose==='walk1'?1:pose==='walk2'?-1:0,strike=pose==='strike';const broad=L.build==='broad',robe=L.build==='robe';
   const tx0=broad?10:11,tw=broad?11:9;const T0=L.torso;
   // cloak behind
+  if(L.cloak&&o.arm&&o.arm.cloak){P.rect(8,12,3,16,L.cloak[1]);P.px(8,28,L.cloak[1])}
   if(L.cloak){P.rect(9,12,4,15,L.cloak[0]);P.rect(9,12,1,15,L.cloak[1]);P.rect(10,26,3,1,L.cloak[1]);P.px(9,27,L.cloak[1])}
   // back hand: lantern
   const lantern=(x,y)=>{P.rect(x,y,1,2,'#3a3a3a');P.rect(x-1,y+2,3,4,'#2a2a2a');P.rect(x,y+3,1,2,o.lit?'#ffd36b':'#5a4a2a');if(o.lit){P.px(x,y+3,'#fff2b0')}P.rect(x-1,y+6,3,1,'#3a3a3a')};
@@ -3312,6 +3396,8 @@ function makeHero(cls,o){const L=HERO_LOOK[cls]||HERO_LOOK.riptide;const c=docum
   P.rect(tx0,13,tw,9,T0[0]);P.rect(tx0,13,1,9,T0[2]);P.rect(tx0+tw-2,13,2,9,T0[1]);P.rect(tx0,13,tw,1,T0[2]);
   if(L.over){const V=L.over;P.rect(tx0+tw-5,13,4,8,V[0]);P.rect(tx0,13,3,8,V[0]);P.rect(tx0+tw-2,13,1,8,V[1]);P.px(tx0+tw-5,13,V[2]);P.px(tx0+1,13,V[2])}
   if(L.trim&&robe){P.rect(tx0+4,13,1,8,L.trim)}
+  if(o.arm&&o.arm.body)armBody(P,o.arm.body,tx0,tw);
+  if(o.arm&&o.arm.cloak){const p=APAL[o.arm.cloak.base][1];P.rect(tx0-1,13,tw+1,2,p.K);P.rect(tx0-1,13,tw+1,1,ashade(p.K,1.25));P.px(tx0+tw-2,14,p.A);if(o.arm.cloak.base==='bearskin'){P.px(tx0,15,p.k);P.px(tx0+2,15,p.k);P.px(tx0+4,15,p.k)}}
   if(L.scars){for(const[x,y]of[[13,15],[14,16],[16,14],[17,15],[15,18],[16,19]])P.px(x,y,'#8a2a2a')}
   // belt
   const belt=cls==='flag'?'#a08a5a':cls==='storm'?'#c8b060':'#2a1a10';P.rect(tx0,20,tw,2,belt);P.rect(15,20,2,2,cls==='riptide'?'#d8b04a':'#6a6a6a');
@@ -3324,7 +3410,7 @@ function makeHero(cls,o){const L=HERO_LOOK[cls]||HERO_LOOK.riptide;const c=docum
   // head
   P.rect(11,5,9,8,L.skin);P.rect(11,5,2,8,L.skinD);P.rect(18,6,2,2,L.skin);P.px(20,9,L.skin);P.px(20,10,L.skinD);
   P.px(17,8,'#140c08');P.px(18,8,'#140c08');P.px(17,7,'#3a2418');P.px(18,7,'#3a2418');P.px(18,8,'#f4ecd8');P.px(15,11,L.skinD);
-  L.head.call(L,P.px,P);
+  L.head.call(L,P.px,P);if(o.arm&&o.arm.head)armHead(P,o.arm.head);
   // front arm and weapon
   const W=o.w||L.def;const rc=RARE_COL[o.rar||'fine']||RARE_COL.fine;const elc=o.el&&ELEM[o.el]?ELEM[o.el].col:null;
   const hx=sw?Math.round(sw.hx):strike?23:20,hy=sw?Math.round(sw.hy):strike?16:20;
@@ -4356,11 +4442,11 @@ let shopTab=null;
 UI.shop=(kind,tab)=>{const town=!!(S.L&&S.L.town);shopTab=tab||shopTab;const mmul=kind==='rook'?1.3:0.9;
   const N={smith:'tobias',chapel:'agathe',tavern:'bram',hall:'hale',apoth:'nell',rook:'rook',peddler:'peddler'}[kind];const NP=NPCS[N];
   let body='',tabs=[];const T=(id,l)=>{tabs.push([id,l]);return shopTab===id};
-  if(kind==='smith'){if(!META.smith){META.smith=[0,1,2,3].map(()=>{const it=genWeapon(Math.max(1,META.deepest+1),pick(['worn','fine','fine','storied']));it.ident=true;return it});saveMeta()}
+  if(kind==='smith'){if(!META.smith){META.smith=[0,1,2,3,4,5].map(i=>{const d=Math.max(1,META.deepest+1),r=pick(['worn','fine','fine','storied']);const it=i<3?genWeapon(d,r):genArmor(d,r);it.ident=true;return it});saveMeta()}
     if(!['buy','sell','forge','kits'].includes(shopTab))shopTab='buy';T('buy','Buy');T('kits','Kits');T('sell','Sell');T('forge',flag('pipFreed')?'Reforge':'Reforge (needs Pip)');
     if(shopTab==='buy')body=`<div class="cards">${META.smith.map(it=>card(it,`<button class="btn" data-act="buy" data-id="${it.id}" ${META.silver>=Math.round(it.value*1.5)?'':'disabled'}>Buy</button>`,{price:Math.round(it.value*1.5)})).join('')||'<p class="purse">Sold out until your next return.</p>'}</div>`;
     if(shopTab==='kits')body=`<div class="cards">${Object.entries(KITS).map(([k,K])=>`<div class="itm${(META.kits||{})[k]?' eq':''}"><div class="t"><div><b>${K.name}</b><div class="r" style="color:var(--dim)">Kit · choose one at the lift head</div></div></div><ul><li>${esc(K.desc)}</li></ul><div class="row2"><span class="pr">${(META.kits||{})[k]?'Owned':K.cost+' silver'}</span>${(META.kits||{})[k]?'':`<button class="btn" data-act="kit" data-id="${k}" ${META.silver>=K.cost?'':'disabled'}>Buy</button>`}</div></div>`).join('')}</div><p class="purse">Kits are armour and harness that change how a delver fights. You own them for good.</p>`;
-    if(shopTab==='sell')body=stashCards(it=>it.kind==='weapon',it=>`<button class="btn" data-act="sell" data-id="${it.id}">Sell ${Math.round(it.value*0.5)}</button>`);
+    if(shopTab==='sell')body=stashCards(it=>it.kind==='weapon'||it.kind==='armor',it=>`<button class="btn" data-act="sell" data-id="${it.id}">Sell ${Math.round(it.value*0.5)}</button>`);
     if(shopTab==='forge')body=flag('pipFreed')?stashCards(it=>it.kind==='weapon',it=>`<button class="btn" data-act="reforge" data-id="${it.id}" ${META.silver>=60?'':'disabled'}>Reforge 60</button>${it.curse?`<button class="btn" data-act="cleanse" data-id="${it.id}" ${META.silver>=80?'':'disabled'}>Cleanse 80</button>`:''}`)+'<p class="purse">Reforging rerolls every property, keeping the rarity. Cleansing strips the curse and the strongest property with it.</p>':'<p class="say">"Bring Pip home," Tobias says, "and we\'ll talk about what the forge can really do."</p>'}
   if(kind==='chapel'){if(!['bless','read'].includes(shopTab))shopTab='bless';T('bless','Blessings');T('read','Readings');
     if(shopTab==='bless')body=`<div class="cards">${Object.entries(BLESS).map(([k,b])=>`<div class="itm${META.pendingBless===k?' eq':''}"><div class="t"><div><b>${b.name}</b><div class="r" style="color:var(--dim)">Lasts one delve</div></div></div><ul><li>${esc(b.desc)}</li></ul><div class="row2"><span class="pr">${b.cost} silver</span>${META.pendingBless===k?'<span class="purse">Blessed for your next delve</span>':`<button class="btn" data-act="bless" data-id="${k}" ${META.silver>=b.cost&&!META.pendingBless?'':'disabled'}>Receive</button>`}</div></div>`).join('')}</div><p class="purse">One blessing at a time. It takes hold when you next ride the lift.</p>`;
@@ -4409,13 +4495,13 @@ UI.lift=()=>{if(!(S.L&&S.L.town)){return}const ds=startDepths();if(!liftSel)lift
   liftSel.items=liftSel.items.filter(id=>META.stash.some(i=>i.id===id));
   const cl=Object.entries(CLASSES).map(([k,c])=>{const open=classOpen(k);return`<button class="itm${liftSel.cls===k?' eq':''}${open?'':' lock'}" data-cls="${k}" ${open?'':'disabled'} style="text-align:left;cursor:${open?'pointer':'default'}"><div class="t"><img src="${ICON[c.spr]}" alt=""><div><b>${c.name}</b><div class="r" style="color:var(--dim)">${c.role} · ${c.res}</div></div></div><ul><li>${esc(open?c.blurb:CLASS_UNLOCK[k].txt)}</li>${open?`<li>${esc(c.passive)}</li>`:''}</ul></button>`}).join('');
   const gear=META.stash.filter(i=>i.kind!=='x');const rSel=liftSel.items.filter(id=>{const i=META.stash.find(x=>x.id===id);return i&&i.kind==='relic'}).length;liftSel.omens=liftSel.omens||[];
-  const kits=Object.keys(META.kits||{});if(liftSel.kit&&!kits.includes(liftSel.kit))liftSel.kit=null;const wSel=liftSel.items.filter(id=>{const i=META.stash.find(x=>x.id===id);return i&&i.kind==='weapon'}).length,tSel=liftSel.items.filter(id=>{const i=META.stash.find(x=>x.id===id);return i&&i.kind==='tome'}).length;
+  const kits=Object.keys(META.kits||{});if(liftSel.kit&&!kits.includes(liftSel.kit))liftSel.kit=null;const wSel=liftSel.items.filter(id=>{const i=META.stash.find(x=>x.id===id);return i&&i.kind==='weapon'}).length,tSel=liftSel.items.filter(id=>{const i=META.stash.find(x=>x.id===id);return i&&i.kind==='tome'}).length;const aSel=sl=>liftSel.items.filter(id=>{const i=META.stash.find(x=>x.id===id);return i&&i.kind==='armor'&&i.slot===sl}).length;
   const el=modal(`${head(ICON_N('n_mara'),'The Lift Head','Choose who goes down, how deep, and what they carry')}
     <p class="purse">Going down: <b>${CLASSES[liftSel.cls].name}</b>, ${CLASSES[liftSel.cls].role.toLowerCase()}.</p>
     <p class="sect">Depth</p><div class="tabs">${ds.map(d=>`<button class="btn${liftSel.d===d?' on':''}" data-d="${d}">Depth ${d} · ${BIOMES[biomeOf(d)].name}${d>1?` (start at level ${1+Math.floor((d-1)/2)})`:''}</button>`).join('')}</div>
     ${kits.length?`<p class="sect">Kit</p><div class="tabs"><button class="btn${!liftSel.kit?' on':''}" data-kit="">None</button>${kits.map(k=>`<button class="btn${liftSel.kit===k?' on':''}" data-kit="${k}" title="${esc(KITS[k].desc)}">${KITS[k].name}</button>`).join('')}</div>`:''}
     ${omensOpen()?`<p class="sect">Omens (harder delves, more silver)</p><div class="tabs">${Object.entries(OMENS).map(([k,O])=>`<button class="btn${liftSel.omens.includes(k)?' on':''}" data-omen="${k}" title="${esc(O.desc)}">${O.name} ×${O.mul}</button>`).join('')}</div>`:''}
-    <p class="sect">Take from your stash (1 weapon, up to 2 tomes, 1 relic)</p>${gear.length?`<div class="cards">${gear.map(it=>{const on=liftSel.items.includes(it.id);const can=on||(it.kind==='weapon'?wSel<1:it.kind==='relic'?rSel<1:tSel<2);return card(it,`<button class="btn${on?' primary':''}" data-act="take" data-id="${it.id}" ${can?'':'disabled'}>${on?'Taking':'Take'}</button>`,{eq:on})}).join('')}</div>`:'<p class="purse">Your stash is empty. You go down with bare hands and your class abilities.</p>'}
+    <p class="sect">Take from your stash (1 weapon, 2 tomes, 1 relic, one piece of armour per slot)</p>${gear.length?`<div class="cards">${gear.map(it=>{const on=liftSel.items.includes(it.id);const can=on||(it.kind==='weapon'?wSel<1:it.kind==='relic'?rSel<1:it.kind==='armor'?aSel(it.slot)<1:tSel<2);return card(it,`<button class="btn${on?' primary':''}" data-act="take" data-id="${it.id}" ${can?'':'disabled'}>${on?'Taking':'Take'}</button>`,{eq:on})}).join('')}</div>`:'<p class="purse">Your stash is empty. You go down with bare hands and your class abilities.</p>'}
     <div class="row" style="align-items:center;flex-wrap:wrap;gap:10px"><span class="purse">${META.pendingBless?`Blessed: <b>${BLESS[META.pendingBless].name}</b> · `:''}Supplies: ${1+META.upg.prov+((META.supplies||{}).draught||0)} draughts, ${1+((META.supplies||{}).charge||0)} charges, ${1+((META.supplies||{}).ink||0)} smoke, ${1+((META.supplies||{}).oil||0)} firepots${(META.supplies||{}).tea?`, ${META.supplies.tea} tea`:''}</span><button class="btn primary" id="goDown">Ride the lift down</button></div>`,true);
   el.querySelectorAll('[data-cls]').forEach(b=>b.onclick=()=>{liftSel.cls=b.dataset.cls;UI.lift()});el.querySelectorAll('[data-kit]').forEach(b=>b.onclick=()=>{liftSel.kit=b.dataset.kit||null;UI.lift()});el.querySelectorAll('[data-omen]').forEach(b=>b.onclick=()=>{const k=b.dataset.omen,i=liftSel.omens.indexOf(k);if(i>=0)liftSel.omens.splice(i,1);else liftSel.omens.push(k);UI.lift()});el.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{liftSel.d=+b.dataset.d;UI.lift()});
   bindCards(el,(a,id)=>{const i=liftSel.items.indexOf(id);if(i>=0)liftSel.items.splice(i,1);else liftSel.items.push(id);UI.lift()});
@@ -5913,6 +5999,185 @@ function showBugForm(){modal(`<div class="gm wide"><div class="gmh"><div class="
 {const s0=showSettings;showSettings=function(from){s0(from);try{const h=[...ov.querySelectorAll('.sset h3')].find(x=>x.textContent==='Saves');if(!h)return;
   h.parentElement.insertAdjacentHTML('afterend',`<section class="sset"><h3>Help</h3>${setRow('Report a bug','Something broken or odd? Send it to the devs','<button class="sv" id="bugBtn">Report <i>▸</i></button>')}</section>`);
   $('bugBtn').onclick=()=>showBugForm()}catch(e){}}}
+/* ---------- the pack: a leather satchel with a Diablo-style grid, and a paper doll that wears what you equip ---------- */
+const BAG_W=10,BAG_H=6;
+const W_ROT={w_blunt:45,w_hook:-45,w_blade:-45,w_focus:0,w_ranged:0};
+function itSize(it){if(it.kind==='armor')return{head:[2,2],body:[2,3],hands:[2,2],feet:[2,2],cloak:[2,3]}[it.slot]||[2,2];if(it.kind==='tome')return[2,2];if(it.kind==='relic')return[1,1];
+  if(it.kind==='weapon')return it.base==='knife'?[1,2]:it.base==='xbow'?[2,2]:[1,3];return[1,1]}
+function fitsAt(it,x,y,g){const[w,h]=itSize(it);if(x<0||y<0||x+w>BAG_W||y+h>BAG_H)return false;for(let j=0;j<h;j++)for(let i=0;i<w;i++){const o=g[(y+j)*BAG_W+x+i];if(o&&o!==it)return false}return true}
+function findSpot(it,g){for(let x=0;x<BAG_W;x++)for(let y=0;y<BAG_H;y++)if(fitsAt(it,x,y,g))return[x,y];return null}
+function bagGrid(){const g=new Array(BAG_W*BAG_H).fill(null);for(const it of S.bag){if(it.bx==null||it.bx<0)continue;const[w,h]=itSize(it);for(let y=0;y<h;y++)for(let x=0;x<w;x++)g[(it.by+y)*BAG_W+it.bx+x]=it}return g}
+// keep every valid position, find room for the rest; anything that will not fit is flagged (bx=-1)
+function bagSettle(){if(!S||!S.bag)return;const g=new Array(BAG_W*BAG_H).fill(null);const put=(it,x,y)=>{const[w,h]=itSize(it);it.bx=x;it.by=y;for(let j=0;j<h;j++)for(let i=0;i<w;i++)g[(y+j)*BAG_W+x+i]=it};
+  const rest=[];for(const it of S.bag){if(it.bx!=null&&it.bx>=0&&fitsAt(it,it.bx,it.by,g))put(it,it.bx,it.by);else rest.push(it)}
+  for(const it of rest){const sp=findSpot(it,g);if(sp)put(it,sp[0],sp[1]);else{it.bx=-1;it.by=-1}}}
+function bagRoom(it){bagSettle();return!!findSpot(it,bagGrid())}
+// a full pack leaves new finds on the floor, like it should
+{const g0=giveLoot;giveLoot=function(it){if(it&&it.kind==='gear'&&S&&S.L&&!S.L.town&&!bagRoom(it.item)){const P=S.P;S.L.items.push({kind:'gear',item:it.item,x:P.x,y:P.y});
+    if(!S._fullT||performance.now()-S._fullT>4000){S._fullT=performance.now();log(`Your pack is full. ${itemTitle(it.item)} stays on the floor. Press G to make room.`,'bad');UI.toast&&UI.toast('Pack full','Drop something to make room')}return}
+  g0(it);try{bagSettle()}catch(e){}}}
+
+/* --- equip slots --- */
+const DSLOTS=['head','cloak','relic','weapon','body','hands','feet','tome0','tome1'];
+const DSLOT_N={head:'Head',cloak:'Cloak',relic:'Relic',weapon:'Weapon',body:'Body',hands:'Hands',feet:'Feet',tome0:'Tome',tome1:'Tome'};
+function eqKind(it){return it.kind==='armor'?it.slot:it.kind==='weapon'?'weapon':it.kind==='relic'?'relic':it.kind==='tome'?'tome':null}
+function slotFits(it,slot){const k=eqKind(it);return k===slot||(k==='tome'&&(slot==='tome0'||slot==='tome1'))}
+function inSlot(slot){const G=S.gear;if(!G.arm)G.arm={};if(slot==='weapon')return G.weapon||null;if(slot==='relic')return G.relic||null;if(slot==='tome0')return G.tomes[0]||null;if(slot==='tome1')return G.tomes[1]||null;return G.arm[slot]||null}
+function setSlot(slot,it){const G=S.gear;if(!G.arm)G.arm={};if(slot==='weapon')G.weapon=it;else if(slot==='relic')G.relic=it;
+  else if(slot==='tome0'||slot==='tome1'){const i=slot==='tome0'?0:1;if(it){if(i<G.tomes.length)G.tomes[i]=it;else G.tomes.push(it)}else if(i<G.tomes.length)G.tomes.splice(i,1)}else G.arm[slot]=it}
+function defSlot(it){const k=eqKind(it);if(k!=='tome')return k;return S.gear.tomes.length<2?'tome'+S.gear.tomes.length:'tome1'}
+function slotOfEquipped(it){for(const s of DSLOTS)if(inSlot(s)===it)return s;return null}
+function onEquip(it){if(it.kind==='weapon'){if(!it.ident){it.ident=true;log(`You take up ${it.name}.${it.curse?' It is cursed: '+CURSE[it.curse].txt.toLowerCase()+'.':''}`,it.curse?'dread':'gold');if(it.curse)addDread(1)}}
+  else if(it.kind==='relic')log(`You take up ${it.name}.`,'gold');
+  else if(it.kind==='tome'){registerTome(it);if(!it.read){it.read=1;META.tomeReads++;saveMeta();log(`You read the first page of ${it.name}. The words stay with you.`,'dread');if(!['storm','occult'].includes(S.cls))addDread(1)}}
+  else if(it.kind==='armor')log(`You put on the ${it.name.replace(/^The /,'')}.`,'gold');packSnd(it,true)}
+function equipItem(it,slot){slot=slot||defSlot(it);if(!slotFits(it,slot))return false;const bi=S.bag.indexOf(it);if(bi<0)return false;
+  const old=inSlot(slot),ox=it.bx,oy=it.by;S.bag.splice(bi,1);delete it.bx;delete it.by;setSlot(slot,it);
+  if(old){S.bag.push(old);old.bx=ox;old.by=oy;bagSettle();if(old.bx<0){S.bag.splice(S.bag.indexOf(old),1);setSlot(slot,old);S.bag.push(it);it.bx=ox;it.by=oy;bagSettle();UI.toast&&UI.toast('No room','Your pack is too full to swap');return false}}
+  onEquip(it);refreshHero();return true}
+function unequip(slot,x,y){const it=inSlot(slot);if(!it)return false;bagSettle();const g=bagGrid();let sp=x!=null&&fitsAt(it,x,y,g)?[x,y]:findSpot(it,g);
+  if(!sp){UI.toast&&UI.toast('No room','Your pack is full');return false}setSlot(slot,null);it.bx=sp[0];it.by=sp[1];S.bag.push(it);packSnd(it,false);refreshHero();return true}
+function dropItem(it){const i=S.bag.indexOf(it);if(i<0)return;S.bag.splice(i,1);delete it.bx;delete it.by;S.L.items.push({kind:'gear',item:it,x:S.P.x,y:S.P.y});log(`You leave ${itemTitle(it)} on the floor.`,'old');packSnd(it,false)}
+const METALA=new Set(['mail','sallet','gauntlets','sabatons','lamp','brigandine']);
+function packSnd(it,on){try{if(!AU.on||!AU.ctx)return;const d=spOut(null,null,1);if(!d)return;
+  if(it.kind==='weapon'||it.kind==='armor'&&METALA.has(it.base)){clang(d,jit(on?520:440),0.03,0.35);nz(d,{f:jit(2400),q:3,peak:0.05,dur:0.05})}
+  else if(it.kind==='tome'){nz(d,{f:jit(1800),q:1.2,peak:0.05,dur:0.12,a:0.02});nz(d,{f:jit(600),q:1,peak:0.05,dur:0.06,when:0.1})}
+  else{for(let k=0;k<3;k++)nz(d,{f:jit(1400),q:1.4,peak:0.05,dur:0.07,when:k*0.06})}}catch(e){}}
+
+/* --- how the hero looks: worn pieces go on the sprite --- */
+function armSpec(){const out={};let any=false;for(const s of ASLOTS){const a=S&&S.gear&&S.gear.arm&&S.gear.arm[s];if(a){out[s]={base:a.base,rar:a.rar};any=true}}return any?out:null}
+{const k0=heroLookKey;heroLookKey=function(){const k=k0();if(!k)return k;const a=armSpec();return a?k+'|'+ASLOTS.map(s=>a[s]?a[s].base+a[s].rar[0]:'').join(','):k}}
+{const n0=heroLookNow;heroLookNow=function(pose){const o=n0(pose);const a=armSpec();if(a)o.arm=a;return o}}
+// the side panel lists your armour
+{const r0=renderGear;renderGear=function(){r0();try{if(!S||!S.L||S.L.town)return;const b=$('gbG');if(!b)return;const n=armPieces().length;
+  b.insertAdjacentHTML('beforebegin',`<div class="row" style="margin-bottom:4px"><span>Armour</span><b>${armorTotal()}${n?` <span style="color:var(--dim);font-weight:400">· ${n} piece${n>1?'s':''} worn</span>`:''}</b></div>`)}catch(e){}}}
+
+/* --- the screen --- */
+let pkSel=null,pkDrag=null;
+function pkCW(){const m=isMob();return m?Math.max(26,Math.min(36,Math.floor((innerWidth-56)/BAG_W))):40}
+function itemImg(it,w,h,inSlotBox){const spr=gearSpr(it),src=ICON[spr]||'';let rot=it.kind==='weapon'?(W_ROT[spr]||0):0;
+  const tall=h>w*1.4;let sz=Math.min(w,h)*0.86;if(rot&&tall)sz=h/1.42;else if(tall&&!rot)sz=Math.min(w*1.1,h*0.9);
+  return`<img src="${src}" alt="" draggable="false" style="width:${sz|0}px;height:${sz|0}px;${rot?`transform:rotate(${rot}deg)`:''}">`}
+function pkInfo(it,where){if(!it)return'<div class="pk-hint">Hover or tap an item to see it. Drag it onto your delver to wear it, or right-click to equip.</div>';const R=RARITY[it.rar]||RARITY.fine;const lines=itemLines(it);
+  const k=eqKind(it),cur=where==='bag'&&k?(k==='tome'?null:inSlot(k)):null;
+  const ttl=it.kind==='armor'?`${R.name} ${ABASE[it.base].name} · ${ASLOT_N[it.slot]}`:`${R.name} ${kindName(it)}`;
+  return`<div class="pk-it"><b style="color:${it.ident===false?'var(--bone)':R.col}">${esc(itemTitle(it))}</b><div class="pk-sub">${esc(ttl)} · depth ${it.d||1}</div><ul>${lines.map(l=>`<li${l.startsWith('Curse')?' class="cur"':''}>${esc(l)}</li>`).join('')}</ul></div>`+
+    (cur?`<div class="pk-it pk-cur"><div class="pk-sub">Wearing now</div><b style="color:${(RARITY[cur.rar]||R).col}">${esc(itemTitle(cur))}</b><ul>${itemLines(cur).map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`:'')}
+function noiseWord(){let r=1;try{r=stepNoise()}catch(e){}return r<=0?['Silent','good']:r===1?['Quiet','good']:r<=3?['Normal','']:['Loud','bad']}
+UI.gear=()=>{if(S.L&&S.L.town){UI.cottage();return}bagSettle();const inC=S.mode==='combat',CW=pkCW(),mob=isMob();
+  const sel=pkSel&&(S.bag.includes(pkSel)||slotOfEquipped(pkSel))?pkSel:null;pkSel=sel;
+  const SD={head:[2,2],cloak:[2,3],relic:[1.5,1.5],weapon:[2,3],body:[2,3],hands:[2,2],feet:[2,2],tome0:[2,2],tome1:[2,2]};const sc=mob?0.8:1;
+  const slotHtml=s=>{const it=inSlot(s),[w,h]=SD[s],pw=Math.round(w*CW*sc*0.92),ph=Math.round(h*CW*sc*0.92);
+    return`<div class="pk-slot pk-s-${s}${it?' has':''}${it&&sel===it?' sel':''}" data-slot="${s}" style="width:${pw}px;height:${ph}px;${it?`--rc:${(RARITY[it.rar]||RARITY.fine).col}`:''}">${it?`<div class="pk-item" data-iid="${it.id}" data-from="slot" data-slot="${s}">${itemImg(it,pw,ph,true)}</div>`:`<span>${DSLOT_N[s]}</span>`}</div>`};
+  const hero=makeHero(S.cls,Object.assign(heroLookNow('idle'),{}));const heroURL=hero.toDataURL();const nw=noiseWord(),P=S.P;
+  const items=S.bag.filter(it=>it.bx>=0).map(it=>{const[w,h]=itSize(it),R=RARITY[it.rar]||RARITY.fine;return`<div class="pk-item pk-bi${sel===it?' sel':''}${it.ident===false?' unid':''}" data-iid="${it.id}" data-from="bag" style="left:${it.bx*CW}px;top:${it.by*CW}px;width:${w*CW}px;height:${h*CW}px;--rc:${R.col}">${itemImg(it,w*CW,h*CW)}</div>`}).join('');
+  const over=S.bag.filter(it=>it.bx<0);
+  const belt=[['draught','Draught'],['charge','Charge'],['ink','Smoke'],['oil','Firepot'],['tea','Tea'],['ration','Ration']].filter(([k])=>k!=='tea'||S.inv.tea).map(([k,n])=>`<div class="pk-pouch" title="${esc((AB[k]&&AB[k].desc)||n)}"><img src="${ICON[k]||''}" alt=""><b>${S.inv[k]||0}</b><span>${n}</span></div>`).join('');
+  const el=modal(`<div class="pk"><button data-close hidden></button>
+    <div class="pk-top"><div class="gmt">${esc(CLASSES[S.cls].name)}</div><div class="pk-note">${inC?'You cannot change gear mid-fight.':mob?'Tap to inspect · drag to move or wear':'Drag to move or wear · right-click to equip or take off'}</div></div>
+    <div class="pk-main">
+      <div class="pk-doll">
+        ${slotHtml('cloak')}${slotHtml('head')}${slotHtml('relic')}
+        ${slotHtml('weapon')}<div class="pk-hero"><img src="${heroURL}" alt="" draggable="false"></div>${slotHtml('body')}
+        ${slotHtml('hands')}<div class="pk-stats"><div><span>Armour</span><b>${armorTotal()}</b></div><div><span>Stamina</span><b>${P.stam}/${P.max}</b></div><div><span>Footsteps</span><b class="${nw[1]}">${nw[0]}</b></div></div>${slotHtml('feet')}
+        ${slotHtml('tome0')}<div class="pk-belt">${belt}</div>${slotHtml('tome1')}
+      </div>
+      <div class="pk-bag"><div class="pk-flap"><div class="pk-buckle"></div></div>
+        <div class="pk-body"><div class="pk-grid" style="width:${BAG_W*CW}px;height:${BAG_H*CW}px;--cw:${CW}px">${items}<div class="pk-shadow" hidden></div></div>
+          <div class="pk-foot"><span class="pk-purse"><img src="${ICON.gold}" alt="">${S.gold} silver</span><span class="pk-floor" data-floor="1">Drop here to leave on the floor</span></div>
+          ${over.length?`<div class="pk-over"><b>Won't fit:</b> ${over.map(it=>`<span class="pk-item pk-ov" data-iid="${it.id}" data-from="bag" style="--rc:${(RARITY[it.rar]||RARITY.fine).col}"><img src="${ICON[gearSpr(it)]||''}" alt="">${esc(itemTitle(it))}</span>`).join('')}</div>`:''}</div></div>
+    </div>
+    <div class="pk-info" id="pkInfo">${pkInfo(sel,sel&&S.bag.includes(sel)?'bag':'slot')}</div>
+    <div class="pk-acts" id="pkActs"></div></div>`,true);
+  ov.classList.add('gmov');const info=$('pkInfo'),acts=$('pkActs');
+  const byId=id=>S.bag.find(x=>x.id===id)||DSLOTS.map(inSlot).find(x=>x&&x.id===id);
+  const showActs=it=>{if(!it||inC){acts.innerHTML='';return}const eq=slotOfEquipped(it);
+    acts.innerHTML=eq?`<button class="btn" data-a="un">Take off</button>`:`${eqKind(it)?`<button class="btn primary" data-a="eq">${it.kind==='armor'?'Wear':it.kind==='tome'?'Ready':'Equip'}</button>`:''}<button class="btn" data-a="drop">Drop</button>`;
+    acts.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const a=b.dataset.a;if(a==='eq')equipItem(it);else if(a==='un')unequip(eq);else if(a==='drop'){dropItem(it);pkSel=null}UI.save();UI.render();UI.gear()})};
+  showActs(sel);
+  el.querySelectorAll('.pk-item').forEach(n=>{const it=byId(n.dataset.iid);n.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&!pkDrag)info.innerHTML=pkInfo(it,n.dataset.from)});
+    n.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'&&!pkDrag)info.innerHTML=pkInfo(pkSel,pkSel&&S.bag.includes(pkSel)?'bag':'slot')});
+    n.addEventListener('contextmenu',e=>{e.preventDefault();if(inC)return;if(n.dataset.from==='slot')unequip(n.dataset.slot);else if(eqKind(it))equipItem(it);UI.save();UI.render();UI.gear()});
+    n.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();pkDrag={it,from:n.dataset.from,slot:n.dataset.slot,n,sx:e.clientX,sy:e.clientY,on:false,id:e.pointerId}})});
+  const grid=el.querySelector('.pk-grid'),shadow=el.querySelector('.pk-shadow');
+  let ghost=null;
+  const target=(x,y)=>{if(ghost)ghost.style.display='none';const t=document.elementFromPoint(x,y);if(ghost)ghost.style.display='';if(!t)return null;
+    const sl=t.closest('.pk-slot');if(sl)return{slot:sl.dataset.slot};if(t.closest('[data-floor]'))return{floor:1};const gr=t.closest('.pk-grid');if(gr||t.closest('.pk-body')){const r=grid.getBoundingClientRect(),[w,h]=itSize(pkDrag.it);
+      const cx=Math.round((x-r.left-pkDrag.ox)/CW),cy=Math.round((y-r.top-pkDrag.oy)/CW);if(x>=r.left-CW&&x<=r.right+CW&&y>=r.top-CW&&y<=r.bottom+CW)return{bag:[Math.max(0,Math.min(BAG_W-w,cx)),Math.max(0,Math.min(BAG_H-h,cy))]}}return null};
+  const mv=e=>{if(!pkDrag||e.pointerId!==pkDrag.id)return;const d=Math.hypot(e.clientX-pkDrag.sx,e.clientY-pkDrag.sy);
+    if(!pkDrag.on){if(d<6||inC)return;pkDrag.on=true;const[w,h]=itSize(pkDrag.it);const gw=w*CW,gh=h*CW;pkDrag.ox=gw/2;pkDrag.oy=gh/2;
+      ghost=document.createElement('div');ghost.className='pk-ghost';ghost.style.cssText=`width:${gw}px;height:${gh}px;--rc:${(RARITY[pkDrag.it.rar]||RARITY.fine).col}`;ghost.innerHTML=itemImg(pkDrag.it,gw,gh);document.body.appendChild(ghost);pkDrag.n.classList.add('lifted')}
+    ghost.style.left=(e.clientX-pkDrag.ox)+'px';ghost.style.top=(e.clientY-pkDrag.oy)+'px';const t=target(e.clientX,e.clientY);pkDrag.t=t;
+    el.querySelectorAll('.pk-slot').forEach(s=>{s.classList.toggle('ok',slotFits(pkDrag.it,s.dataset.slot));s.classList.toggle('hot',!!(t&&t.slot===s.dataset.slot))});
+    if(t&&t.bag){const[w,h]=itSize(pkDrag.it);const g=bagGrid();const ok=fitsAt(pkDrag.it,t.bag[0],t.bag[1],g);shadow.hidden=false;shadow.style.cssText=`left:${t.bag[0]*CW}px;top:${t.bag[1]*CW}px;width:${w*CW}px;height:${h*CW}px`;shadow.className='pk-shadow'+(ok?' ok':' no')}else shadow.hidden=true;
+    const fl=el.querySelector('.pk-floor');if(fl)fl.classList.toggle('hot',!!(t&&t.floor))};
+  const up=e=>{if(!pkDrag||e.pointerId!==pkDrag.id)return;const D=pkDrag;pkDrag=null;document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',up);
+    if(ghost){ghost.remove();ghost=null}
+    if(!D.on){pkSel=D.it;info.innerHTML=pkInfo(D.it,D.from);el.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));(D.from==='slot'?D.n.parentElement:D.n).classList.add('sel');showActs(D.it);return}
+    const t=D.t;let changed=false;
+    if(t&&t.slot){if(D.from==='bag'){changed=equipItem(D.it,t.slot)}else if(D.slot!==t.slot&&D.slot.startsWith('tome')&&t.slot.startsWith('tome')){S.gear.tomes.reverse();changed=true}}
+    else if(t&&t.bag){if(D.from==='bag'){if(fitsAt(D.it,t.bag[0],t.bag[1],bagGrid())){D.it.bx=t.bag[0];D.it.by=t.bag[1];changed=true;packSnd(D.it,false)}}else changed=unequip(D.slot,t.bag[0],t.bag[1])}
+    else if(t&&t.floor){if(D.from==='slot')unequip(D.slot);dropItem(D.it);pkSel=null;changed=true}
+    if(changed){UI.save();UI.render()}UI.gear()};
+  el.addEventListener('pointerdown',()=>{if(pkDrag){document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',up)}});
+};
+{const st=document.createElement('style');st.textContent=`
+#overlay .mdl.wide:has(.pk){max-width:min(960px,calc(100vw - 24px));padding:18px 20px 16px}
+.pk{font-family:var(--ui,serif);color:#e6d8bc;user-select:none;-webkit-user-select:none}
+.pk-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}.pk-top .gmt{font-size:26px;margin:0}
+.pk-note{font-size:13px;color:var(--dim,#8a7e6a);font-style:italic}
+.pk-main{display:flex;gap:18px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
+.pk-doll{display:grid;grid-template-columns:auto auto auto;grid-template-areas:"cloak head relic" "weapon hero body" "hands hero feet" "tome0 stats tome1" "belt belt belt";gap:10px 14px;align-items:center;justify-items:center;padding:14px;border-radius:6px;
+  background:radial-gradient(ellipse at 50% 40%,#2a241c 0%,#16120e 70%);border:1px solid #3a3022;box-shadow:inset 0 0 30px rgba(0,0,0,.7)}
+.pk-slot{position:relative;display:flex;align-items:center;justify-content:center;border:1px solid #4a3c28;border-radius:4px;
+  background:linear-gradient(180deg,#0c0a08,#14110d);box-shadow:inset 0 0 12px rgba(0,0,0,.9),0 0 0 2px #0a0806,0 0 0 3px #2e261a}
+.pk-slot>span{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#4e4434;font-variant:small-caps}
+.pk-slot.has{border-color:color-mix(in srgb,var(--rc) 55%,#4a3c28);background:radial-gradient(circle,color-mix(in srgb,var(--rc) 16%,#14110d),#0c0a08)}
+.pk-slot.ok{box-shadow:inset 0 0 12px rgba(0,0,0,.9),0 0 0 2px #0a0806,0 0 0 3px #7a6a3a}.pk-slot.hot{box-shadow:inset 0 0 14px rgba(227,195,90,.35),0 0 0 2px #0a0806,0 0 0 3px #e3c35a}
+.pk-slot.sel,.pk-bi.sel{outline:2px solid #e3c35a;outline-offset:1px}
+.pk-slot>.pk-item{width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:grab;touch-action:none}
+.pk-item img{image-rendering:pixelated;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.8))}
+.pk-hero{display:flex;align-items:center;justify-content:center;width:150px}.pk-hero img{width:216px;height:216px;image-rendering:pixelated;margin:-24px -30px -12px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.8))}
+.pk-s-cloak{grid-area:cloak}.pk-s-head{grid-area:head}.pk-s-relic{grid-area:relic}.pk-s-weapon{grid-area:weapon}.pk-s-body{grid-area:body}.pk-s-hands{grid-area:hands}.pk-s-feet{grid-area:feet}.pk-s-tome0{grid-area:tome0}.pk-s-tome1{grid-area:tome1}.pk-hero{grid-area:hero}.pk-stats{grid-area:stats}.pk-belt{grid-area:belt}
+.pk-stats{display:grid;gap:3px;width:150px;font-size:13px}.pk-stats div{display:flex;justify-content:space-between;border-bottom:1px solid #2a2218;padding:1px 2px}.pk-stats span{color:#8a7e6a}
+.pk-stats b{font-weight:600}.pk-stats b.good{color:#9fd0b0}.pk-stats b.bad{color:#e07a5a}
+.pk-belt{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;justify-self:stretch;padding:6px 4px;border-radius:4px;background:linear-gradient(180deg,#3a2616,#24170d);border:1px solid #5a3e24;box-shadow:inset 0 1px 0 rgba(255,220,160,.12)}
+.pk-pouch{position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:3px 3px 8px 8px;background:#2a1c10;border:1px solid #6a4a2a}
+.pk-pouch img{width:24px;height:24px;image-rendering:pixelated}.pk-pouch b{position:absolute;right:1px;bottom:-1px;font-size:11px;color:#f0e0b0;text-shadow:0 1px 2px #000}.pk-pouch span{display:none}
+.pk-bag{position:relative;padding-top:34px}
+.pk-flap{position:absolute;left:8%;right:8%;top:0;height:52px;border-radius:40px 40px 10px 10px;z-index:2;
+  background:radial-gradient(ellipse at 50% 0%,#7a5232,#4a2e18 75%);border:1px solid #2a1a0c;box-shadow:0 4px 8px rgba(0,0,0,.6),inset 0 0 0 4px rgba(0,0,0,.08)}
+.pk-flap::after{content:'';position:absolute;inset:6px 10px 8px;border:1.5px dashed rgba(240,210,160,.35);border-radius:34px 34px 6px 6px}
+.pk-buckle{position:absolute;left:50%;bottom:-12px;transform:translateX(-50%);width:26px;height:22px;border-radius:3px;border:3px solid #c8a048;background:#3a2414;box-shadow:0 2px 4px rgba(0,0,0,.7),inset 0 0 0 2px #6a4a20}
+.pk-buckle::after{content:'';position:absolute;left:50%;top:-1px;bottom:-1px;width:3px;transform:translateX(-50%);background:#e0c060}
+.pk-body{position:relative;padding:30px 18px 12px;border-radius:14px 14px 30px 30px;border:1px solid #2a1a0c;
+  background:radial-gradient(ellipse at 30% 20%,#6a4428,transparent 60%),radial-gradient(ellipse at 80% 90%,#2e1c0e,transparent 60%),linear-gradient(180deg,#5a3a20,#3a2412);
+  box-shadow:0 10px 24px rgba(0,0,0,.7),inset 0 0 40px rgba(0,0,0,.45)}
+.pk-body::before{content:'';position:absolute;inset:7px;border:1.5px dashed rgba(240,210,160,.28);border-radius:10px 10px 24px 24px;pointer-events:none}
+.pk-grid{position:relative;margin:0 auto;border:2px solid #24160a;border-radius:3px;background-color:#120c07;
+  background-image:linear-gradient(rgba(240,210,160,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(240,210,160,.07) 1px,transparent 1px);background-size:var(--cw) var(--cw);box-shadow:inset 0 0 18px rgba(0,0,0,.9)}
+.pk-bi{position:absolute;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:grab;touch-action:none;box-sizing:border-box;
+  background:radial-gradient(circle,color-mix(in srgb,var(--rc) 22%,transparent),color-mix(in srgb,var(--rc) 8%,transparent));border:1px solid color-mix(in srgb,var(--rc) 45%,transparent)}
+.pk-bi:hover{background:radial-gradient(circle,color-mix(in srgb,var(--rc) 34%,transparent),color-mix(in srgb,var(--rc) 12%,transparent))}
+.pk-bi.unid img{filter:grayscale(.6) brightness(.8) drop-shadow(0 2px 2px rgba(0,0,0,.8))}
+.pk-item.lifted{opacity:.25}
+.pk-ghost{position:fixed;z-index:10000;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;background:color-mix(in srgb,var(--rc) 18%,transparent);border:1px solid var(--rc)}
+.pk-ghost img{image-rendering:pixelated}
+.pk-shadow{position:absolute;pointer-events:none;box-sizing:border-box}.pk-shadow.ok{background:rgba(120,200,140,.18);border:1px solid rgba(120,200,140,.6)}.pk-shadow.no{background:rgba(220,80,60,.2);border:1px solid rgba(220,80,60,.6)}
+.pk-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;font-size:13px}
+.pk-purse{display:flex;align-items:center;gap:6px;color:#f0d890}.pk-purse img{width:18px;height:18px;image-rendering:pixelated}
+.pk-floor{color:rgba(240,210,160,.45);font-style:italic;border:1px dashed rgba(240,210,160,.2);border-radius:4px;padding:3px 8px}.pk-floor.hot{color:#ffb090;border-color:#e07a5a;background:rgba(220,80,60,.12)}
+.pk-over{margin-top:8px;font-size:12px;color:#e0a080;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.pk-ov{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border:1px solid var(--rc);border-radius:3px;cursor:grab}.pk-ov img{width:16px;height:16px}
+.pk-info{display:flex;gap:16px;flex-wrap:wrap;min-height:74px;margin-top:14px;padding:10px 14px;border-top:1px solid #3a3022;border-bottom:1px solid #3a3022;background:rgba(0,0,0,.25)}
+.pk-it{flex:1;min-width:220px}.pk-it b{font-size:17px}.pk-sub{font-size:12px;color:#8a7e6a;letter-spacing:.04em;margin:1px 0 4px}.pk-it ul{margin:0;padding-left:16px;font-size:14px;line-height:1.45}.pk-it li.cur{color:#e07a5a}
+.pk-cur{opacity:.75;border-left:1px solid #3a3022;padding-left:14px}.pk-hint{color:#8a7e6a;font-style:italic;font-size:14px;align-self:center}
+.pk-acts{display:flex;gap:8px;justify-content:center;margin-top:10px;min-height:34px}
+body.mob .pk-doll{gap:6px 8px;padding:10px}body.mob .pk-hero img{width:150px;height:150px;margin:-16px -22px -8px}body.mob .pk-stats{width:120px}body.mob .pk-stats{font-size:12px}
+body.mob .pk-pouch{width:28px;height:28px}body.mob .pk-pouch img{width:20px;height:20px}body.mob .pk-body{padding:26px 10px 10px}body.mob .pk-top .gmt{font-size:22px}
+`;document.head.appendChild(st)}
+setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{ringBell:(...a)=>ringBell(...a),carriedItems:()=>carriedItems(),genArmor,equipItem,unequip,bagSettle,inSlot})}catch(e){}},400);
+// armour soaking a hit: a dull clink and a small grey number
+{const d0=damage;damage=function(e,amt,src){const r=d0(e,amt,src);try{if(e&&e.lastBlock&&isP(e)){const b=e.lastBlock;e.lastBlock=0;UI.fx('float',{e,text:'−'+b+' armour',color:'#b8c0c8'});if(AU.on&&AU.ctx){const d=spOut(null,null,1);if(d){clang(d,jit(700),0.025,0.25);nz(d,{f:jit(1800),q:2,peak:0.05,dur:0.04})}}}}catch(er){}return r}}
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
