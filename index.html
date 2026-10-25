@@ -14,7 +14,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="theme-color" content="#090d10">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@500;700&family=IM+Fell+English:ital@0;1&family=Spline+Sans+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@500;700&family=UnifrakturMaguntia&family=IM+Fell+English:ital@0;1&family=Spline+Sans+Mono:wght@400;500;700&display=swap">
 <style>
 /* Layout: one dungeon screen. Map with HUD overlays + hotbar on the left, hero sheet / satchel / log on the right; stacks on phones. Single dark world by design. */
 :root{
@@ -5133,7 +5133,7 @@ function showSettings(from){GM.from=from||GM.from;const mob=isMob(),desk=!mob,ht
 /* ---- title screen ---- */
 showTitle=function(){const act=activeSlot(),cur=slotRead(act),any=[1,2,3].some(n=>slotRead(n));try{closeInspect()}catch(e){}
   const sub=cur?((cur.sum||{}).cls?cur.sum.cls+' · '+cur.sum.where:cur.sum.where):'';
-  ov.innerHTML=`<div class="ttl"><div class="ttlogo"><div class="tt1">Saltmarrow</div><div class="tt2">Deep</div><div class="ttsub">A gothic delve beneath a drowned mining town</div></div>
+  ov.innerHTML=`<div class="ttl"><div class="ttlogo"><div class="tt1">Saltmarrow</div><div class="tt2">Deep</div><div class="ttorn"><i></i><b>✠</b><i></i></div><div class="ttsub">A gothic delve beneath a drowned mining town</div></div>
     <div class="gml">${cur?gmItem('cont','Continue',esc(sub)+' · slot '+act):''}${gmItem('tnew','New game')}${any?gmItem('tload','Load game'):''}${gmItem('tset','Settings')}${gmItem('thelp','How to play')}${IS_ELECTRON?gmItem('quit','Quit'):''}</div>
     <div class="ttfoot">© Juju Games</div><p class="gmmsg" id="gmMsg"></p></div>`;ov.hidden=false;ov.classList.add('gmov','ttov');
   ov.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{const k=b.dataset.g;
@@ -5153,7 +5153,7 @@ document.addEventListener('keydown',ev=>{if(ev.key==='m'||ev.key==='M'){if(!ov.h
 {const s0=start;start=function(data){s0(data);if(!(data&&data.S))splash()}}
 /* ---- the skin ---- */
 {const st=document.createElement('style');st.textContent=`
-:root{--abyss:#0a0908;--hull:#14110e;--hull-2:#1c1814;--hull-3:#26201a;--line:#3b3026;--bone:#ebdfc6;--dim:#9b8f7a;--lantern:#d9a441;--gilt:#f0cf7a;--bronze:#6a5232}
+:root{--black:'UnifrakturMaguntia','Grenze Gotisch',Georgia,serif;--abyss:#0a0908;--hull:#14110e;--hull-2:#1c1814;--hull-3:#26201a;--line:#3b3026;--bone:#ebdfc6;--dim:#9b8f7a;--lantern:#d9a441;--gilt:#f0cf7a;--bronze:#6a5232}
 html,body{background:#0a0908}
 .btn{background:linear-gradient(180deg,#26201a,#18140f);border:1px solid #4a3c2c;border-radius:4px;box-shadow:inset 0 1px 0 rgba(255,225,170,.07),0 1px 0 rgba(0,0,0,.6);color:var(--bone)}
 .btn:hover:not(:disabled){border-color:var(--lantern);color:var(--gilt);background:linear-gradient(180deg,#2e261c,#1c1712)}
@@ -5166,7 +5166,7 @@ html,body{background:#0a0908}
 .mdl h2,.mdl .hd h2{font-family:var(--display);color:var(--gilt);letter-spacing:.01em}
 .say,.mdl p.say{font-family:var(--prose);font-size:16.5px;line-height:1.5}
 .overlay{background:radial-gradient(ellipse at 50% 40%,rgba(20,16,12,.86),rgba(4,3,2,.96))}
-header h1{font-family:var(--display);color:var(--bone)}
+header h1{font-family:var(--black);font-weight:400;color:#e9dcc0;letter-spacing:.01em}header h1 span{background:linear-gradient(180deg,#fff0b8,#f0c860 40%,#b8781e);-webkit-background-clip:text;background-clip:text;color:transparent}
 body.mob header{background:linear-gradient(180deg,#14110e,#0f0d0b);border-bottom:1px solid #3b3026}
 body.mob header h1{font-size:24px}
 #menuBtn{display:inline-flex;align-items:center;gap:8px}
@@ -5178,7 +5178,7 @@ body.mob header h1{font-size:24px}
   box-shadow:inset 0 0 0 1px #0a0806,inset 0 0 0 3px rgba(217,164,65,.1),0 30px 80px rgba(0,0,0,.8)}
 .gm.wide{width:min(620px,94vw)}
 .gm::before,.gm::after{content:"";position:absolute;width:18px;height:18px;border:2px solid #9a7638;pointer-events:none}.gm::before{top:7px;left:7px;border-right:none;border-bottom:none}.gm::after{bottom:7px;right:7px;border-left:none;border-top:none}
-.gmh{text-align:center;display:flex;flex-direction:column;gap:4px;margin-bottom:4px}.gmt{font-family:var(--display);font-size:34px;line-height:1;color:var(--bone)}.gmt span{color:var(--lantern)}
+.gmh{text-align:center;display:flex;flex-direction:column;gap:4px;margin-bottom:4px}.gmt{font-family:var(--black);font-size:38px;line-height:1.05;color:#e9dcc0;text-shadow:0 2px 0 #2a1a08}.gmt span{background:linear-gradient(180deg,#fff0b8,#f0c860 40%,#b8781e);-webkit-background-clip:text;background-clip:text;color:transparent}
 .gms{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
 .gml{display:flex;flex-direction:column;gap:8px}
 .gmb{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 14px;font-family:var(--prose);font-size:19px;color:var(--bone);cursor:pointer;border-radius:3px;
@@ -5196,8 +5196,9 @@ body.mob header h1{font-size:24px}
 .ttl{display:flex;flex-direction:column;align-items:center;gap:26px;width:min(420px,92vw);margin:auto}
 .ttov{background:radial-gradient(ellipse at 50% 30%,rgba(40,28,14,.75),rgba(4,3,2,.97) 70%)}
 .ttlogo{text-align:center;filter:drop-shadow(0 4px 18px rgba(0,0,0,.9))}
-.tt1{font-family:var(--display);font-size:clamp(46px,12vw,72px);line-height:.9;color:var(--bone);letter-spacing:.01em}
-.tt2{font-family:var(--display);font-size:clamp(54px,15vw,92px);line-height:.85;color:var(--lantern);text-shadow:0 0 30px rgba(217,164,65,.35)}
+.tt1{font-family:var(--black);font-size:clamp(50px,13vw,84px);line-height:.95;color:#e9dcc0;text-shadow:0 2px 0 #3a2a18,0 4px 14px rgba(0,0,0,.9)}
+.tt2{font-family:var(--black);font-size:clamp(64px,18vw,112px);line-height:.9;background:linear-gradient(180deg,#fff0b8 0,#f0c860 35%,#c8892c 62%,#7a4a14 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 0 #2a1a08) drop-shadow(0 0 22px rgba(217,164,65,.35))}
+.ttorn{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:6px;color:#9a7638}.ttorn i{display:block;width:90px;height:1px;background:linear-gradient(90deg,transparent,#9a7638)}.ttorn i:last-child{transform:scaleX(-1)}.ttorn b{font-size:16px;font-weight:400}
 .ttsub{margin-top:10px;font-family:var(--prose);font-style:italic;font-size:16px;color:var(--dim)}
 .ttl .gml{width:100%}.ttfoot{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#5a4e3e}
 /* splash */
