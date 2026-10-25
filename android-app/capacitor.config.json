@@ -1,0 +1,14 @@
+{
+  "appId": "com.alemeno.saltmarrow",
+  "appName": "Saltmarrow Deep",
+  "webDir": "www",
+  "server": {
+    "url": "https://alemeno-00.github.io/Saltmarrow/",
+    "androidScheme": "https",
+    "errorPath": "index.html"
+  },
+  "android": {
+    "backgroundColor": "#0b0e10",
+    "allowMixedContent": false
+  }
+}
