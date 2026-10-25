@@ -5761,9 +5761,35 @@ body.full.bot #heroBox,body.full.bot #logBox,body.full.bot .log p{font-family:va
 `;document.head.appendChild(st)}
 {const t0=UI.toast;UI.toast=(t,s)=>{const h=$('toastHost');if(h)h.innerHTML='';return t0(t,s)}}
 {const st=document.createElement('style');st.textContent=`body.full.bot #portBox .pw{font-family:var(--ui);font-size:13px;font-variant:small-caps;letter-spacing:.06em}.toast p{font-family:var(--ui);font-variant:small-caps;letter-spacing:.14em}`;document.head.appendChild(st)}
+/* ---- calmer boot: one thing on screen at a time, fonts loaded first, the menu fades in on its own ---- */
+splash=function(done){const B=$('boot');if(!B){done&&done();return}if(HEADLESS){B.remove();return}
+  try{$('toastHost').innerHTML='';$('feed').innerHTML=''}catch(e){}
+  B.innerHTML=`<div class="bst b1"><div class="jjmark"></div><div class="jjname">JUJU<span>GAMES</span></div><div class="jjtag">presents</div></div>
+    <div class="bst b2"><div class="tt1">Saltmarrow</div><div class="tt2">Deep</div><div class="ttorn"><i></i><b>✠</b><i></i></div><div class="ttsub">A gothic delve beneath a drowned mining town</div></div><div class="brain"></div>`;
+  B.querySelector('.jjmark').appendChild(jujuMark());B.classList.add('on');let gone=false;const T=[];const at=(ms,f)=>T.push(setTimeout(f,ms));
+  const set=s=>{B.dataset.s=s};
+  const end=()=>{if(gone)return;gone=true;T.forEach(clearTimeout);try{$('toastHost').innerHTML=''}catch(e){}set('done');B.classList.add('out');document.body.classList.add('ttin');setTimeout(()=>{B.remove();done&&done()},700)};
+  const run=()=>{if(gone)return;set('1');at(2300,()=>set('1o'));at(3100,()=>set('2'));at(5700,()=>set('2o'));at(6400,end)};
+  const fonts=document.fonts&&document.fonts.ready?Promise.race([document.fonts.ready,new Promise(r=>setTimeout(r,1500))]):Promise.resolve();
+  fonts.then(()=>requestAnimationFrame(()=>requestAnimationFrame(run)));
+  B.addEventListener('pointerdown',end);addEventListener('keydown',end,{once:true})};
+// never redraw the title while it's already up (it was being drawn twice on start)
+{const t0=showTitle;showTitle=function(){if(!ov.hidden&&ov.querySelector('.ttl'))return;return t0.apply(this,arguments)}}
+{const st=document.createElement('style');st.textContent=`
+#boot .bst{transition:opacity .7s ease,transform 3s ease;opacity:0;transform:scale(.985)}
+#boot[data-s="1"] .b1{opacity:1;transform:none}
+#boot[data-s="1o"] .b1{opacity:0;transform:none;transition:opacity .6s ease}
+#boot[data-s="2"] .b2{opacity:1;transform:scale(1.02)}
+#boot[data-s="2o"] .b2{opacity:0;transform:scale(1.02);transition:opacity .6s ease}
+#boot[data-s="2"] .brain{opacity:1}#boot[data-s="2o"] .brain{opacity:0}
+#boot .b1 .jjtag{opacity:0;transition:opacity .7s ease .9s}#boot[data-s="1"] .b1 .jjtag{opacity:1}
+#boot .b2 .ttsub{opacity:0;transition:opacity .8s ease .9s}#boot[data-s="2"] .b2 .ttsub{opacity:1}
+#boot.out{opacity:0;transition:opacity .7s ease}
+.ttov{background:radial-gradient(ellipse at 50% 32%,#1c150d 0,#0a0806 62%,#050403 100%)!important}
+body.ttin .ttl{animation:ttin .9s ease both}@keyframes ttin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}`;document.head.appendChild(st)}
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
 </script>
-<script>if('serviceWorker' in navigator&&location.protocol.startsWith('http')){const T0=Date.now();addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(r=>r.update()).catch(()=>{}));let had=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!had){had=true;return}if(Date.now()-T0<30000&&!sessionStorage.getItem('sm-reloaded')){sessionStorage.setItem('sm-reloaded','1');location.reload()}})}</script>
+<script>if('serviceWorker' in navigator&&location.protocol.startsWith('http'))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(r=>r.update()).catch(()=>{}));</script>
 </body></html>
