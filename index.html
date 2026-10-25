@@ -1317,7 +1317,7 @@ function enterTown(why){const cls0=S&&S.cls?S.cls:'riptide';
   S.P=townHero();genTown();S.P.x=53;S.P.y=16;S.P.rx=53;S.P.ry=16;S.P.lantern=true;S.P.dread=0;computeFov();
   if(why==='death'){log('You wake on the cold floor of the chapel. You do not remember the climb. Your pack is gone.','dread');UI.toast('Saltmarrow','You do not remember the climb')}
   else if(why==='bell'){log('The lift groans up out of the dark. Rain, gas lamps, and the smell of the sea.','gold');UI.toast('Saltmarrow','You made it back')}
-  else{log('Rain hammers the slate roofs of Saltmarrow. The lift head waits at the end of the street.','gold');UI.toast('Saltmarrow','A mining village above a dead sea')}
+  else{log('Saltmarrow smells of brine and coal smoke. The sea left two hundred years ago. The town still listens for it. The lift head waits at the end of the street.','gold');UI.toast('Saltmarrow','A mining village above a dead sea')}
   META.smith=null;saveMeta();UI.save();UI.render()}
 /* ---- dives ---- */
 const startDepths=()=>[1,3,5,7].filter(d=>d===1||META.deepest>=d-1);
@@ -2787,6 +2787,138 @@ async function enterSewer(){const P=S.P;if(S.mode==='combat'){log('Not with enem
 // the King drops the proof
 {const k0=killMon;killMon=function(m,how,src){const r=k0(m,how,src);try{if(m.type==='ratking'){const L=S.L;if(!META.lore[SEWER_LORE_START])L.items.push({kind:'page',n:SEWER_LORE_START,x:m.x,y:m.y});
   const it=rollLoot();L.items.push(Object.assign(it,{x:m.x,y:m.y}));L.items.push({kind:'gold',amt:rr(40,70),x:m.x,y:m.y});log('The knot of rats comes apart. Something was tangled in it: a book, and somebody\'s purse.','gold')}}catch(e){}return r}}
+/* ---------- the expanded story: motives, the Mother's voice, Hale's family, Ada, Edric, the sewer witness, and the Founder's child ---------- */
+// ---- new lore, appended so old indices never move ----
+const LORE2=LORE.length;
+LORE.push(
+  {d:3,t:'Lottery box, false bottom',x:"Under the slips, a second compartment. Every founding family's name, folded small, never drawn in two hundred years. A note in the Mayor's hand: KEEP THESE DRY."},
+  {d:7,t:'A letter in a lottery shawl',x:"Father. If you are reading this, I lived longer than you planned. The custom is a lie, and you knew it when you put my name in the box yourself. Isobel."},
+  {d:5,t:"Ada's last page",x:"Nell. The Mother remembers every child of the Founders, even the ones who were given away, even the ones who never knew. She showed me a face I didn't know. I think it was whoever comes after me."});
+// ---- quests ----
+Object.assign(QUESTS,{
+  edricDeep:{act:4,name:'The Choir of the Drowned',who:'mara',steps:[['edricFound','Find Edric Vell in the Drowned Vaults (depth 7)']]},
+  ada:{act:3,name:"Nell's Sister",who:'nell',steps:[['adaFound','Find Ada Thorn in the Fungal Hollows (depth 5 or 6)']]}});
+// ---- why each delver goes down ----
+const MOTIVE={
+  riptide:{intro:"You worked Shift Nine's face for twelve years. You were home with a fever the morning it broke through. Every man on that list was yours.",
+    mara:"'I should have been on that shift.' Mara looks at you a long time. 'Then you'll look harder than anyone Hale could pay. Good.'",
+    end:'You never go back to the mine. Some nights you still wake at the hour the shift bell used to ring.'},
+  shadow:{intro:"Last season the lottery drew your little brother, Wil. They paid your mother a purse and took him down the shaft at dawn. You mean to see where the shaft goes.",
+    mara:"'Wil Corran.' Mara knows the name. 'I worked the winch that morning. He asked if the pumps were loud.' She looks away. 'Find out what they're for.'",
+    end:'You find Wil\'s name on the tithe-rolls, and beside it a tonnage of salt. You burn the page. It does not help.'},
+  storm:{intro:"For fifty years every storm on this coast has started from the same place: a pressure in the earth under Saltmarrow, like breath held too long. Lately it has started to let go.",
+    mara:"'You can feel it too?' Mara grips the winch rail. 'The cables hum before a bad night. I thought it was only me.'",
+    end:'The weather on the coast is ordinary now. You find you miss the storms more than you expected.'},
+  flag:{intro:"Sister Agathe raised you in the chapel and taught you the lash. You have begun to suspect that the chapel's penance was invented to keep the faithful too busy bleeding to ask where the lottery went.",
+    mara:"'Agathe's novice.' Mara almost smiles. 'She sends her own down now? Then she's frightened. That's new.'",
+    end:'You lay the scourge on the altar and never pick it up again. Agathe does not ask you to.'},
+  occult:{intro:"As a student you read the Brotherhood's psalter in a locked archive, one page, once. You have heard Her every night since. Going down is the only way to make it stop, or to finally answer.",
+    mara:"'You've the look of someone who doesn't sleep.' Mara nods at the shaft. 'Neither did the ones who came back.'",
+    end:'The whispering stops. In the silence you discover you had grown to depend on it.'}};
+// ---- the Mother's voice: dreams at camp and whispers at high dread ----
+const MOTHER_DREAMS={1:'You dream of salt, white and endless, and something underneath it turning over. A voice, almost fond: "Little digger. You smell of the town."',
+  2:'You dream the lift cable is a vein, and you are climbing down it toward a heart. "Closer," something says. "I can almost taste your lantern."',
+  3:'You dream of the lottery box opening by itself, again and again, every slip blank but one. "That one is yours," says the voice. "It always was."',
+  4:'You dream of the Choir, and you are singing with them, and it is the most beautiful thing you have ever done. You wake with your jaw aching.',
+  5:'You dream of Ada Thorn, smiling, rooted to the wall. "She asks after you," Ada says. "She asks after everyone."',
+  6:'"I know your name," says the voice in the dream. "I dreamed it before your mother did. Come down and I will tell you what it means."',
+  7:'You do not dream. You lie awake and hear breathing that is not yours, vast and slow, coming up through the stone.',
+  8:'"Here," says the voice. "Here, at last."'};
+const MOTHER_WHISPERS=['"You are so far from the sky."','"Keep the lantern lit. I like to watch it."','"They gave me your brother. They will give me you."','"Salt is bread. Bread is life. You are bread."','"Rest. Lie down in the water. It is warm."','"I remember your grandmother. She tasted of copper and fear."'];
+{const c0=campApply;campApply=function(fire,acts){const r=c0(fire,acts);try{const d=Math.max(1,Math.min(8,S.depth||1));log(S.L&&S.L.bio==='sewer'?'You dream of the town above, all its drains running down to you, and something down here drinking.':MOTHER_DREAMS[d],'dread');if(d>=5)addDread(1)}catch(e){}return r}}
+{const t0=exploreTick;exploreTick=async function(){const r=await t0();try{const P=S.P;if(P&&(P.dread||0)>=7&&!S.L.town&&(S.L.turns||0)-(S.lastWhisper||-99)>40&&Math.random()<0.05){S.lastWhisper=S.L.turns||0;log(pick(MOTHER_WHISPERS),'dread')}}catch(e){}return r}}
+// ---- the Abbot speaks as you descend ----
+const ABBOT_VOICE={4:'Far below, a voice like a bell under water: "Another bell. Another guest. Come down, little one. The Choir needs a new mouth."',
+  6:'The Abbot\'s voice, closer now: "I gave Her my brothers and my name. What will you give?"',
+  7:'The voice is all around you, patient and kind: "Two hundred years I have kept Her. Do you think you are the first to come with a lantern and a hopeful face?"',
+  8:'"There you are," says the Drowned Abbot. "Sit with me. Let me tell you how it ends."'};
+{const d0=descend;descend=async function(f){const r=await d0(f);try{if(!S.inSewer&&ABBOT_VOICE[S.depth]&&!(S.abbotSaid||{})[S.depth]){S.abbotSaid=Object.assign(S.abbotSaid||{},{[S.depth]:1});log(ABBOT_VOICE[S.depth],'dread')}}catch(e){}return r}}
+// ---- the people you can meet below ----
+Object.assign(ENC,{
+  ada:{name:'Ada Thorn',desc:'A woman grown into a wall of pale fungus. She is alive. She is smiling.',title:'Ada Thorn',
+    txt:'Roots run through her ribs and out into the wall. Her eyes are open and kind. "Nell sent you? No," Ada says. "You found me. She always said I would be found." The caps around her pulse faintly, in time with something enormous.',
+    opts:[{label:'Cut her free, though it will kill her',res:[o=>{setFlag('adaFound');setFlag('adaFreed');closeQuest('ada');o.dead=1;if(!META.lore[11]){S.L.items.push({kind:'page',n:11,x:S.P.x,y:S.P.y})}if(!META.lore[LORE2+2])S.L.items.push({kind:'page',n:LORE2+2,x:S.P.x,y:S.P.y});easeDread(2);
+        return'You cut. She sighs, the way someone does when they finally sit down. "Tell Nell the page is in the nave. I took a copy." She presses two folded sheets into your hand and is gone.'}]},
+      {label:'Let her keep listening, and listen with her',stat:'I',res:[o=>{setFlag('adaFound');setFlag('adaHeard');closeQuest('ada');addDread(3);o.gone=1;return'You press your ear to the caps. The Mother is dreaming. You are in the dream. You pull away screaming, and Ada only smiles.'},
+        o=>{setFlag('adaFound');setFlag('adaHeard');setFlag('founderBlood');closeQuest('ada');addDread(2);revealMap();o.gone=1;return'You listen. You see the whole level, every passage, the way the Mother sees it. And you see a face you know in Her memory of the Founders: your own grandmother. Ada nods. "Yes. You too."'},
+        o=>{setFlag('adaFound');setFlag('adaHeard');setFlag('founderBlood');closeQuest('ada');addDread(1);revealMap();o.gone=1;if(!META.lore[LORE2+2])S.L.items.push({kind:'page',n:LORE2+2,x:S.P.x,y:S.P.y});return'You listen, and keep your head. The Mother remembers every Founder\'s child, and She remembers your blood. Ada gives you her notes. "Now you know what you can do," she says. "I am sorry."'}]}]},
+  edric:{name:'Edric Vell',desc:'A man kneeling in the black water among the Choir. He looks like Mara.',title:'Edric Vell',
+    txt:'He kneels waist-deep among the Choir, his mouth not yet sewn to anyone\'s. Mara\'s face, older and starved. He is singing. When your lantern finds him he stops, and for a moment he is only a frightened miner. "Is she still waiting at the winch?"',
+    opts:[{label:'Drag him out and get him to the lift',stat:'M',res:[o=>{setFlag('edricFound');setFlag('edricLost');closeQuest('edricDeep');damage(S.P,5,null);o.gone=1;return'He fights you like a drowning man, and breaks loose, and wades deeper into the dark, singing again.'},
+        o=>{setFlag('edricFound');setFlag('edricHome');closeQuest('edricDeep');o.gone=1;return'You haul him out of the water. He weeps the whole way to the stair, and then he climbs toward the lift on his own.'},
+        o=>{setFlag('edricFound');setFlag('edricHome');closeQuest('edricDeep');o.gone=1;giveLoot({kind:'gold',amt:40});return'You get him out. He presses something into your hand: the silver Shift Nine was paid in advance. "Give the rest to the families," he says, and climbs.'}]},
+      {label:'Give him the mercy he is asking for',res:[o=>{setFlag('edricFound');setFlag('edricMercy');closeQuest('edricDeep');o.dead=1;easeDread(1);return'"Thank you," he says, and means it. The song stops. Somewhere far below, something notices.'}]},
+      {label:'Leave him singing',res:[o=>{setFlag('edricFound');setFlag('edricLeft');closeQuest('edricDeep');o.done=1;return'You back away. The song follows you a long way down the nave.'}]}]},
+  isobel:{name:'Isobel Hale',desc:'A young woman in a lottery shawl, sitting in a dry alcove above the flood. Alive.',title:'Isobel Hale',
+    txt:'She has been down here a long time. A lottery shawl, gone grey. A bone comb in her hair. "You came from the town," she says. "Is my father still Mayor?" She laughs, and it echoes. "He told everyone it was an honour. He wrote my name on the slip himself. I wasn\'t even drawn."',
+    opts:[{label:'Get her out, past the Choir',stat:'A',res:[o=>{setFlag('isobelSaved');o.gone=1;addDread(1);S.L.items.push({kind:'page',n:LORE2+1,x:S.P.x,y:S.P.y});return'The Choir turns as one when you pass. You run. She keeps up. At the stair she stops, gives you a folded letter, and says, "Make him read it."'},
+        o=>{setFlag('isobelSaved');o.gone=1;S.L.items.push({kind:'page',n:LORE2+1,x:S.P.x,y:S.P.y});return'You find a dry way around the Choir. She climbs toward the lift without a word, then turns back and gives you a letter. "For my father. Make him read it."'}]},
+      {label:'Tell her to wait, and come back later',res:[o=>{o.keepOpen=1;return'"I have waited six years," Isobel says. "I can wait an afternoon."'}]}]},
+  tam:{name:'Tam the delivery',desc:'A young man in a lottery shawl, hiding in a dry culvert.',title:'A delivery that got away',
+    txt:'A young man in a lottery shawl crouches in a dry culvert, a broken sewer-rod in both fists. "Don\'t," he says. "I\'m not going down. They brought me through here on a cart, at night, from the Hall cellar. The rats got the cart. They didn\'t get me."',
+    opts:[{label:'Lead him back up through the grate',res:[o=>{setFlag('witness');o.gone=1;return'He follows you to the ladder and climbs like he is being chased. "I\'ll be at the Drowned Lamb," he says. "If you need someone to say it out loud, I will."'}]},
+      {label:'Give him your ration and leave him hidden',res:[o=>{if(S.inv.ration>0)S.inv.ration--;setFlag('witnessHidden');o.gone=1;return'He eats like a dog. "Go on," he says. "I know the way out. I just don\'t know who to tell."'}]}]}});
+FEAT.encounter.desc=o=>(ENC[o.who]||ENC.miner).desc;
+function placeStoryEnc(who){const L=S.L,P=S.P;const d=bfsDist(P.x,P.y,true);const rs=shuffle((L.rooms||[]).slice()).sort((a,b)=>(d[I(b.cx,b.cy)]||0)-(d[I(a.cx,a.cy)]||0));
+  for(const r of rs){const c=roomFloors(r).filter(([x,y])=>freeFloor(x,y)&&d[I(x,y)]>8&&!L.mons.some(m=>m.x===x&&m.y===y));if(!c.length)continue;const[x,y]=pick(c);const o={type:'encounter',who,x,y,id:S.nextId++};L.objs.push(o);if(levelOK())return o;L.objs.pop()}return null}
+{const g0=genLevel;genLevel=function(){g0();try{const L=S.L;if(L.town)return;
+  if(S.inSewer){if(!flag('witness')&&!flag('witnessHidden'))placeStoryEnc('tam')}
+  else if(S.depth===7){if(!flag('edricFound'))placeStoryEnc('edric');if(!flag('isobelSaved'))placeStoryEnc('isobel')}
+  else if((S.depth===6||(S.depth===5&&Math.random()<0.5))&&!flag('adaFound'))placeStoryEnc('ada');
+  rebuildOpq()}catch(e){LV.err++}}}
+// ---- town conversations ----
+D.mara.ring={t:"You hold out a tarnished ring. It was on a husk's finger in the crypts, but the hand was too small to be his. Mara turns it over twice. 'That's Edric's ring.' A long breath. 'That's not Edric's hand.'",o:[
+  {l:'Tell her everything you saw.',do:()=>{setFlag('edricTruth');setFlag('edricTold');closeQuest('edric');openQuest('edricDeep');trust('mara',2)},to:'deeper'},
+  {l:'Tell her it was quick, whoever it was.',do:()=>{setFlag('edricLie');setFlag('edricTold');closeQuest('edric');openQuest('edricDeep');trust('mara',1)},to:'deeper'},
+  {l:'Say nothing, and keep the ring.',do:()=>{setFlag('edricSilent');setFlag('edricTold');closeQuest('edric');trust('mara',-2)}}]};
+D.mara.deeper={t:"'He gave it away, or someone took it. Either way he went on without it.' She looks down the shaft. 'The Choir, Davy used to say. The ones who go deep enough start singing. If he's singing, he's alive.'",o:[{l:"I'll find him.",to:'idle'}]};
+D.mara.home={t:"Edric sits by the winch wrapped in Mara's coat, staring at the rain like he has never seen it. Mara doesn't let go of his hand while she talks to you. 'He doesn't sleep. He hums. I don't care.' Her voice breaks on the last word. 'I don't care.'",o:[{l:'Leave them be.',do:()=>{setFlag('edricHomeSeen');trust('mara',3)}}]};
+D.mara.motive={t:()=>(MOTIVE[S.cls]||MOTIVE.riptide).mara,o:[{l:'Ready the lift.',do:()=>setFlag('mot_'+S.cls),lift:1},{l:'Leave.',do:()=>setFlag('mot_'+S.cls)}]};
+D.mara.idle.o.splice(1,0,{l:'Tell her why you are really going down.',if:()=>!flag('mot_'+S.cls),to:'motive'});
+{const e0=D.mara.entry;D.mara.entry=()=>flag('edricHome')&&!flag('edricHomeSeen')?'home':e0()}
+// Hale: the rigged box, the sewer book, his daughter
+D.hale.lot.t="'The custom?' He never calls it the lottery. 'A volunteer, chosen by lot, tends the deep pumps for a season. Their family is well provided for.' He holds your gaze. 'It is an honour.'";
+D.hale.face.t="You lay Rook's tithe-rolls on Hale's desk. Every name the custom ever sent down, and beside each, the tonnage of salt that came up the next season. Not one founding family's name in two hundred years.";
+D.hale.face2={t:"You lay the stained delivery book on his desk, open at the last page. Hall cellar to the old drain, then the Brotherhood's stair. Night deliveries only. Signed C.H. Hale reads his own initials as if they belong to a stranger.",o:[
+  {l:'Expose him. Everyone will know.',do:()=>{setFlag('exposed');setFlag('haleFaced');trust('hale',-5);trust('mara',1);trust('bram',1)},to:'exposed'},
+  {l:'Take his money and stay quiet.',do:()=>{setFlag('bribed');setFlag('haleFaced');trust('hale',2);trust('agathe',-2);META.silver+=200;saveMeta()},to:'bribed'},
+  {l:'Ask him why.',to:'why'}]};
+D.hale.isobel={t:"You put Isobel's letter on the desk. He knows the handwriting before he opens it. When he has read it he folds it very small, the way she used to fold the slips. 'She's alive.' It is not a question, and it is not relief. 'Then the custom never worked the way I told myself. Then all of them...' He stands. 'I will say it in the square. Tonight. All of it.'",o:[
+  {l:'Let him.',do:()=>{setFlag('exposed');setFlag('haleFaced');setFlag('isobelHale');closeQuest('proof');trust('hale',1);trust('mara',2);trust('bram',1)},to:'confess'}]};
+D.hale.confess={t:"He tells them everything, standing on the lottery box in the rain. Isobel stands at the back of the crowd. When he is done they do not hang him. They simply walk away, one family at a time, until he is alone in the square.",o:[{l:'Leave.'}]};
+{const e0=D.hale.entry;D.hale.entry=()=>{if(seen('hale')&&flag('isobelSaved')&&!flag('isobelHale'))return'isobel';const k=e0();if(k==='idle'&&!flag('haleFaced')&&(META.lore[SEWER_LORE_START]||flag('witness')))return'face2';return k}}
+// Bram and the witness
+D.bram.tam={t:"A young man in a lottery shawl sits by Bram's fire with a bowl he hasn't touched. Bram nods at him. 'Says he came up through the drains. Says the Mayor's cellar has a door in the floor.' He wipes the same spot on the bar three times. 'I've given him a room. Nobody touches him.'",o:[{l:'Leave them be.',do:()=>setFlag('tamSeen')}]};
+{const e0=D.bram.entry;D.bram.entry=()=>flag('witness')&&!flag('tamSeen')&&seen('bram')?'tam':e0()}
+// Nell and Ada
+D.nell.adaAsk={t:"'Ada.' Nell's smile slips for once. 'She went to the deepest caps. She said the Mother was talking about someone who hadn't come yet. Find her. If she's still listening, I want to know what she heard.'",o:[{l:"I'll look.",do:()=>openQuest('ada')}]};
+D.nell.adaFreedT={t:"You tell her. Nell sets down the jar she is holding very carefully, as if it might break. 'She sat down,' she says. 'Good. She was always standing.' Later you hear her laughing in the back room, or something like laughing.",o:[{l:'Leave her be.',do:()=>{setFlag('adaTold');trust('nell',2)}}]};
+D.nell.adaHeardT={t:"'You listened.' Nell takes your face in both hands and looks into your eyes for a long time. 'Yes. She's in there now, a little. She'll be in there always.' She lets go. 'Did Ada tell you what you are?'",o:[{l:'Leave.',do:()=>{setFlag('adaTold');trust('nell',1)}}]};
+D.nell.idle.o.splice(1,0,{l:'Ask about Ada.',if:()=>!questState('ada'),to:'adaAsk'});
+{const e0=D.nell.entry;D.nell.entry=()=>seen('nell')&&!flag('adaTold')&&flag('adaFreed')?'adaFreedT':seen('nell')&&!flag('adaTold')&&flag('adaHeard')?'adaHeardT':e0()}
+// Agathe and the founding families
+D.agathe.founders={t:"Agathe opens the psalter to the back, where the founding families signed. She runs a finger down the names, and stops, and looks at you differently. 'Your grandmother's name. Married out of the Founders and never spoke of it.' She closes the book. 'You are Founders' blood. If you find the last page, you will not need to ask anyone else to walk into the water.'",o:[{l:'Leave.',do:()=>{setFlag('founderBlood');trust('agathe',1)}}]};
+D.agathe.idle.o.splice(1,0,{l:'Ask about the founding families.',if:()=>flag('psalterGiven')&&tr('agathe')>=2&&!flag('founderBlood'),to:'founders'});
+// ---- endings ----
+{const o0=endingOptions;endingOptions=function(){const o=o0();if(flag('founderBlood')&&META.lore[11])o.push({id:'self',label:'Read the last page aloud. Walk into the water yourself.',txt:"Give your own Founders' blood"});return o}}
+const SELF_END=["You read the last page aloud. The words are older than the Order, and they are addressed to you by name. You set down your lantern and walk into the water. It is not cold. It has been waiting for you specifically, and it is almost kind.",
+  "The Mother sleeps without dreaming. The Drowned Abbot crumbles like salt in rain, grateful. Above, the seams run thin and then run out, and Saltmarrow learns to fish a sea that is slowly coming home.",
+  "Nobody draws a slip again. They carve your name over the lift head instead, misspelled. On still nights Mara swears she can hear someone humming at the bottom of the shaft, and that it sounds content."];
+{const e0=epilogue;epilogue=function(id){const L=e0(id==='self'?'agathe':id);if(id==='self')L.splice(0,3,...SELF_END);
+  const m=MOTIVE[S&&S.cls||'riptide'];if(m&&id!=='renew'&&id!=='self')L.splice(3,0,m.end);
+  const ins=[];
+  if(flag('edricHome'))ins.push('Edric Vell works the winch with his sister now. He never goes below the first gallery, and he never stops humming.');
+  else if(flag('edricMercy'))ins.push('You never tell Mara how Edric asked you for it. Some kindnesses have to be carried alone.');
+  else if(flag('edricLeft'))ins.push('Sometimes, when the lift is quiet, Mara thinks she hears her brother singing. She tells herself it is the cables.');
+  if(flag('isobelHale'))ins.push('Isobel Hale runs the Hall now. The lottery box sits by the door as a planter. Nothing she plants in it ever grows.');
+  else if(flag('isobelSaved'))ins.push('Isobel Hale lives above the Drowned Lamb and never speaks to her father. He walks past her window every evening anyway.');
+  if(flag('witness'))ins.push('Tam, the delivery that got away, told his story in the square until people stopped calling it a rumour.');
+  if(flag('adaFreed'))ins.push('Nell planted something on the spot where you cut her sister free. It glows a little, and it is not a mushroom.');
+  else if(flag('adaHeard'))ins.push('You still hear Ada Thorn sometimes, in the moment between waking and sleep, telling you that you were always going to be found.');
+  if(flag('exposed')&&(flag('witness')||flag('isobelSaved')))ins.push('Saltmarrow knows everything now. It is a harder town for it, and an honest one.');
+  const tail=L.length-1;L.splice(tail,0,...ins);return L}}
+{const r0=encResolve;encResolve=function(o,opt){const r=r0(o,opt);if(o.keepOpen){o.done=false;o.keepOpen=0}return r}}
+{const e0=enterTown;enterTown=function(why){const r=e0(why);try{const c=S.cls;if(MOTIVE[c]&&!flag('motiveSeen_'+c)&&!why){setFlag('motiveSeen_'+c);log(MOTIVE[c].intro,'whisper')}}catch(e){}return r}}
 /* ================= heroes & runs ================= */
 function newHero(k){const c=CLASSES[k];const bm=c.stam+META.upg.stam*4,br=c.recov+META.upg.recov;
   return{id:'P',x:0,y:0,rx:0,ry:0,stam:bm,max:bm,baseMax:bm,temp:0,lvl:1,chars:Object.assign({},c.chars),recov:br,recovMax:br,baseRecov:br,res:0,lantern:true,hidden:false,defending:false,conds:[],fx:1,fy:0,stab:c.stab,webbed:0,dread:0,lens:META.upg.lamp?1:0}}
@@ -4145,7 +4277,7 @@ UI.ending=()=>{S.busy=false;const opts=endingOptions();
   const el=modal(`${head(monIcon('abbot'),'The Tithe-Mother','She is awake enough to listen',1)}<p class="say">The Abbot kneels in the black water, unmade but not dead. He cannot die; that was the bargain. Beneath him the floor of the nave is not stone. It is an eyelid, and it is beginning to open.</p><p class="say">You understand, without words, that you are being asked a question.</p><div class="opts">${opts.map((o,i)=>`<button class="btn" data-i="${i}">${esc(o.label)}</button>`).join('')}</div>`);
   el.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const o=opts[+b.dataset.i];META.ended=o.id;setFlag('ended');closeQuest('tithe');saveMeta();UI.save(true);showEpilogue(o.id,0)})};
 function showEpilogue(id,pg){const L0=epilogue(id);const chunk=L0.slice(pg*3,pg*3+3);const more=(pg+1)*3<L0.length;
-  const el=modal(`<div class="mhd"><div><h2>${{break:'The Bargain Broken',renew:'The New Keeper',agathe:'A Willing Keeper',hale:'Founders\' Blood'}[id]}</h2><div class="sub">Epilogue</div></div></div>${chunk.map(t=>`<p class="epi">${esc(t)}</p>`).join('')}<div class="opts">${more?'<button class="btn" id="epNext">Continue</button>':'<button class="btn" id="epTown">Return to Saltmarrow and keep delving</button><button class="btn" id="epNew">Begin a new story (erases all progress)</button>'}</div>`);
+  const el=modal(`<div class="mhd"><div><h2>${{break:'The Bargain Broken',renew:'The New Keeper',agathe:'A Willing Keeper',hale:'Founders\' Blood',self:'The Founder\'s Child'}[id]}</h2><div class="sub">Epilogue</div></div></div>${chunk.map(t=>`<p class="epi">${esc(t)}</p>`).join('')}<div class="opts">${more?'<button class="btn" id="epNext">Continue</button>':'<button class="btn" id="epTown">Return to Saltmarrow and keep delving</button><button class="btn" id="epNew">Begin a new story (erases all progress)</button>'}</div>`);
   if(more)$('epNext').onclick=()=>showEpilogue(id,pg+1);else{$('epTown').onclick=()=>{S.over=false;ov.hidden=true;enterTown('bell')};$('epNew').onclick=()=>{META=freshMeta();saveMeta();ov.hidden=true;enterTown()}}}
 
 /* ---------- new screens: perk choice, camp, night watch, journeys, dice ---------- */
@@ -4984,6 +5116,14 @@ Object.assign(EVB.occult,{arr_sewer:['The town dreams down here too. Its dreams 
 {const a0=arrivalRemark;arrivalRemark=function(){const L=S.L;if(L&&L.bio==='sewer'){evSay('arr_sewer',true,'arrive');return}return a0()}}
 {const e0=enterSewer;enterSewer=async function(){const r=await e0();try{S.L.uid=Date.now()+'';whenFree(arrivalRemark);if(typeof slotFlush==='function')setTimeout(()=>{if(slotFlush())savedMark()},600)}catch(e){}return r}}
 setTimeout(()=>{if(window.__dbg)window.__dbg.enterSewer=enterSewer},400);
+/* ---------- the new people below ---------- */
+{const P16={
+  enc_ada:p=>{p('#3a5a3a',0,0,16,16);for(let k=0;k<14;k++)p(k%2?'#a8c890':'#7aa87a',(k*5)%16,(k*7)%16,2,2);p('#e8e0d0',6,3,4,4);p('#140c08',7,4);p('#140c08',9,4);p('#c8b0a0',6,7,4,6);p('#5a8a5a',5,8,1,6);p('#5a8a5a',10,9,1,5);p('#bfffe0',3,12,2,1);p('#bfffe0',12,3,1,2)},
+  enc_edric:p=>{p('#14303a',0,10,16,6);p('#23606f',0,10,16,1);p('#b8a090',6,3,4,4);p('#140c08',7,4);p('#140c08',9,4);p('#5a4a3a',5,7,6,4);p('#3a2e24',5,10,6,2);p('#7fd0d8',3,11,2,1);p('#7fd0d8',11,12,2,1);p('#6a5040',6,2,4,1)},
+  enc_isobel:p=>{p('#8a8a90',4,6,8,9);p('#6a6a70',4,6,1,9);p('#e0c8b0',6,2,4,4);p('#140c08',7,3);p('#140c08',9,3);p('#6a3a20',5,1,6,2);p('#6a3a20',5,3,1,3);p('#d8d0b8',10,2,1,1);p('#aaa',4,14,8,1);p('#c8b040',7,8,2,1)},
+  enc_tam:p=>{p('#7a7a80',4,6,8,8);p('#e0b890',6,2,4,4);p('#140c08',7,3);p('#140c08',9,3);p('#3a2a1a',5,1,6,2);p('#5a5a60',12,3,1,11);p('#8a8a90',12,3,1,2);p('#3a3a40',5,13,3,3);p('#3a3a40',9,13,3,3)}};
+  for(const k in P16){SPR[k]=hdSprite(tileC(P16[k]),{soft:false});SPRW[k]=white(SPR[k])}}
+Object.assign(MVOICE,{ada:{f:300,w:'triangle',ms:34,sp:6,form:1900,q:1.5,vib:7,wob:1},edric:{f:118,w:'sawtooth',ms:32,sp:4,form:800,q:3,vib:4},isobel:{f:260,w:'square',ms:26,sp:5,form:1800,q:2},tam:{f:165,w:'square',ms:20,sp:7,form:1300,q:2}});
 /* ---------- save slots, a title screen, save files: saving like a normal game ---------- */
 const SLOTS=3,SLOT_K=n=>'saltmarrow-slot-'+n,ACT_K='saltmarrow-active';
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}},lsDel=k=>{try{localStorage.removeItem(k)}catch(e){}};
