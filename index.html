@@ -5787,6 +5787,26 @@ splash=function(done){const B=$('boot');if(!B){done&&done();return}if(HEADLESS){
 #boot.out{opacity:0;transition:opacity .7s ease}
 .ttov{background:radial-gradient(ellipse at 50% 32%,#1c150d 0,#0a0806 62%,#050403 100%)!important}
 body.ttin .ttl{animation:ttin .9s ease both}@keyframes ttin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}`;document.head.appendChild(st)}
+/* ---------- text size setting: scales every panel, menu and message, not the map ---------- */
+const TZ=[['Small',0.9],['Normal',1],['Large',1.15],['Larger',1.3],['Largest',1.5]];
+function tzIdx(){const i=TZ.findIndex(t=>t[1]===UIP.tz);return i<0?1:i}
+function applyTZ(){const z=TZ[tzIdx()][1];document.documentElement.style.setProperty('--tz',z);document.body.classList.toggle('tzon',z!==1);const b=$('tzBtn');if(b)b.textContent='Text size: '+TZ[tzIdx()][0];try{resize()}catch(e){}}
+{const hb=document.querySelector('.hbtns');if(hb&&!$('tzBtn')){const b=document.createElement('button');b.className='btn';b.id='tzBtn';b.onclick=()=>{UIP.tz=TZ[(tzIdx()+1)%TZ.length][1];saveUIP();applyTZ()};hb.appendChild(b)}}
+applyTZ();
+{const s0=showSettings;showSettings=function(from){s0(from);try{const h=[...ov.querySelectorAll('.sset h3')].find(x=>x.textContent==='Display');if(!h)return;
+  h.insertAdjacentHTML('afterend',`<div class="srow"><div><b>Text size</b><span>Menus, panels and messages. The map is not affected</span></div><div class="sctl"><button class="sv sq" id="tzDown">A−</button><button class="sv" id="tzVal" style="min-width:86px">${TZ[tzIdx()][0]}</button><button class="sv sq" id="tzUp">A+</button></div></div>`);
+  const set=d=>{const i=Math.max(0,Math.min(TZ.length-1,tzIdx()+d));UIP.tz=TZ[i][1];saveUIP();applyTZ();const top=ov.scrollTop;showSettings();ov.scrollTop=top};
+  $('tzDown').onclick=()=>set(-1);$('tzUp').onclick=()=>set(1);$('tzVal').onclick=()=>set(tzIdx()===TZ.length-1?-(TZ.length-1):1)}catch(e){}}}
+{const st=document.createElement('style');st.textContent=`
+.tzon .hud-tl,.tzon .tracker,.tzon .feed,.tzon .tipcard,.tzon #toastHost,.tzon .overlay>*,.tzon .inspect>*,.tzon .savedmark,.tzon .dock{zoom:var(--tz)}
+.tzon .pbubble{font-size:calc(15px*var(--tz))}
+.tzon.full.bot .game{grid-template-rows:minmax(0,1fr) calc(100px*var(--tz)) calc(100px*var(--tz))!important}
+.tzon.full.bot .bar>*{zoom:min(var(--tz),1.12)}
+.tzon.full.bot #portBox canvas{zoom:calc(1/var(--tz))}
+.tzon.full.bot #heroBox>*,.tzon.full.bot #gearBox>*,.tzon.full.bot #satBox>*,.tzon.full.bot #logBox>*,.tzon.full.bot #portBox>*{zoom:var(--tz)}
+.tzon.full.bot .game{grid-template-columns:minmax(0,.40fr) minmax(0,.66fr) 220px minmax(0,.40fr) minmax(0,.54fr)}
+.tzon:not(.bot):not(.mob) .panel .box>*,.tzon:not(.bot):not(.mob) .bar>*{zoom:var(--tz)}
+.tzon.mob .bar>*,.tzon.mob .panel>*{zoom:var(--tz)}`;document.head.appendChild(st)}
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
