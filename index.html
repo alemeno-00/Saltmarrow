@@ -476,7 +476,7 @@ const BIOMES={
   fungal:{name:'The Fungal Hollows',blurb:'Glowing caps and webbed galleries. The air tastes of spores.'},
   drowned:{name:'The Drowned Vaults',blurb:'A sunken temple under the mountain, half-flooded and full of bells.'},
 };
-const biomeOf=d=>d<=2?'mine':d<=4?'crypt':d<=6?'fungal':'drowned';
+const biomeOf=d=>(typeof S!=='undefined'&&S&&S.inSewer&&S.genning)?'drowned':d<=2?'mine':d<=4?'crypt':d<=6?'fungal':'drowned';
 
 /* ================= heroes & abilities ================= */
 const CLASSES={
@@ -1118,7 +1118,7 @@ function genLevel(){
   /* ---- room themes ---- */
   const themes={mine:['storage','props','crystals','plain','shrine','flooded','rails','rails','camp','collapse','chasm'],crypt:['ossuary','pillars','chapel','plain','vault','ossuary','cathedral','cathedral','chasm','collapse'],fungal:['grove','nest','pods','grove','pool','garden','garden','chasm','plain'],drowned:['flooded','pillars','chapel','plain','cistern','cistern','cathedral','drain','chasm']}[bio];
   const nests=[],flooded=new Set();let shrineDone=false;
-  let bellRoom=null;if([2,4,6].includes(S.depth)){const cands=nonC.filter(r=>r!==start&&r!==stairsRoom&&r.w>=7&&r.h>=5);const pool2=cands.length?cands:nonC.filter(r=>r!==start&&r!==stairsRoom);bellRoom=pool2.reduce((a,b)=>dm[I(b.cx,b.cy)]>dm[I(a.cx,a.cy)]?b:a,pool2[0]);if(bellRoom)bellRoom.bell=true}
+  let bellRoom=null;if([2,4,6].includes(S.depth)&&!S.inSewer){const cands=nonC.filter(r=>r!==start&&r!==stairsRoom&&r.w>=7&&r.h>=5);const pool2=cands.length?cands:nonC.filter(r=>r!==start&&r!==stairsRoom);bellRoom=pool2.reduce((a,b)=>dm[I(b.cx,b.cy)]>dm[I(a.cx,a.cy)]?b:a,pool2[0]);if(bellRoom)bellRoom.bell=true}
   for(const r of nonC){if(r===bellRoom){r.theme='bell';placeSome(r,'brazier',2,{lit:true},corners);continue}if(r===start&&Math.random()<0.6){r.theme='plain';continue}
     let th=pick(themes);if(r===stairsRoom&&(th==='flooded'||th==='pool'))th='plain';if(th==='shrine'&&shrineDone)th='plain';r.theme=th;
     switch(th){
@@ -1209,7 +1209,7 @@ function genLevel(){
   if((S.depth===5||S.depth===6)&&!flag('nellFreed')&&(S.depth===6||Math.random()<0.6))captive('nell',r=>r.theme==='grove'||r.theme==='nest'||r.theme==='pods'||true);
   const spots=shuffle(dead.slice()).filter(([x,y])=>free(x,y)&&!L.items.some(i=>i.x===x&&i.y===y));
   const putItem=it=>{const sp=spots.pop()||(()=>{const r=roomFor();if(!r)return null;const c=cells(r).filter(([x,y])=>free(x,y));return c.length?pick(c):null})();if(sp)L.items.push(Object.assign(it,{x:sp[0],y:sp[1]}))};
-  if(S.depth<=2)for(const k of(S.depth===1?['tag1','tag2']:['tag3']))if(!flag(k))putItem({kind:'quest',key:k});
+  if(S.depth<=2&&!S.inSewer)for(const k of(S.depth===1?['tag1','tag2']:['tag3']))if(!flag(k))putItem({kind:'quest',key:k});
   let pages=bellRoom||S.depth===MAXD?2:1;for(let n=0;n<LORE.length&&pages>0;n++){if(META.lore[n]||LORE[n].d>S.depth||L.items.some(i=>i.kind==='page'&&i.n===n))continue;if(Math.random()<0.75){putItem({kind:'page',n});pages--}}
   // merchants
   const merch=who=>{const r=roomFor(r=>!flooded.has(r));if(!r)return;const c=cells(r).filter(([x,y])=>free(x,y)&&!nearDoor(x,y));if(!c.length)return;const[x,y]=pick(c);L.objs.push({type:'merchant',who,x,y,id:S.nextId++})};
@@ -2744,6 +2744,49 @@ function learnMove(id){S.learned=S.learned||[];if(!S.learned.includes(id))S.lear
   case'seafog':makeSmoke(P.x,P.y,2,9);P.hidden=true;P.lantern=false;log('Fog rolls in off a sea that is not there. You vanish inside it.','good');computeFov();return;
   case'offering':heal(8);easeDread(1);log('You pray through the pain, and the pain answers.','good');computeFov();return}
   return d0(id,tx,ty)}}
+/* ---------- the Undercity Sewers: a secret side level under Saltmarrow, reached through a hidden grate on depth 1 or 2 ---------- */
+BIOMES.sewer={name:'The Undercity Sewers',blurb:'Brick tunnels under Saltmarrow. Everything the town flushes away ends up down here, and so does everything it wants forgotten.'};
+MON.ratking={name:'the Rat King',ai:'brute',stam:30,speed:5,stab:2,bonus:3,free:3,xp:24,pts:12,ab:[{name:'Gnawing Mass',kind:'melee',range:1,t:[{d:4},{d:6,cond:'bleeding'},{d:8,cond:'bleeding'}]}],mal:{cost:3,name:'Call the Swarm',type:'extra'},
+  desc:'A dozen rats knotted together at the tails, grown fat on what Saltmarrow throws away. It moves like one animal and screams like twelve.'};
+MXTRA.ratking={dread:1,weak:['fire']};Object.assign(MON.ratking,MXTRA.ratking);
+const SEWER_POOL=['rat','rat','rat','bat','eel','husk','ghoul','sapper'];
+for(const d of[1,2,3]){const orig=POOL[d];Object.defineProperty(POOL,d,{configurable:true,get(){return S&&S.inSewer?SEWER_POOL:orig}})}
+const SEWER_LORE_START=LORE.length;
+LORE.push({d:99,t:'A delivery book, water-stained',x:"Hall cellar to the old drain, then along the brick to the Brotherhood's stair. Night deliveries only. Sedate them first; they kick, and the tunnels carry sound. Burn this. C.H."},
+  {d:99,t:'Scratched into the brick of the outflow',x:'THE KING EATS WHAT THE TOWN THROWS AWAY. THE TOWN THROWS AWAY PEOPLE.'});
+FEAT.sewergrate={name:'Rusted drain grate',block:true,desc:'An iron grate set into the floor of a hidden chamber. Below it, brick, black water, and the smell of the town. Someone has oiled the hinges.'};
+// pick which of the first two levels hides the way down
+function placeGrate(){const L=S.L;let cand=null,sr=null;
+  for(let t=0;t<3&&cand==null;t++){const s=carveSecret({thick:1});if(!s)break;if(!levelOK()){uncarve(s);continue}sr=s;L.decal[s.face]=38;cand=pick(s.cells)}
+  if(cand==null){const ex=(L.secrets||[]).filter(s=>!s.found&&!s.vault&&!s.puzzle);for(const s of shuffle(ex)){const c=s.cells.filter(i=>!L.objs.some(o=>I(o.x,o.y)===i)&&!L.items.some(o=>I(o.x,o.y)===i));if(c.length){cand=pick(c);sr=s;break}}}
+  if(cand==null)return false;L.objs.push({type:'sewergrate',x:cand%W,y:(cand/W)|0,id:S.nextId++});sr.sewer=1;
+  // a clue: someone wrote down where the drain is
+  const conts=L.objs.filter(o=>SEARCH_T&&SEARCH_T[o.type]&&!o.key&&o.note==null);if(conts.length)pick(conts).note=L.secrets.indexOf(sr);return true}
+function dressSewer(){const L=S.L;L.bio='sewer';L.tset='sewer';L.sewer=1;
+  // the Rat King holds the biggest room far from the way in
+  const P=S.P;const d=bfsDist(P.x,P.y,true);let best=null,bd=-1;for(const r of(L.rooms||[])){const i=I(r.cx,r.cy);if(L.map[i]!==FLOOR||d[i]<0)continue;const sc=d[i]+r.w*r.h*0.3;if(sc>bd){bd=sc;best=r}}
+  if(best){L.mons=L.mons.filter(m=>cheb(m.x,m.y,best.cx,best.cy)>2);const k=spawnMon('ratking',best.cx,best.cy,{state:'idle',role:'guard'});k.stam=k.max=30+S.depth*4;
+    for(const[dx,dy]of[[1,1],[-1,1],[1,-1],[-1,-1]]){const x=best.cx+dx,y=best.cy+dy;if(L.map[I(x,y)]===FLOOR&&!L.mons.some(m=>m.x===x&&m.y===y))spawnMon('rat',x,y,{state:'idle',role:'guard'})}}
+  // a scrawl on the outflow wall, and more loot than a level this shallow should hold
+  const fl=[];for(let i=0;i<W*H;i++)if(L.map[i]===FLOOR&&d[i]>6&&!L.objs.some(o=>I(o.x,o.y)===i)&&!L.items.some(o=>I(o.x,o.y)===i))fl.push(i);shuffle(fl);
+  if(!META.lore[SEWER_LORE_START+1]&&fl.length){const i=fl.pop();L.items.push({kind:'page',n:SEWER_LORE_START+1,x:i%W,y:(i/W)|0})}
+  for(let k=0;k<3&&fl.length;k++){const i=fl.pop();L.items.push(Object.assign(rollLoot(),{x:i%W,y:(i/W)|0}))}
+  for(let k=0;k<3&&fl.length;k++){const i=fl.pop();L.items.push({kind:'gold',amt:rr(10,22),x:i%W,y:(i/W)|0})}}
+{const g0=genLevel;genLevel=function(){if(S.inSewer){S.genning=true;try{g0()}finally{S.genning=false}try{dressSewer()}catch(e){LV.err++}return}
+  if(S.sewerAt==null&&!S.inSewer){S.sewerAt=S.depth===1?pick([1,2]):S.depth===2?2:0;S.sewerDone=false}
+  g0();try{if(S.sewerAt&&S.depth===S.sewerAt&&!S.sewerDone&&!S.L.town&&placeGrate()){sealSecrets();rebuildOpq()}}catch(e){LV.err++}}}
+async function enterSewer(){const P=S.P;if(S.mode==='combat'){log('Not with enemies on you.','bad');return false}
+  S.inSewer=true;S.sewerDone=true;S.mode='explore';S.C=null;S.pitWarn=-1;P.hidden=false;
+  log('You heave the grate up and climb down a rusted ladder into the dark.','gold');genLevel();
+  log(`${BIOMES.sewer.name}, beneath depth ${S.depth}.`,'gold');log(BIOMES.sewer.blurb,'old');if(!HEADLESS)UI.toast(BIOMES.sewer.name,'A secret way beneath the town');
+  UI.save();UI.render();if(!HEADLESS&&typeof sfx==='function')try{sfx('descend')}catch(e){}return false}
+{const f0=featActions;featActions=function(o){if(o.type==='sewergrate'){const adj=cheb(o.x,o.y,S.P.x,S.P.y)<=1;return[{id:'sewer',label:'Climb down into the sewers',adj}]}return f0(o)}}
+{const f0=featAct;featAct=async function(o,id){if(id==='sewer'&&o.type==='sewergrate')return enterSewer();return f0(o,id)}}
+// leaving the sewers: their stairs come out one level further down
+{const d0=descend;descend=async function(f){const was=S&&S.inSewer;if(was)S.inSewer=false;const r=await d0(f);if(was&&S.depth)log('The outflow tunnel climbs, turns, and spits you out deeper in the mine than you went in.','gold');return r}}
+// the King drops the proof
+{const k0=killMon;killMon=function(m,how,src){const r=k0(m,how,src);try{if(m.type==='ratking'){const L=S.L;if(!META.lore[SEWER_LORE_START])L.items.push({kind:'page',n:SEWER_LORE_START,x:m.x,y:m.y});
+  const it=rollLoot();L.items.push(Object.assign(it,{x:m.x,y:m.y}));L.items.push({kind:'gold',amt:rr(40,70),x:m.x,y:m.y});log('The knot of rats comes apart. Something was tangled in it: a book, and somebody\'s purse.','gold')}}catch(e){}return r}}
 /* ================= heroes & runs ================= */
 function newHero(k){const c=CLASSES[k];const bm=c.stam+META.upg.stam*4,br=c.recov+META.upg.recov;
   return{id:'P',x:0,y:0,rx:0,ry:0,stam:bm,max:bm,baseMax:bm,temp:0,lvl:1,chars:Object.assign({},c.chars),recov:br,recovMax:br,baseRecov:br,res:0,lantern:true,hidden:false,defending:false,conds:[],fx:1,fy:0,stab:c.stab,webbed:0,dread:0,lens:META.upg.lamp?1:0}}
@@ -2897,7 +2940,7 @@ function wallPaint(p,v,cracked,B,bio){p(B.w,0,0,16,16);
   if(v===3){p(B.acc2,7,1,1,5);p(B.acc,7,6)}
   if(cracked){const pts=[[8,0],[7,2],[9,4],[7,6],[8,8],[6,10],[9,12],[8,15]];for(let i=0;i<pts.length-1;i++){const[a,b]=pts[i],[c,d]=pts[i+1];const n=Math.max(Math.abs(c-a),Math.abs(d-b));for(let s=0;s<=n;s++){const x=Math.round(a+(c-a)*s/n),y=Math.round(b+(d-b)*s/n);p('#050505',x,y);p(B.wl,x+1,y)}}p('#050505',5,9);p('#050505',12,5)}}
 function floorPaint(p,v,B,bio){p(B.f,0,0,16,16);
-  if(bio==='crypt'||bio==='drowned'){p(B.fa,0,0,7,7);p(B.fa,8,8,7,7);p(B.fl,7,0,1,16);p(B.fl,0,7,16,1);p(B.fl,15,0,1,16);p(B.fl,0,15,16,1)}
+  if(bio==='crypt'||bio==='drowned'||bio==='sewer'){p(B.fa,0,0,7,7);p(B.fa,8,8,7,7);p(B.fl,7,0,1,16);p(B.fl,0,7,16,1);p(B.fl,15,0,1,16);p(B.fl,0,15,16,1)}
   else if(bio==='mine'){p(B.fa,0,3,16,4);p(B.fl,0,7,16,1);if(v===2){p(B.beamd,0,5,16,1);p(B.beamd,0,10,16,1)}}
   else{p(B.fa,2,2,5,4);p(B.fa,9,9,5,5)}
   const dots=[[[2,3],[11,5],[5,12]],[[10,2],[3,10]],[[1,1],[12,11]],[[4,4],[2,12],[12,12]]][v];for(const[x,y]of dots)p(B.fd,x,y);
@@ -4921,6 +4964,26 @@ function bubbleSpeak(){const b=document.getElementById('pbubble');if(!b||b.hidde
 // townsfolk muttering as you pass
 {const T0=setInterval(()=>{try{if(!AU.on||!S||!S.L||!S.L.town||S.L.interior||!$('overlay').hidden)return;const P=S.P;const near=(S.L.npcs||[]).filter(n=>cheb(n.x,n.y,P.x,P.y)<=4);if(!near.length||Math.random()>0.22)return;
   const n=pick(near);const v=voiceFor(n.key==='folk'?'folk'+n.id:n.key);const d=spOut(n.x,n.y,0.6,8);if(!d)return;const syl=2+rnd(4);for(let k=0;k<syl;k++)setTimeout(()=>blip(v,pick('aeiou'),k,false,d),k*v.ms*3.2)}catch(e){}},2500)}
+/* ---------- sewer art, sound and chatter ---------- */
+BPAL.sewer={w:'#4a2e26',wl:'#6a4434',wd:'#22140f',acc:'#8aa83a',acc2:'#5a7a24',f:'#1e2220',fa:'#242a26',fl:'#121614',fd:'#323a34',wa:['#1e2a14','#3a4a1e','#a8c060'],beam:'#4a4a50',beamd:'#2a2a2e'};
+MOSS.sewer=['#4a6a2a','#6a8a34'];
+{const g=tileC(p=>{p('#14100c',0,0,16,16);p('#3a3a40',1,1,14,14);for(let x=3;x<14;x+=3)p('#0a0806',x,2,2,12);p('#5a5a62',1,1,14,1);p('#22222a',1,14,14,1);p('#6a5a3a',2,2,1,1);p('#8a6a3a',12,12,1,1);p('#1e2a14',4,9,8,3);p('#5a7a24',5,10,2,1)});
+  SPR.sewergrate=hdSprite(g,{soft:true});SPRW.sewergrate=white(SPR.sewergrate)}
+{const r=SPR.rat;const c=document.createElement('canvas');c.width=r.width;c.height=r.height;const x=c.getContext('2d');x.imageSmoothingEnabled=false;const w=r.width,h=r.height;
+  x.drawImage(r,-w*0.18,h*0.12,w*0.8,h*0.8);x.save();x.translate(w,0);x.scale(-1,1);x.drawImage(r,-w*0.18,h*0.14,w*0.8,h*0.8);x.restore();x.drawImage(r,w*0.1,-h*0.02,w*0.85,h*0.85);
+  const u=w/32;x.fillStyle='#d9a441';x.fillRect(12*u,4*u,9*u,3*u);for(const k of[12,15,18,20])x.fillRect(k*u,1*u,1.5*u,3*u);x.fillStyle='#c2533e';x.fillRect(16*u,5*u,2*u,1.5*u);
+  x.strokeStyle='#5a4632';x.lineWidth=1.2*u;x.beginPath();x.moveTo(14*u,26*u);x.quadraticCurveTo(16*u,30*u,19*u,26*u);x.stroke();SPR.ratking=c;SPRW.ratking=white(c)}
+// footsteps squelch, the tunnels drip and gurgle
+{const t0=auTick;let nextFlow=0;auTick=function(){t0();try{if(!AU.on||!S||!S.L||S.L.bio!=='sewer')return;const now=AU.ctx.currentTime;if(now>nextFlow){nextFlow=now+2+Math.random()*4;const d=spOut(null,null,0.5);if(d){nz(d,{f:jit(600),q:0.8,peak:0.05,dur:1.2,a:0.3});for(let k=0;k<3;k++)tn(d,jit(400),'sine',0.02,0.08,0.3+k*0.2,jit(700))}}}catch(e){}}}
+// what each hero says on climbing down
+Object.assign(EVB.riptide,{arr_sewer:['Smells like every privy in Saltmarrow emptied in one go. Because it did.','Town sewers. I helped dig half of these. Never thought I\'d be glad to see them.']});
+Object.assign(EVB.shadow,{arr_sewer:['Ah, the sewers. Home, sweet, disgusting home.','Every thief in Saltmarrow knows these tunnels. The rats know them better.']});
+Object.assign(EVB.storm,{arr_sewer:['Water that has forgotten the sky. It runs thick and slow down here.','The town\'s secrets flow downhill, like everything else.']});
+Object.assign(EVB.flag,{arr_sewer:['The filth of Saltmarrow, laid bare. Fitting.','Beneath the chapel, the sewers. Beneath the sewers, worse.']});
+Object.assign(EVB.occult,{arr_sewer:['The town dreams down here too. Its dreams are rotten.','Something rules these tunnels. I can hear it chewing.']});
+{const a0=arrivalRemark;arrivalRemark=function(){const L=S.L;if(L&&L.bio==='sewer'){evSay('arr_sewer',true,'arrive');return}return a0()}}
+{const e0=enterSewer;enterSewer=async function(){const r=await e0();try{S.L.uid=Date.now()+'';whenFree(arrivalRemark);if(typeof slotFlush==='function')setTimeout(()=>{if(slotFlush())savedMark()},600)}catch(e){}return r}}
+setTimeout(()=>{if(window.__dbg)window.__dbg.enterSewer=enterSewer},400);
 /* ---------- save slots, a title screen, save files: saving like a normal game ---------- */
 const SLOTS=3,SLOT_K=n=>'saltmarrow-slot-'+n,ACT_K='saltmarrow-active';
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}},lsDel=k=>{try{localStorage.removeItem(k)}catch(e){}};
@@ -5214,6 +5277,39 @@ body.mob header h1{font-size:24px}
 @keyframes jjtag{0%,45%{opacity:0}70%,100%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.jj,.jjmark canvas,.jjtag{animation:none;opacity:1}}
 `;document.head.appendChild(st)}
+/* ---- the game always opens on the title, and a new game starts with choosing your delver ---- */
+{const i0=showIntro;showIntro=function(){if(!ov.hidden&&(ov.querySelector('.ttl')||ov.querySelector('.cpick')))return;return i0.apply(this,arguments)}}
+{const s1=start;start=function(data){s1(data);if(!(data&&data.S))showTitle()}}
+{const e0=enterTown;enterTown=function(why){if(META&&META.hero&&CLASSES[META.hero]){if(!S)S={};S.cls=META.hero}return e0(why)}}
+{const n0=newRun;newRun=function(cls,d,lo){if(cls&&META){META.hero=cls;saveMeta()}return n0(cls,d,lo)}}
+{const g0=newGameIn;newGameIn=function(n,cls){if(!cls){showCharSelect(n);return}lsSet(ACT_K,String(n));slotFlush();lsSet(ACT_K,String(n));const m=freshMeta();m.hero=cls;applySave(m,'',`Slot ${n}: a new game`);slotWrite(n);try{stamp();cloudQueue()}catch(e){}setTimeout(()=>showIntro(),400)}}
+function showCharSelect(slot){const fm=freshMeta();let sel=null;const icon=k=>{try{return makeHero(k,{core:true,lantern:true,lit:true,pose:'idle',w:HERO_LOOK[k].def}).toDataURL()}catch(e){return ICON[k]}};
+  const bar=(v,max)=>`<i class="cbar"><b style="width:${Math.round(100*v/max)}%"></b></i>`;
+  const card=k=>{const c=CLASSES[k],open=!!fm.classes[k];return`<button class="ccard${open?'':' locked'}" data-c="${k}" ${open?'':'disabled'}>
+    <img src="${icon(k)}" alt=""><div class="cn">${c.name}</div><div class="cr">${c.role} · ${c.res}</div>
+    ${open?`<p class="cb">${esc(c.blurb)}</p><div class="cs"><span>Stamina</span>${bar(c.stam,30)}<span>Speed</span>${bar(c.speed,7)}<span>Recoveries</span>${bar(c.recov,10)}</div>
+    <p class="cp">${esc(c.passive)}</p><p class="ca">${c.abilities.map(a=>AB[a].name).join(' · ')}</p>`:`<p class="cb">${esc(CLASS_UNLOCK[k].txt)}</p>`}</button>`};
+  ov.innerHTML=`<div class="cpick"><div class="gmh"><div class="gmt">Choose your delver</div><div class="gms">Slot ${slot} · a new game</div></div>
+    <div class="cgrid">${Object.keys(CLASSES).map(card).join('')}</div>
+    <div class="cfoot"><button class="gmb small" id="cBack">Back</button><button class="gmb small primary" id="cGo" disabled>Choose a delver</button></div></div>`;
+  ov.hidden=false;ov.classList.add('gmov','ttov');
+  ov.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{sel=b.dataset.c;ov.querySelectorAll('.ccard').forEach(x=>x.classList.toggle('on',x===b));const g=$('cGo');g.disabled=false;g.innerHTML=`<span>Begin as the ${CLASSES[sel].name}</span>`;try{sfx('pickup')}catch(e){}});
+  $('cBack').onclick=()=>showTitle();$('cGo').onclick=()=>{if(!sel)return;ov.classList.remove('ttov','gmov');ov.hidden=true;newGameIn(slot,sel)}}
+{const st=document.createElement('style');st.textContent=`
+.cpick{width:min(1100px,96vw);display:flex;flex-direction:column;gap:16px;margin:auto;padding:10px 0}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.ccard{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:14px 12px;border-radius:4px;cursor:pointer;color:var(--bone);font:inherit;
+  background:radial-gradient(120% 70% at 50% 0%,#241d16 0,#120e0b 80%);border:1px solid #4a3c2a;box-shadow:inset 0 0 0 1px #0a0806,0 6px 18px rgba(0,0,0,.5);transition:border-color .15s,transform .12s}
+.ccard:hover:not(:disabled){border-color:var(--lantern);transform:translateY(-2px)}.ccard.on{border-color:var(--gilt);box-shadow:inset 0 0 0 1px #0a0806,0 0 0 2px rgba(217,164,65,.45),0 0 26px rgba(217,164,65,.2)}
+.ccard img{width:112px;height:112px;image-rendering:pixelated;filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
+.ccard.locked{opacity:.45;cursor:default}.ccard.locked img{filter:grayscale(1) brightness(.5)}
+.cn{font-family:var(--black);font-size:26px;line-height:1;color:var(--gilt)}.cr{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.cb{margin:2px 0;font-family:var(--prose);font-size:14px;line-height:1.4}.cp{margin:0;font-size:11.5px;line-height:1.4;color:#c8b890}.ca{margin:0;font-size:10.5px;color:var(--dim)}
+.cs{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;width:100%;font-size:10.5px;color:var(--dim);align-items:center;text-align:left}
+.cbar{display:block;height:5px;background:#0a0806;border:1px solid #3b3026;border-radius:3px;overflow:hidden}.cbar b{display:block;height:100%;background:linear-gradient(90deg,#8a6a34,#f0cf7a)}
+.cfoot{display:flex;justify-content:center;gap:10px}.gmb.small{padding:10px 22px;font-size:17px;min-width:140px}.gmb.primary:not(:disabled){border-color:#9a7638;color:var(--gilt)}.gmb:disabled{opacity:.45;cursor:default}
+body.mob .cgrid{grid-template-columns:1fr 1fr}body.mob .ccard img{width:84px;height:84px}body.mob .cp,body.mob .ca{display:none}`;document.head.appendChild(st)}
+{const st=document.createElement('style');st.textContent=`body.mob .cfoot{position:sticky;bottom:0;padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,rgba(10,9,8,0),#0a0908 35%)}`;document.head.appendChild(st)}
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
