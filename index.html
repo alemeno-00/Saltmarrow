@@ -3792,13 +3792,13 @@ function townGround(){if(TTILE.ok)return;TTILE.ok=1;const mk=f=>{const[c,x]=tcv(
   TTILE.kerb=[0,1].map(v=>mk(p=>{p('#1c1d21',0,0,16,16);for(let c=0;c<4;c++){p(['#2c2e33','#303237'][(c+v)%2],c*4,4,3,3);p('#3c3e44',c*4,4,3,1)}p('#4a4c54',0,0,16,3);p('#5c5e66',0,0,16,1);for(let x=v*3;x<16;x+=6)p('#3a3c42',x,0,1,3);p('#101114',0,3,16,1);p('#141a20',0,13,16,3);p('#223040',2+v*5,14,4,1)}));
   TTILE.grass=[0,1,2].map(v=>mk(p=>{const R=srand(v*13+9);p('#1c2418',0,0,16,16);for(let k=0;k<30;k++)p(R()<0.5?'#2a3a22':'#22301c',R()*16|0,R()*16|0,1,2+(R()*2|0));if(v===2){p('#c8c0a0',5,6,1,1);p('#a8a8c8',11,10,1,1)}}));
   TTILE.wall=[0,1].map(v=>mk(p=>{const R=srand(v*5+1);p('#0b0c0e',0,0,16,16);for(let y=4;y<16;y+=4){const o=(y/4)%2?3:0;for(let x=-o;x<16;x+=6){p(R()<0.4?'#2a2a2e':'#323238',x,y,5,3);p('#3e3e46',x,y,5,1)}}p('#2a3a24',0,3,16,2);for(let x=0;x<16;x++)if(R()<0.5)p('#3a5030',x,2+(R()*2|0),1,1)}))}
-{const t0=tileImg;tileImg=function(TS,t,x,y,wf){const L=S.L;if(L.town&&!L.interior){const i=I(x,y);if(L.bart&&L.bart[i])return L.bart[i];townGround();
+{const t0=tileImg;tileImg=function(TS,t,x,y,wf){const L=S.L;if(L.town&&!L.interior){const i=I(x,y);const bt=L.bart&&L.bart[i];if(bt&&bt.getContext)return bt;townGround();
     if(t===FLOOR&&!(L.bld&&L.bld[i])){if(x>=29&&x<=37&&y>=7&&y<=13)return TTILE.grass[(L.deco[i]%7===0)?2:L.deco[i]%2];if(y===14||y===19)return TTILE.kerb[(x+y)%2];if(y>=15&&y<=18||x>=53)return t0(TS,t,x,y,wf);return TTILE.mud[L.deco[i]%4]}
     if(t===WALL&&!(L.bld&&L.bld[i])){const n=inb(x,y+1)&&L.map[I(x,y+1)]!==WALL;if(n)return TTILE.wall[(x+y)%2]}}return t0(TS,t,x,y,wf)}}
 {const g0=genTown;genTown=function(){g0();try{buildTown()}catch(e){console.error(e)}}}
 // doors are painted into each facade; closed ones get boarded over
 {const d0=drawObj;drawObj=function(o){const L=S.L;if(L.town&&!L.interior){const x=Math.round(o.x*T),y=Math.round(o.y*T);
-  if((o.type==='door'||o.type==='house')&&L.bart&&L.bart[I(o.x,o.y)]){if(o.type==='house'?o.boarded:o.closed){ctx.fillStyle='#5a3e22';ctx.fillRect(x+3,y+6,T-6,5);ctx.fillRect(x+3,y+18,T-6,5);ctx.fillStyle='#3a2614';ctx.fillRect(x+6,y+2,3,T-4);ctx.fillRect(x+T-9,y+2,3,T-4)}return}
+  if((o.type==='door'||o.type==='house')&&L.bart&&L.bart[I(o.x,o.y)]&&L.bart[I(o.x,o.y)].getContext){if(o.type==='house'?o.boarded:o.closed){ctx.fillStyle='#5a3e22';ctx.fillRect(x+3,y+6,T-6,5);ctx.fillRect(x+3,y+18,T-6,5);ctx.fillStyle='#3a2614';ctx.fillRect(x+6,y+2,3,T-4);ctx.fillRect(x+T-9,y+2,3,T-4)}return}
   if(o.type==='lamp'){drawLamp(o,x,y);return}}return d0(o)}}
 function drawLamp(o,x,y){const v=(o.x*7+o.y*3)%3,c=ctx,fl=0.85+Math.sin(NOW/110+o.id*3)*0.08+Math.sin(NOW/37+o.id)*0.04;const ir='#1c1e22',ir2='#3a3e46',gl=`rgba(255,${200+Math.round(30*fl)},120,${fl})`;const cx=x+T/2;
   c.fillStyle='rgba(0,0,0,.35)';c.beginPath();c.ellipse(cx,y+T-3,9,3,0,0,Math.PI*2);c.fill();
@@ -3827,6 +3827,8 @@ function drawLamp(o,x,y){const v=(o.x*7+o.y*3)%3,c=ctx,fl=0.85+Math.sin(NOW/110+
     else if(f.k==='pud'){const ph=((NOW/900+f.s/37)%1);c.strokeStyle=`rgba(170,190,210,${0.35*(1-ph)})`;c.lineWidth=1;c.beginPath();c.ellipse(f.x,f.y,1+ph*7,0.5+ph*3,0,0,Math.PI*2);c.stroke()}
     else if(f.k==='bell'&&S.L.town){}}
   c.restore()}catch(e){c.restore()}return l0()}}
+
+{const r0=resume;resume=function(sv){if(sv&&sv.L)delete sv.L.bart;r0(sv);try{if(S.L&&S.L.town&&!S.L.interior)buildTown()}catch(e){}}}
 /* ---------- selection ---------- */
 const SEL={id:null,valid:[],cursor:null,hover:null,reach:null,cone:null,walk:null,inspect:null};
 function refreshOverlays(){SEL.reach=null;SEL.cone=null;if(!S||!S.L)return;
@@ -4181,7 +4183,7 @@ document.addEventListener('pointerdown',ev=>{if(AUTO.on&&!ev.target.closest('[da
 /* ---------- save / load ---------- */
 const SAVE_KEY='saltmarrow-run-v5';
 let saveTimer=null;
-UI.save=(clear)=>{try{if(clear||S.over){localStorage.removeItem(SAVE_KEY);return}clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{const s=JSON.parse(JSON.stringify(S,(k,v)=>['rx','ry','lunge','flashT','route'].includes(k)?undefined:v instanceof Uint8Array?Array.from(v):v));s.busy=false;localStorage.setItem(SAVE_KEY,JSON.stringify(s))}catch(e){}},200)}catch(e){}};
+UI.save=(clear)=>{try{if(clear||S.over){localStorage.removeItem(SAVE_KEY);return}clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{const s=JSON.parse(JSON.stringify(S,(k,v)=>['rx','ry','lunge','flashT','route','bart'].includes(k)?undefined:v instanceof Uint8Array?Array.from(v):v));s.busy=false;localStorage.setItem(SAVE_KEY,JSON.stringify(s))}catch(e){}},200)}catch(e){}};
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');return s&&s.v===5&&s.L&&!s.over?s:null}catch(e){return null}}
 function resume(s){S=s;S.busy=false;const L=S.L;L.light=new Uint8Array(L.light||W*H);L.opq=new Uint8Array(L.opq||W*H);L.deco=new Uint8Array(L.deco||W*H);L.decal=new Uint8Array(L.decal||W*H);if(L.bld)L.bld=new Uint8Array(L.bld);if(S.gear)for(const t of S.gear.tomes)registerTome(t);S.P.rx=S.P.x;S.P.ry=S.P.y;rebuildOpq();computeLight();computeFov();
   if(S.mode==='combat'&&S.C){S.C.phase='hero';beginHeroTurn()}$('overlay').hidden=true;camInit=false;UI.render();UI.toast(S.L.town?'Saltmarrow':S.depth===MAXD?'The Chapel':'Depth '+S.depth,S.L.town?'':BIOMES[S.L.bio].name)}
@@ -4930,7 +4932,7 @@ function summarise(metaStr,runStr){let m={},r=null;try{m=JSON.parse(metaStr)||{}
   else out.where='Between delves, in Saltmarrow';return out}
 function slotWrite(n){const meta=lsGet(META_KEY);if(!meta)return false;const run=lsGet(SAVE_KEY)||'';return lsSet(SLOT_K(n),JSON.stringify({meta,run,t:Date.now(),sum:summarise(meta,run)}))}
 let slotTimer=null;function slotQueue(){clearTimeout(slotTimer);slotTimer=setTimeout(()=>slotWrite(activeSlot()),1500)}
-function slotFlush(){clearTimeout(slotTimer);clearTimeout(saveTimer);try{if(S&&S.L&&!S.over){const s=JSON.parse(JSON.stringify(S,(k,v)=>['rx','ry','lunge','flashT','route'].includes(k)?undefined:v instanceof Uint8Array?Array.from(v):v));s.busy=false;lsSet(SAVE_KEY,JSON.stringify(s))}}catch(e){}saveMeta();return slotWrite(activeSlot())}
+function slotFlush(){clearTimeout(slotTimer);clearTimeout(saveTimer);try{if(S&&S.L&&!S.over){const s=JSON.parse(JSON.stringify(S,(k,v)=>['rx','ry','lunge','flashT','route','bart'].includes(k)?undefined:v instanceof Uint8Array?Array.from(v):v));s.busy=false;lsSet(SAVE_KEY,JSON.stringify(s))}}catch(e){}saveMeta();return slotWrite(activeSlot())}
 // first launch with the old single save: it becomes slot 1
 if(!lsGet(ACT_K)){lsSet(ACT_K,'1');if(lsGet(META_KEY)&&!slotRead(1))slotWrite(1)}
 {const us=UI.save;UI.save=c=>{us(c);slotQueue()}}
