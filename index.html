@@ -1017,12 +1017,17 @@ const D={
 
 /* ================= kits, relics, omens ================= */
 const KITS={
-  panoply:{name:"Miner's Panoply",cost:120,eff:{stam:2,stab:1,speed:-1},desc:'Riveted leather and an iron cap. +8 stamina and +1 stability, but −1 speed.'},
-  leathers:{name:"Skirmisher's Leathers",cost:100,eff:{speed:1,shiftR:1,stam:-1},desc:'+1 speed and Shift moves 2 squares, but −4 stamina.'},
+  panoply:{name:"Miner's Panoply",cost:120,eff:{stam:2,stab:1,speed:-1},desc:'Iron plates riveted where they matter. +8 stamina and +1 stability, but −1 speed.'},
+  leathers:{name:"Skirmisher's Leathers",cost:100,eff:{speed:1,shiftR:1,stam:-1},desc:'Straps and nothing else. +1 speed and Shift moves 2 squares, but −4 stamina.'},
   chains:{name:"Penitent's Chains",cost:100,eff:{free:1,steady:1},desc:'Heavy and humbling. +2 free strike damage, and Dread rises more slowly.'},
-  lamplighter:{name:"Lamplighter's Coat",cost:110,eff:{light:1,fireDmg:2},desc:'Oilcloth and a long wick. Lantern +1, and +2 damage with fire.'},
+  lamplighter:{name:"Lamplighter's Coat",cost:110,eff:{light:1,fireDmg:2},desc:'Oilcloth and a long wick on your back. Lantern +1, and +2 damage with fire.'},
   gravedigger:{name:"Gravedigger's Kit",cost:120,eff:{recov:1,killHeal:3},desc:'A spade and a flask. +1 Recovery, and heal 3 whenever you kill.'},
-  ratcatcher:{name:"Ratcatcher's Harness",cost:90,eff:{quiet:1,vsPack:2},desc:'Quiet boots and a long knife. Softer steps, and +2 damage against packs and swarms.'},
+  ratcatcher:{name:"Ratcatcher's Harness",cost:90,eff:{quiet:1,vsPack:2},desc:'Soft soles and a belt of tails. Quieter steps, and +2 damage against packs and swarms.'},
+  smuggler:{name:"Smuggler's Coat",cost:110,eff:{findGear:1,luck:4},desc:'More pockets than honesty. You find gear more often, and what you find is better.'},
+  saltwife:{name:"Saltwife's Charms",cost:100,eff:{startTemp:5},desc:'Salt knots and sea-glass, blessed by the widows on the quay. Start every fight with 5 temporary stamina.'},
+  wrecker:{name:"Wrecker's Hooks",cost:110,eff:{push:1,pull:1},desc:'Rope, grapnel and bad intentions. +1 to every push and pull.'},
+  fenwalker:{name:"Fen-walker's Waders",cost:90,eff:{wade:1,hardy:1},desc:'Tarred waders and a reed hat. Water no longer betrays your steps, and you tire half as fast.'},
+  bonereader:{name:"Bone-reader's Satchel",cost:130,eff:{resKill:1},desc:'Knucklebones, feathers and a bag that rattles. +1 heroic resource whenever you kill.'},
 };
 const RELICS={
   lamp:{name:'The Lamp of Saint Hollis',desc:'Your light shows the truth: no hallucinations, and lurkers cannot hide from it. Enemies spot you 2 squares farther.',eff:{}},
@@ -1282,7 +1287,7 @@ function genLevel(){
   {const ab=L.mons.find(m=>m.type==='abbot');if(ab){const d=bfsDist(P.x,P.y,true);if(!DIR8.some(([dx,dy])=>d[I(ab.x+dx,ab.y+dy)]>=0))digTo(ab.x,ab.y+1)}}
   rebuildOpq();computeLight();computeFov();
 }
-function rollGear(luck){const r=Math.random();return r<0.45?genWeapon(S.depth,rollRarity(S.depth,luck)):r<0.77?genArmor(S.depth,rollRarity(S.depth,luck)):genTome(S.depth,rollRarity(S.depth,luck))}
+function rollGear(luck){return Math.random()<0.62?genWeapon(S.depth,rollRarity(S.depth,luck)):genTome(S.depth,rollRarity(S.depth,luck))}
 function rollLoot(){const roll=rnd(100);if(roll<14)return{kind:'gear',item:rollGear()};const free=Object.keys(TRINKETS).filter(k=>!S.trinkets.includes(k)&&!(S.L&&S.L.items.some(i=>i.t===k)));
   if(roll<30)return{kind:'gold',amt:rr(3,6)*S.depth+rr(1,6)};if(roll<48)return{kind:'draught'};if(roll<62)return{kind:'charge'};if(roll<74)return{kind:'ink'};if(roll<88)return{kind:'oil'};
   if(free.length&&!(S.L&&S.L.items.some(i=>i.kind==='trinket')))return{kind:'trinket',t:pick(free)};return{kind:'gold',amt:rr(4,9)*S.depth}}
@@ -3384,7 +3389,65 @@ function armBody(P,b,tx0,tw){const p=APAL[b.base][1],t=ATRIM[b.rar];
   else if(b.base==='oilskin'){P.rect(tx0+Math.floor(tw/2),13,1,8,p.b)}
   else if(b.base==='jerkin'){P.px(tx0+Math.floor(tw/2),15,p.b);P.px(tx0+Math.floor(tw/2),17,p.b)}
   if(t)P.rect(tx0,13,tw,1,t)}
-function makeHero(cls,o){const L=armLook(HERO_LOOK[cls]||HERO_LOOK.riptide,o.arm);const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');const OX=8,OY=12;
+/* ---- kits: the same kit, worn differently by each delver ---- */
+const KC={iron:'#7a7e84',ironH:'#b8bcc2',ironD:'#4a4e54',lea:'#6a4424',leaD:'#3a2414',leaH:'#8a5a34',chain:'#9a9ea4',chainD:'#3a3e44',rope:'#b89a68',ropeD:'#7a6440',bone:'#e4dcc4',boneD:'#a89c80',salt:'#eef2f0',glass:'#7ac8c0',gold:'#d8b04a',flame:'#ffb347',flameH:'#fff2b0',oil:'#3a4030',oilH:'#55604a',reed:'#c8b070',reedD:'#8a7840',tar:'#2a3024',tarH:'#3e4a36',pink:'#c89a98'};
+function kitLook(L,kit,cls){if(!kit)return L;const D=Object.create(L);
+  if(kit==='fenwalker'){if(L.legs)D.legs=[KC.tarH,KC.tar];D.boots=[KC.tarH,KC.tar]}
+  if(kit==='lamplighter'&&L.build!=='robe'&&cls!=='riptide'){D.over=[KC.oil,ashade(KC.oil,0.7),KC.oilH]}
+  if(kit==='smuggler'&&L.build!=='robe'){D.over=[ashade(L.torso[0],0.7),ashade(L.torso[0],0.5),L.torso[2]]}
+  return D}
+function chainLine(P,x0,y0,x1,y1){const n=Math.max(Math.abs(x1-x0),Math.abs(y1-y0));for(let i=0;i<=n;i++){const x=Math.round(x0+(x1-x0)*i/n),y=Math.round(y0+(y1-y0)*i/n);P.px(x,y,i%2?KC.chainD:KC.chain)}}
+function kitDraw(ph,P,kit,cls,L,g){if(!kit)return;const{tx0,tw,robe}=g,R=tx0+tw-1,hood=!!L.hood,tint=L.torso[0];
+  switch(kit){
+  case'panoply':
+    if(ph==='body'){P.rect(tx0-1,13,3,3,KC.iron);P.rect(tx0-1,13,3,1,KC.ironH);P.px(tx0,15,KC.ironD);
+      if(cls==='flag'){P.rect(tx0+2,14,tw-4,5,KC.iron);P.rect(tx0+2,14,tw-4,1,KC.ironH);P.rect(tx0+Math.floor(tw/2),15,1,3,L.trim||KC.gold);P.rect(tx0+Math.floor(tw/2)-1,16,3,1,L.trim||KC.gold)}
+      else if(cls==='storm'||cls==='occult'){P.rect(tx0,19,tw,2,KC.iron);for(let x=tx0+1;x<R;x+=2)P.px(x,19,KC.ironH)}
+      else if(cls==='shadow'){P.rect(13,12,6,1,KC.iron);P.px(14,12,KC.ironH);P.rect(R-1,14,2,5,KC.iron)}
+      else{P.rect(R-2,13,3,3,KC.iron);P.rect(R-2,13,3,1,KC.ironH);for(const y of[15,17])P.px(tx0+3,y,KC.ironH)}}
+    if(ph==='head'){if(cls==='riptide'){P.rect(11,3,9,2,KC.iron);P.rect(12,3,7,1,KC.ironH);P.rect(10,5,11,1,KC.ironD)}
+      else if(cls==='occult'){P.rect(14,8,6,1,KC.iron);P.px(15,8,KC.ironH)}
+      else if(hood){P.rect(10,6,1,2,KC.iron);P.rect(19,4,1,2,KC.ironH)}}break;
+  case'leathers':
+    if(ph==='body'){for(let i=0;i<9;i++){P.px(tx0+i,13+i,KC.lea);P.px(tx0+i+1,13+i,KC.leaD)}
+      if(cls==='riptide')for(let i=0;i<9;i++)P.px(R-i,13+i,KC.lea);
+      const bits=cls==='shadow'?[[R-2,15,'#8a8a8a'],[R-2,16,'#5a5a5a']]:cls==='storm'?[[tx0+3,16,KC.gold],[tx0+6,19,KC.gold]]:cls==='flag'?[[tx0+3,16,'#e8e0d0'],[tx0+5,18,'#e8e0d0']]:cls==='occult'?[[tx0+3,16,KC.bone],[tx0+6,19,KC.bone]]:[[tx0+4,17,KC.leaH]];
+      for(const[x,y,c]of bits)P.px(x,y,c)}break;
+  case'chains':
+    if(ph==='body'){chainLine(P,tx0,14,R,20);if(cls==='flag'){chainLine(P,R,14,tx0,20);P.rect(tx0+Math.floor(tw/2)-1,20,3,2,KC.ironD);P.px(tx0+Math.floor(tw/2),20,KC.gold)}
+      else if(cls==='riptide')chainLine(P,tx0,13,R,13);
+      if(!robe)chainLine(P,tx0+2,22,tx0+2,26);else chainLine(P,tx0+1,22,tx0+1,26);if(cls==='occult')P.rect(tx0+1,27,2,2,KC.bone)}break;
+  case'lamplighter':
+    if(ph==='back'){P.line(8,2,12,24,'#6a4a2a');P.line(9,2,13,24,'#4a3418');P.rect(7,0,3,2,KC.flame);P.px(8,0,KC.flameH);P.px(8,-1,KC.flame);
+      if(robe||cls==='riptide'){P.rect(tx0-1,20,3,8,KC.oil);P.rect(tx0-1,20,1,8,KC.oilH)}}
+    if(ph==='body'){if(robe){P.rect(13,11,6,2,KC.oil);P.rect(13,11,6,1,KC.oilH)}if(cls==='riptide'){P.rect(tx0,13,3,8,KC.oil);P.rect(R-2,13,3,8,KC.oil)}P.px(tx0+2,19,KC.flame)}break;
+  case'gravedigger':
+    if(ph==='back'){const bc=cls==='occult'?KC.bone:'#6a4a2a',blade=cls==='occult'?KC.boneD:cls==='storm'?'#c07a40':KC.iron;P.line(10,2,10,24,bc);P.rect(9,0,3,4,blade);P.px(9,0,ashade(blade,1.3));
+      if(cls==='flag'){P.rect(8,6,5,1,bc)}if(cls==='riptide'){P.rect(8,0,5,1,blade)}}
+    if(ph==='body'){P.rect(R-2,19,2,3,'#3a6a4a');P.px(R-2,19,'#8ac8a0');P.px(R-1,18,'#6a4a2a')}break;
+  case'ratcatcher':
+    if(ph==='body'){const n=cls==='riptide'?3:2;for(let k=0;k<n;k++){const x=tx0+1+k*2;P.line(x,22,x+(k%2?1:-1),26,KC.pink);P.px(x,21,'#5a4a44')}
+      P.line(R,17,R,23,'#8a8a8a');if(cls==='shadow'){P.rect(18,10,3,2,'#6a5a54');P.px(20,10,'#e8503a');P.line(17,12,16,14,KC.pink)}
+      if(cls==='occult'){P.rect(tx0+tw-4,20,2,2,KC.bone);P.px(tx0+tw-4,21,'#000')}}
+    if(ph==='back'){P.rect(7,15,4,5,'#3a2a1a');for(const x of[7,9])P.rect(x,15,1,5,KC.iron);P.rect(7,15,4,1,KC.iron)}break;
+  case'smuggler':
+    if(ph==='body'){const pc=ashade(tint,0.55);for(const[x,y]of[[tx0+1,15],[R-2,15],[tx0+1,18]]){P.rect(x,y,2,2,pc);P.px(x,y,ashade(tint,1.2))}P.rect(R-1,20,2,3,KC.gold);P.px(R-1,20,'#fff2b0');
+      if(robe)P.rect(tx0,22,tw,1,ashade(tint,0.6))}
+    if(ph==='head'&&!hood&&cls!=='occult'){P.rect(10,3,11,2,'#3a2a1e');P.rect(9,5,13,1,'#2a1e14')}break;
+  case'saltwife':
+    if(ph==='body'){for(let i=0;i<tw-1;i++){const x=tx0+i,y=14+Math.round(Math.sin(i/(tw-2)*Math.PI)*3);P.px(x,y,i%3===1?KC.glass:KC.salt)}P.px(tx0+Math.floor(tw/2),18,KC.glass);P.px(tx0+Math.floor(tw/2),19,ashade(KC.glass,0.7));
+      if(cls==='riptide'){P.px(16,13,KC.salt);P.px(18,13,KC.glass)}}
+    if(ph==='head'&&hood){for(const[x,y]of[[10,8],[10,10],[19,7]])P.px(x,y,KC.salt);P.px(10,9,KC.glass)}break;
+  case'wrecker':
+    if(ph==='body'){for(let i=0;i<10;i++){const x=tx0-1+i,y=13+i;P.px(x,y,KC.rope);P.px(x,y+1,KC.ropeD)}P.line(tx0-2,21,tx0-3,24,KC.iron);P.px(tx0-2,25,KC.ironH);P.px(tx0-4,24,KC.iron);
+      if(cls==='storm'||cls==='occult')P.rect(R-1,19,2,3,KC.rope)}break;
+  case'fenwalker':
+    if(ph==='head'){if(hood){P.rect(9,6,12,1,KC.reed);P.px(9,6,KC.reedD);P.px(20,6,KC.reedD)}else{P.rect(8,4,15,1,KC.reed);P.rect(11,2,9,2,KC.reed);P.rect(11,2,9,1,KC.reedD);P.px(8,4,KC.reedD);P.px(22,4,KC.reedD)}}
+    if(ph==='body'&&robe){P.rect(13,27,3,2,KC.tar);P.rect(16,27,4,2,KC.tarH)}break;
+  case'bonereader':
+    if(ph==='body'){P.rect(tx0-1,18,4,4,KC.leaD);P.rect(tx0-1,18,4,1,KC.lea);P.px(tx0,20,KC.bone);P.px(tx0+2,19,KC.bone);P.line(tx0+1,13,tx0-1,18,KC.lea)}
+    if(ph==='head'){const fc=cls==='storm'?'#4a6a9a':cls==='flag'?'#e8e0d0':'#2a2a2a';P.line(12,2,10,-1,fc);P.px(13,2,KC.bone);P.line(13,2,12,0,ashade(fc,1.4))}break}}
+function makeHero(cls,o){const L=kitLook(armLook(HERO_LOOK[cls]||HERO_LOOK.riptide,o.arm),o.kit,cls);const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');const OX=8,OY=12;
   const P={px:(x,y,col)=>{x=(x|0)+OX;y=(y|0)+OY;if(x<0||y<0||x>47||y>47)return;g.fillStyle=col;g.fillRect(x,y,1,1)},rect:(x,y,w,h,col)=>{g.fillStyle=col;g.fillRect((x|0)+OX,(y|0)+OY,w|0,h|0)},
     line(x0,y0,x1,y1,col){x0|=0;y0|=0;x1|=0;y1|=0;const dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1;let e=dx+dy;for(;;){this.px(x0,y0,col);if(x0===x1&&y0===y1)break;const e2=2*e;if(e2>=dy){e+=dy;x0+=sx}if(e2<=dx){e+=dx;y0+=sy}}}};
   const pose=o.pose||'idle',walk=pose==='walk1'?1:pose==='walk2'?-1:0,strike=pose==='strike';const broad=L.build==='broad',robe=L.build==='robe';
@@ -3394,6 +3457,7 @@ function makeHero(cls,o){const L=armLook(HERO_LOOK[cls]||HERO_LOOK.riptide,o.arm
   if(L.cloak){P.rect(9,12,4,15,L.cloak[0]);P.rect(9,12,1,15,L.cloak[1]);P.rect(10,26,3,1,L.cloak[1]);P.px(9,27,L.cloak[1])}
   // back hand: lantern
   const lantern=(x,y)=>{P.rect(x,y,1,2,'#3a3a3a');P.rect(x-1,y+2,3,4,'#2a2a2a');P.rect(x,y+3,1,2,o.lit?'#ffd36b':'#5a4a2a');if(o.lit){P.px(x,y+3,'#fff2b0')}P.rect(x-1,y+6,3,1,'#3a3a3a')};
+  const KG=()=>({tx0,tw,robe});if(o.kit)kitDraw('back',P,o.kit,cls,L,KG());
   // legs and feet
   if(!robe){const Lg=L.legs;const bx=13-walk,fx=16+walk;P.rect(bx,22,3,5,Lg[1]);P.rect(fx,22,3,5,Lg[0]);P.px(fx,22,Lg[1]);
     P.rect(bx,26,3,3,L.boots[1]);P.rect(bx+3,28,1,1,L.boots[1]);P.rect(fx,26,3,3,L.boots[0]);P.rect(fx+3,28,1,1,L.boots[0]);P.rect(fx,26,3,1,L.boots[1])}
@@ -3418,12 +3482,13 @@ function makeHero(cls,o){const L=armLook(HERO_LOOK[cls]||HERO_LOOK.riptide,o.arm
   // tomes on the hip
   (o.tomes||[]).slice(0,2).forEach((r,k)=>{const col=(RARITY[r]||RARITY.fine).col;const x=k?tx0+tw-1:tx0-2,y=19+k;P.rect(x,y,3,4,'#2a1e16');P.rect(x,y,3,1,col);P.rect(x+2,y,1,4,col);P.px(x,y+3,'#000')});
   if(o.lantern)lantern(bh[0],bh[1]);
+  if(o.kit)kitDraw('body',P,o.kit,cls,L,KG());
   // neck & relic
   P.rect(14,12,4,1,L.skinD);if(o.relic){P.px(16,14,'#e0c060');P.px(16,15,'#fff2b0');P.px(15,13,'#5a4a30');P.px(17,13,'#5a4a30')}
   // head
   P.rect(11,5,9,8,L.skin);P.rect(11,5,2,8,L.skinD);P.rect(18,6,2,2,L.skin);P.px(20,9,L.skin);P.px(20,10,L.skinD);
   P.px(17,8,'#140c08');P.px(18,8,'#140c08');P.px(17,7,'#3a2418');P.px(18,7,'#3a2418');P.px(18,8,'#f4ecd8');P.px(15,11,L.skinD);
-  L.head.call(L,P.px,P);if(o.arm&&o.arm.head)armHead(P,o.arm.head);
+  L.head.call(L,P.px,P);if(o.arm&&o.arm.head)armHead(P,o.arm.head);if(o.kit)kitDraw('head',P,o.kit,cls,L,KG());
   // front arm and weapon
   const W=o.w||L.def;const rc=RARE_COL[o.rar||'fine']||RARE_COL.fine;const elc=o.el&&ELEM[o.el]?ELEM[o.el].col:null;
   const hx=sw?Math.round(sw.hx):strike?23:20,hy=sw?Math.round(sw.hy):strike?16:20;
@@ -4458,7 +4523,7 @@ const shopObj=kind=>S.L.objs.find(o=>kind==='silas'?o.type==='rival':o.type==='m
 UI.shop=(kind,tab)=>{const town=!!(S.L&&S.L.town);shopTab=tab||shopTab;const mmul=kind==='rook'?1.3:kind==='silas'?1.15:0.9;
   const N={smith:'tobias',chapel:'agathe',tavern:'bram',hall:'hale',apoth:'nell',rook:'rook',peddler:'peddler',silas:'silas'}[kind];const NP=NPCS[N];
   let body='',tabs=[];const T=(id,l)=>{tabs.push([id,l]);return shopTab===id};
-  if(kind==='smith'){if(!META.smith){META.smith=[0,1,2,3,4,5].map(i=>{const d=Math.max(1,META.deepest+1),r=pick(['worn','fine','fine','storied']);const it=i<3?genWeapon(d,r):genArmor(d,r);it.ident=true;return it});saveMeta()}
+  if(kind==='smith'){if(!META.smith){META.smith=[0,1,2,3].map(()=>{const it=genWeapon(Math.max(1,META.deepest+1),pick(['worn','fine','fine','storied']));it.ident=true;return it});saveMeta()}
     if(!['buy','sell','forge','kits'].includes(shopTab))shopTab='buy';T('buy','Buy');T('kits','Kits');T('sell','Sell');T('forge',flag('pipFreed')?'Reforge':'Reforge (needs Pip)');
     if(shopTab==='buy')body=`<div class="cards">${META.smith.map(it=>card(it,`<button class="btn" data-act="buy" data-id="${it.id}" ${META.silver>=Math.round(it.value*1.5)?'':'disabled'}>Buy</button>`,{price:Math.round(it.value*1.5)})).join('')||'<p class="purse">Sold out until your next return.</p>'}</div>`;
     if(shopTab==='kits')body=`<div class="cards">${Object.entries(KITS).map(([k,K])=>`<div class="itm${(META.kits||{})[k]?' eq':''}"><div class="t"><div><b>${K.name}</b><div class="r" style="color:var(--dim)">Kit · choose one at the lift head</div></div></div><ul><li>${esc(K.desc)}</li></ul><div class="row2"><span class="pr">${(META.kits||{})[k]?'Owned':K.cost+' silver'}</span>${(META.kits||{})[k]?'':`<button class="btn" data-act="kit" data-id="${k}" ${META.silver>=K.cost?'':'disabled'}>Buy</button>`}</div></div>`).join('')}</div><p class="purse">Kits are armour and harness that change how a delver fights. You own them for good.</p>`;
@@ -4517,7 +4582,7 @@ UI.lift=()=>{if(!(S.L&&S.L.town)){return}const ds=startDepths();if(!liftSel)lift
     <p class="sect">Depth</p><div class="tabs">${ds.map(d=>`<button class="btn${liftSel.d===d?' on':''}" data-d="${d}">Depth ${d} · ${BIOMES[biomeOf(d)].name}${d>1?` (start at level ${1+Math.floor((d-1)/2)})`:''}</button>`).join('')}</div>
     ${kits.length?`<p class="sect">Kit</p><div class="tabs"><button class="btn${!liftSel.kit?' on':''}" data-kit="">None</button>${kits.map(k=>`<button class="btn${liftSel.kit===k?' on':''}" data-kit="${k}" title="${esc(KITS[k].desc)}">${KITS[k].name}</button>`).join('')}</div>`:''}
     ${omensOpen()?`<p class="sect">Omens (harder delves, more silver)</p><div class="tabs">${Object.entries(OMENS).map(([k,O])=>`<button class="btn${liftSel.omens.includes(k)?' on':''}" data-omen="${k}" title="${esc(O.desc)}">${O.name} ×${O.mul}</button>`).join('')}</div>`:''}
-    <p class="sect">Take from your stash (1 weapon, 2 tomes, 1 relic, one piece of armour per slot)</p>${gear.length?`<div class="cards">${gear.map(it=>{const on=liftSel.items.includes(it.id);const can=on||(it.kind==='weapon'?wSel<1:it.kind==='relic'?rSel<1:it.kind==='armor'?aSel(it.slot)<1:tSel<2);return card(it,`<button class="btn${on?' primary':''}" data-act="take" data-id="${it.id}" ${can?'':'disabled'}>${on?'Taking':'Take'}</button>`,{eq:on})}).join('')}</div>`:'<p class="purse">Your stash is empty. You go down with bare hands and your class abilities.</p>'}
+    <p class="sect">Take from your stash (1 weapon, up to 2 tomes, 1 relic)</p>${gear.length?`<div class="cards">${gear.map(it=>{const on=liftSel.items.includes(it.id);const can=on||(it.kind==='weapon'?wSel<1:it.kind==='relic'?rSel<1:it.kind==='armor'?aSel(it.slot)<1:tSel<2);return card(it,`<button class="btn${on?' primary':''}" data-act="take" data-id="${it.id}" ${can?'':'disabled'}>${on?'Taking':'Take'}</button>`,{eq:on})}).join('')}</div>`:'<p class="purse">Your stash is empty. You go down with bare hands and your class abilities.</p>'}
     <div class="row" style="align-items:center;flex-wrap:wrap;gap:10px"><span class="purse">${META.pendingBless?`Blessed: <b>${BLESS[META.pendingBless].name}</b> · `:''}Supplies: ${1+META.upg.prov+((META.supplies||{}).draught||0)} draughts, ${1+((META.supplies||{}).charge||0)} charges, ${1+((META.supplies||{}).ink||0)} smoke, ${1+((META.supplies||{}).oil||0)} firepots${(META.supplies||{}).tea?`, ${META.supplies.tea} tea`:''}</span><button class="btn primary" id="goDown">Ride the lift down</button></div>`,true);
   el.querySelectorAll('[data-cls]').forEach(b=>b.onclick=()=>{liftSel.cls=b.dataset.cls;UI.lift()});el.querySelectorAll('[data-kit]').forEach(b=>b.onclick=()=>{liftSel.kit=b.dataset.kit||null;UI.lift()});el.querySelectorAll('[data-omen]').forEach(b=>b.onclick=()=>{const k=b.dataset.omen,i=liftSel.omens.indexOf(k);if(i>=0)liftSel.omens.splice(i,1);else liftSel.omens.push(k);UI.lift()});el.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{liftSel.d=+b.dataset.d;UI.lift()});
   bindCards(el,(a,id)=>{const i=liftSel.items.indexOf(id);if(i>=0)liftSel.items.splice(i,1);else liftSel.items.push(id);UI.lift()});
@@ -6062,12 +6127,8 @@ function packSnd(it,on){try{if(!AU.on||!AU.ctx)return;const d=spOut(null,null,1)
 
 /* --- how the hero looks: worn pieces go on the sprite --- */
 function armSpec(){const out={};let any=false;for(const s of ASLOTS){const a=S&&S.gear&&S.gear.arm&&S.gear.arm[s];if(a){out[s]={base:a.base,rar:a.rar};any=true}}return any?out:null}
-{const k0=heroLookKey;heroLookKey=function(){const k=k0();if(!k)return k;const a=armSpec();return a?k+'|'+ASLOTS.map(s=>a[s]?a[s].base+a[s].rar[0]:'').join(','):k}}
-{const n0=heroLookNow;heroLookNow=function(pose){const o=n0(pose);const a=armSpec();if(a)o.arm=a;return o}}
-// the side panel lists your armour
-{const r0=renderGear;renderGear=function(){r0();try{if(!S||!S.L||S.L.town)return;const b=$('gbG');if(!b)return;const n=armPieces().length;
-  b.insertAdjacentHTML('beforebegin',`<div class="row" style="margin-bottom:4px"><span>Armour</span><b>${armorTotal()}${n?` <span style="color:var(--dim);font-weight:400">· ${n} piece${n>1?'s':''} worn</span>`:''}</b></div>`)}catch(e){}}}
-
+{const k0=heroLookKey;heroLookKey=function(){let k=k0();if(!k)return k;if(S.kit)k+='|kit:'+S.kit;const a=armSpec();return a?k+'|'+ASLOTS.map(s=>a[s]?a[s].base+a[s].rar[0]:'').join(','):k}}
+{const n0=heroLookNow;heroLookNow=function(pose){const o=n0(pose);const a=armSpec();if(a)o.arm=a;if(S&&S.kit)o.kit=S.kit;return o}}
 /* --- the screen --- */
 let pkSel=null,pkDrag=null;
 function pkCW(){const m=isMob();return m?Math.max(26,Math.min(36,Math.floor((innerWidth-56)/BAG_W))):40}
@@ -6093,10 +6154,10 @@ UI.gear=()=>{if(S.L&&S.L.town){UI.cottage();return}bagSettle();const inC=S.mode=
     <div class="pk-top"><div class="gmt">${esc(CLASSES[S.cls].name)}</div><div class="pk-note">${inC?'You cannot change gear mid-fight.':mob?'Tap to inspect · drag to move or wear':'Drag to move or wear · right-click to equip or take off'}</div></div>
     <div class="pk-main">
       <div class="pk-doll">
-        ${slotHtml('cloak')}${slotHtml('head')}${slotHtml('relic')}
-        ${slotHtml('weapon')}<div class="pk-hero"><img src="${heroURL}" alt="" draggable="false"></div>${slotHtml('body')}
-        ${slotHtml('hands')}<div class="pk-stats"><div title="Every 2 points of armour take 1 off each hit, but never more than 30% of it"><span>Armour</span><b>${armorTotal()}</b></div><div><span>Stamina</span><b>${P.stam}/${P.max}</b></div><div><span>Footsteps</span><b class="${nw[1]}">${nw[0]}</b></div></div>${slotHtml('feet')}
-        ${slotHtml('tome0')}<div class="pk-belt">${belt}</div>${slotHtml('tome1')}
+        ${slotHtml('weapon')}<div class="pk-hero"><img src="${heroURL}" alt="" draggable="false"></div>${slotHtml('relic')}${slotHtml('tome0')}${slotHtml('tome1')}
+        <div class="pk-kit${S.kit?' has':''}" title="${esc(S.kit?KITS[S.kit].desc:'Buy kits from Tobias the smith, then pick one at the lift head.')}"><span>Kit</span><b>${S.kit?esc(KITS[S.kit].name):'None'}</b>${S.kit?`<i>${esc(KITS[S.kit].desc)}</i>`:'<i>Chosen at the lift head</i>'}</div>
+        <div class="pk-stats"><div><span>Stamina</span><b>${P.stam}/${P.max}</b></div><div><span>Speed</span><b>${speedOf(P)}</b></div><div><span>Footsteps</span><b class="${nw[1]}">${nw[0]}</b></div></div>
+        <div class="pk-belt">${belt}</div>
       </div>
       <div class="pk-bag"><div class="pk-flap"><div class="pk-buckle"></div></div>
         <div class="pk-body"><div class="pk-grid" style="width:${BAG_W*CW}px;height:${BAG_H*CW}px;--cw:${CW}px">${items}<div class="pk-shadow" hidden></div></div>
@@ -6143,7 +6204,7 @@ UI.gear=()=>{if(S.L&&S.L.town){UI.cottage();return}bagSettle();const inC=S.mode=
 .pk-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}.pk-top .gmt{font-size:26px;margin:0}
 .pk-note{font-size:13px;color:var(--dim,#8a7e6a);font-style:italic}
 .pk-main{display:flex;gap:18px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
-.pk-doll{display:grid;grid-template-columns:auto auto auto;grid-template-areas:"cloak head relic" "weapon hero body" "hands hero feet" "tome0 stats tome1" "belt belt belt";gap:10px 14px;align-items:center;justify-items:center;padding:14px;border-radius:6px;
+.pk-doll{display:grid;grid-template-columns:auto auto auto;grid-template-areas:"weapon hero relic" "weapon hero tome0" "kit hero tome1" "kit stats stats" "belt belt belt";gap:10px 14px;align-items:center;justify-items:center;padding:14px;border-radius:6px;
   background:radial-gradient(ellipse at 50% 40%,#2a241c 0%,#16120e 70%);border:1px solid #3a3022;box-shadow:inset 0 0 30px rgba(0,0,0,.7)}
 .pk-slot{position:relative;display:flex;align-items:center;justify-content:center;border:1px solid #4a3c28;border-radius:4px;
   background:linear-gradient(180deg,#0c0a08,#14110d);box-shadow:inset 0 0 12px rgba(0,0,0,.9),0 0 0 2px #0a0806,0 0 0 3px #2e261a}
@@ -6154,8 +6215,10 @@ UI.gear=()=>{if(S.L&&S.L.town){UI.cottage();return}bagSettle();const inC=S.mode=
 .pk-slot>.pk-item{width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:grab;touch-action:none}
 .pk-item img{image-rendering:pixelated;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.8))}
 .pk-hero{display:flex;align-items:center;justify-content:center;width:150px}.pk-hero img{width:216px;height:216px;image-rendering:pixelated;margin:-24px -30px -12px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.8))}
-.pk-s-cloak{grid-area:cloak}.pk-s-head{grid-area:head}.pk-s-relic{grid-area:relic}.pk-s-weapon{grid-area:weapon}.pk-s-body{grid-area:body}.pk-s-hands{grid-area:hands}.pk-s-feet{grid-area:feet}.pk-s-tome0{grid-area:tome0}.pk-s-tome1{grid-area:tome1}.pk-hero{grid-area:hero}.pk-stats{grid-area:stats}.pk-belt{grid-area:belt}
-.pk-stats{display:grid;gap:3px;width:150px;font-size:13px}.pk-stats div{display:flex;justify-content:space-between;border-bottom:1px solid #2a2218;padding:1px 2px}.pk-stats span{color:#8a7e6a}
+.pk-s-cloak{grid-area:cloak}.pk-s-head{grid-area:head}.pk-s-relic{grid-area:relic}.pk-s-weapon{grid-area:weapon}.pk-s-body{grid-area:body}.pk-s-hands{grid-area:hands}.pk-s-feet{grid-area:feet}.pk-s-tome0{grid-area:tome0}.pk-s-tome1{grid-area:tome1}.pk-hero{grid-area:hero}.pk-stats{grid-area:stats}.pk-belt{grid-area:belt}.pk-kit{grid-area:kit}
+.pk-stats{display:grid;gap:3px;width:100%;font-size:13px;align-self:start}
+.pk-kit{align-self:stretch;width:130px;display:flex;flex-direction:column;gap:2px;padding:8px;border:1px solid #4a3c28;border-radius:4px;background:linear-gradient(180deg,#0c0a08,#14110d);box-shadow:inset 0 0 12px rgba(0,0,0,.9);font-size:12px}
+.pk-kit span{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#6e6250}.pk-kit b{color:#e3c35a;font-size:14px;line-height:1.2}.pk-kit:not(.has) b{color:#6e6250}.pk-kit i{color:#a89a80;line-height:1.3}.pk-stats div{display:flex;justify-content:space-between;border-bottom:1px solid #2a2218;padding:1px 2px}.pk-stats span{color:#8a7e6a}
 .pk-stats b{font-weight:600}.pk-stats b.good{color:#9fd0b0}.pk-stats b.bad{color:#e07a5a}
 .pk-belt{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;justify-self:stretch;padding:6px 4px;border-radius:4px;background:linear-gradient(180deg,#3a2616,#24170d);border:1px solid #5a3e24;box-shadow:inset 0 1px 0 rgba(255,220,160,.12)}
 .pk-pouch{position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:3px 3px 8px 8px;background:#2a1c10;border:1px solid #6a4a2a}
@@ -6191,9 +6254,27 @@ UI.gear=()=>{if(S.L&&S.L.town){UI.cottage();return}bagSettle();const inC=S.mode=
 body.mob .pk-doll{gap:6px 8px;padding:10px}body.mob .pk-hero img{width:150px;height:150px;margin:-16px -22px -8px}body.mob .pk-stats{width:120px}body.mob .pk-stats{font-size:12px}
 body.mob .pk-pouch{width:28px;height:28px}body.mob .pk-pouch img{width:20px;height:20px}body.mob .pk-body{padding:26px 10px 10px}body.mob .pk-top .gmt{font-size:22px}
 `;document.head.appendChild(st)}
-setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{ringBell:(...a)=>ringBell(...a),carriedItems:()=>carriedItems(),genArmor,equipItem,unequip,bagSettle,inSlot})}catch(e){}},400);
+setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{kitPv:(c,k)=>kitPreview(c,k,100),ringBell:(...a)=>ringBell(...a),carriedItems:()=>carriedItems(),genArmor,equipItem,unequip,bagSettle,inSlot})}catch(e){}},400);
 // armour soaking a hit: a dull clink and a small grey number
 {const d0=damage;damage=function(e,amt,src){const r=d0(e,amt,src);try{if(e&&e.lastBlock&&isP(e)){const b=e.lastBlock;e.lastBlock=0;UI.fx('float',{e,text:'−'+b+' armour',color:'#b8c0c8'});if(AU.on&&AU.ctx){const d=spOut(null,null,1);if(d){clang(d,jit(700),0.025,0.25);nz(d,{f:jit(1800),q:2,peak:0.05,dur:0.04})}}}}catch(er){}return r}}
+/* ---------- armour is retired: anything already found is sold back to Tobias ---------- */
+function scrubArmor(){let v=0,n=0;const take=it=>{v+=it.value||20;n++};
+  try{if(META&&META.stash)META.stash=META.stash.filter(it=>{if(it&&it.kind==='armor'){take(it);return false}return true});if(META&&META.smith)META.smith=META.smith.filter(it=>it.kind!=='armor');
+  if(S&&S.bag)S.bag=S.bag.filter(it=>{if(it&&it.kind==='armor'){take(it);return false}return true});
+  if(S&&S.gear&&S.gear.arm)for(const k in S.gear.arm)if(S.gear.arm[k]){take(S.gear.arm[k]);S.gear.arm[k]=null};
+  if(S&&S.L&&S.L.objs)for(const o of S.L.objs)if(o.stock)o.stock=o.stock.filter(it=>it.kind!=='armor');
+  if(S&&S.L&&S.L.items)S.L.items=S.L.items.filter(it=>!(it.kind==='gear'&&it.item&&it.item.kind==='armor'));
+  if(n){const g=Math.round(v*0.5);META.silver=(META.silver||0)+g;saveMeta();try{refreshHero()}catch(e){}log(`Tobias buys back the ${n} piece${n>1?'s':''} of armour you had: ${g} silver, added to your bank.`,'gold');UI.toast&&UI.toast('Armour sold',`${g} silver banked`);try{UI.save()}catch(e){}}}catch(e){}}
+{let lastS=null;const r0=UI.render;UI.render=function(){if(S&&S!==lastS){lastS=S;scrubArmor()}return r0.apply(this,arguments)}}
+/* ---------- kit previews: see how a kit looks on your delver before you buy or take it ---------- */
+function kitPreview(cls,kit,size){try{const c=makeHero(cls,{lantern:true,lit:true,pose:'idle',kit,w:HERO_LOOK[cls].def});return`<img class="kitpv" src="${c.toDataURL()}" alt="" style="width:${size}px;height:${size}px;image-rendering:pixelated">`}catch(e){return''}}
+{const s0=UI.shop;UI.shop=function(kind,tab){s0(kind,tab);try{if(kind!=='smith'||shopTab!=='kits')return;const cls=META.hero||S.cls||'riptide';const keys=Object.keys(KITS);
+  ov.querySelectorAll('.cards .itm').forEach((el,i)=>{const t=el.querySelector('.t');if(t&&keys[i])t.insertAdjacentHTML('afterbegin',kitPreview(cls,keys[i],80))})}catch(e){}}}
+{const l0=UI.lift;UI.lift=function(){l0();try{const kb=ov.querySelector('[data-kit]');if(!kb||!liftSel)return;const row=kb.parentElement;const box=document.createElement('div');box.className='kitrow';
+  const show=k=>{box.innerHTML=`${kitPreview(liftSel.cls,k||null,72)}<div><b>${k?esc(KITS[k].name):'No kit'}</b><span>${k?esc(KITS[k].desc):'Go down in your own clothes.'}</span></div>`};show(liftSel.kit);row.after(box);
+  ov.querySelectorAll('[data-kit]').forEach(b=>{b.addEventListener('pointerenter',()=>show(b.dataset.kit||null));b.addEventListener('pointerleave',()=>show(liftSel.kit))})}catch(e){}}}
+{const st=document.createElement('style');st.textContent=`.kitpv{flex:none;margin:-14px 0 -10px -14px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.8));background:radial-gradient(circle,#2a241c,transparent 70%);border-radius:4px}
+.kitrow{display:flex;align-items:center;gap:10px;margin:8px 0 4px;padding:6px 10px;border:1px solid #3a3022;border-radius:4px;background:rgba(0,0,0,.25)}.kitrow b{display:block;color:#e3c35a}.kitrow span{font-size:13px;color:#a89a80}`;document.head.appendChild(st)}
 /* ---------- every move gets its own look: hero pose + a drawn effect per ability ---------- */
 const ABANIM={
   // Saltbreaker
