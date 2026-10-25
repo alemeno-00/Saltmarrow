@@ -3518,7 +3518,7 @@ function draw(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio);ctx.setTransform(dp
   for(const e of list){
     if(e.o){drawObj(e.o);continue}
     if(e.p){drawSprite(SPR[S.cls],SPRW[S.cls],P,T,P.hidden?0.5:(S.over&&!S.won?0.35:1));continue}
-    if(e.n){const n=e.n;const k=n.key==='folk'&&n.id%2?'n_folk2':NPCS[n.key].spr;drawSprite(SPR[k],null,n,T);continue}
+    if(e.n){const n=e.n;drawSprite(npcImg(n),null,n,Math.round(T*1.12));continue}
     const m=e.m,M=MT(m);
     if(M.light){const p=wpos(m);const g=ctx.createRadialGradient(p.x,p.y,2,p.x,p.y,T*2);g.addColorStop(0,'rgba(255,211,107,.25)');g.addColorStop(1,'rgba(255,211,107,0)');ctx.fillStyle=g;ctx.fillRect(p.x-T*2,p.y-T*2,T*4,T*4)}
     const sub=M.ai==='lurker'&&inWater(m);
@@ -4004,6 +4004,166 @@ function drawLamp(o,x,y){const v=(o.x*7+o.y*3)%3,c=ctx,fl=0.85+Math.sin(NOW/110+
   c.restore()}catch(e){c.restore()}return l0()}}
 
 {const r0=resume;resume=function(sv){if(sv&&sv.L)delete sv.L.bart;r0(sv);try{if(S.L&&S.L.town&&!S.L.interior)buildTown()}catch(e){}}}
+/* ---------- townsfolk with faces of their own, stairs that look like where they lead, and a proper lift-bell ---------- */
+function makePerson(o){const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');const OX=8,OY=12;
+  const P={px:(x,y,col)=>{x=Math.round(x)+OX;y=Math.round(y)+OY;if(x<0||y<0||x>47||y>47)return;g.fillStyle=col;g.fillRect(x,y,1,1)},rect:(x,y,w,h,col)=>{g.fillStyle=col;g.fillRect(Math.round(x)+OX,Math.round(y)+OY,Math.round(w),Math.round(h))}};
+  const sh=(h,f)=>{const n=parseInt(h.slice(1),16);const r=n>>16&255,gg=n>>8&255,b=n&255;const m=v=>Math.max(0,Math.min(255,Math.round(f>0?v+(255-v)*f:v*(1+f))));return'#'+[m(r),m(gg),m(b)].map(v=>v.toString(16).padStart(2,'0')).join('')};
+  const walk=o.pose==='walk1'?1:o.pose==='walk2'?-1:0;const child=o.build==='child',stout=o.build==='stout',broad=o.build==='broad',old=o.build==='old';
+  const top=child?6:old?2:0;                       // children are shorter
+  const tw=broad?11:stout?11:child?7:9,tx=16-Math.ceil(tw/2);const body=o.top||'#5a4a3a',bodyD=sh(body,-0.35),bodyL=sh(body,0.18),skin=o.skin||'#d0a07a',skinD=sh(skin,-0.28);
+  const legY=child?24:22,legH=child?3:5;
+  // cloak or coat tails behind
+  if(o.coat){P.rect(tx-1,14+top,tw+2,o.coatLen||12,sh(o.coat,-0.3))}
+  // legs / skirt
+  if(o.skirt){const sk=o.skirt;P.rect(tx-1,20+top,tw+2,8-top*0.5,sk);P.rect(tx-2,25+top*0.5,tw+4,3,sk);P.rect(tx+tw-1,20+top,2,8,sh(sk,-0.3));P.rect(13-walk,28,3,1,'#1e1610');P.rect(17+walk,28,3,1,'#1e1610')}
+  else{const L=o.legs||'#3a3434',LD=sh(L,-0.3);if(o.peg){P.rect(13,legY,3,legH,LD);P.rect(13,legY+legH,3,2,'#1e1610');P.rect(17,legY,2,legH+2,'#8a6a40')}
+    else{P.rect(13-walk,legY,3,legH,LD);P.rect(16+walk,legY,3,legH,L);P.rect(13-walk,legY+legH-1,3,2+(child?0:1),'#1e1610');P.rect(16+walk,legY+legH-1,4,2+(child?0:1),'#2a1e14')}}
+  // back arm
+  P.rect(tx-1,14+top,2,6,bodyD);P.rect(tx-1,20+top,2,2,skinD);
+  // torso
+  P.rect(tx,13+top,tw,9-(child?1:0),body);P.rect(tx,13+top,1,8,bodyL);P.rect(tx+tw-2,13+top,2,8,bodyD);P.rect(tx,13+top,tw,1,bodyL);
+  if(o.coat){P.rect(tx,13+top,3,9,o.coat);P.rect(tx+tw-3,13+top,3,9,o.coat);P.rect(tx+tw-1,13+top,1,9,sh(o.coat,-0.3));if(o.coatLen)P.rect(tx,22+top,tw,Math.min(o.coatLen-8,5),o.coat)}
+  if(o.apron){P.rect(tx+2,16+top,tw-4,9,o.apron);P.rect(tx+2,16+top,tw-4,1,sh(o.apron,0.2));P.rect(tx+3,15+top,1,1,o.apron);P.rect(tx+tw-4,15+top,1,1,o.apron)}
+  if(o.vest){P.rect(tx+1,14+top,tw-2,6,o.vest);P.rect(16,14+top,1,6,sh(o.vest,-0.3))}
+  if(o.shawl){P.rect(tx-1,13+top,tw+2,4,o.shawl);P.rect(tx+2,17+top,tw-4,2,o.shawl);P.rect(15,19+top,2,1,o.shawl)}
+  if(o.belt)P.rect(tx,20+top,tw,1,o.belt);
+  if(o.chain){for(let k=0;k<5;k++)P.px(tx+2+k,15+top+(k<3?k:4-k),'#e0c060');P.px(16,18+top,'#fff2b0')}
+  if(o.scarf){P.rect(tx+1,12+top,tw-2,2,o.scarf);P.rect(tx+tw-3,14+top,2,3,o.scarf)}
+  if(o.welts)for(const[x,y]of[[13,15],[15,16],[17,15],[14,18]])P.px(x,y+top,'#8a2a2a');
+  // head
+  const hy=5+top,hx=11;P.rect(14,12+top,4,1,skinD);
+  P.rect(hx,hy,9,8,skin);P.rect(hx,hy,2,8,skinD);P.rect(18,hy+1,2,2,skin);P.px(20,hy+4,skin);P.px(20,hy+5,skinD);
+  P.px(17,hy+3,'#140c08');P.px(18,hy+3,'#140c08');P.px(18,hy+3,o.eye||'#f4ecd8');P.px(17,hy+2,sh(o.hair||'#3a2a1a',-0.2));P.px(18,hy+2,sh(o.hair||'#3a2a1a',-0.2));P.px(15,hy+6,skinD);
+  if(old){P.px(16,hy+5,skinD);P.px(13,hy+4,skinD)}if(o.blush)P.px(17,hy+5,'#d88a7a');if(o.mouth)P.rect(16,hy+6,2,1,o.mouth);
+  const H=o.hair||'#3a2a1a',HD=sh(H,-0.3);
+  switch(o.hairStyle){
+    case'bald':P.rect(hx,hy,9,1,skinD);P.rect(hx,hy+1,2,3,H);break;
+    case'short':P.rect(hx,hy-1,9,3,H);P.rect(hx,hy+2,2,3,HD);P.rect(hx+2,hy-1,6,1,sh(H,0.15));break;
+    case'long':P.rect(hx,hy-1,9,3,H);P.rect(hx-1,hy,3,10,H);P.rect(hx-1,hy+8,2,3,HD);P.rect(hx+2,hy-1,6,1,sh(H,0.15));break;
+    case'bun':P.rect(hx,hy-1,9,3,H);P.rect(hx-1,hy-2,3,3,H);P.rect(hx,hy+2,2,3,HD);break;
+    case'braid':P.rect(hx,hy-1,9,3,H);P.rect(hx-1,hy+1,2,10,H);for(let k=0;k<4;k++)P.px(hx-1,hy+3+k*2,HD);break;
+    case'wild':P.rect(hx-1,hy-2,11,4,H);P.rect(hx-1,hy+1,3,6,H);P.px(hx+9,hy-2,H);P.px(hx+4,hy-3,H);break;}
+  if(o.beard){P.rect(14,hy+5,6,4,o.beard);P.rect(15,hy+9,4,1,o.beard);P.px(17,hy+6,skin)}
+  if(o.moustache)P.rect(16,hy+5,3,1,o.moustache);
+  switch(o.hat){
+    case'cap':P.rect(hx,hy-2,9,3,o.hatC||'#3a3a42');P.rect(hx+6,hy,5,1,sh(o.hatC||'#3a3a42',-0.3));P.rect(hx,hy-2,9,1,sh(o.hatC||'#3a3a42',0.2));break;
+    case'bonnet':{const b=o.hatC||'#d8d0c0';P.rect(hx-1,hy-2,10,4,b);P.rect(hx-1,hy+1,3,6,b);P.rect(hx,hy-2,9,1,sh(b,0.15));P.px(18,hy+7,b);break}
+    case'hood':{const b=o.hatC||'#3a3a40';P.rect(hx-1,hy-2,11,4,b);P.rect(hx-1,hy+1,4,7,b);P.rect(hx-1,hy-2,11,1,sh(b,0.15));break}
+    case'wimple':P.rect(hx-1,hy-2,11,4,'#141418');P.rect(hx-1,hy+1,4,8,'#141418');P.rect(hx+3,hy,7,1,'#e8e4dc');P.rect(hx+2,hy+7,8,3,'#e8e4dc');P.rect(hx+2,hy,1,7,'#e8e4dc');break;
+    case'tophat':{const b=o.hatC||'#141418';P.rect(hx+1,hy-7,7,6,b);P.rect(hx-1,hy-1,11,2,b);P.rect(hx+1,hy-3,7,1,'#6a2a2a');P.rect(hx+1,hy-7,7,1,sh(b,0.25));break}
+    case'kerchief':{const b=o.hatC||'#8a3a2a';P.rect(hx,hy-2,9,3,b);P.rect(hx-1,hy,2,3,b);P.px(hx-2,hy+3,b);break}
+    case'veil':P.rect(hx-1,hy-2,11,3,'#0e0e12');P.rect(hx-1,hy+1,11,6,'rgba(14,14,18,.65)');P.rect(hx-1,hy+1,2,9,'#0e0e12');break;}
+  // front arm and what they carry
+  const hx2=20+(o.reach||0),hy2=20+top-(o.raise||0)+(walk?walk:0);P.rect(tx+tw-2,14+top,2,2,bodyD);
+  for(let k=0;k<6;k++){const t=k/5;P.rect(tx+tw-2+(hx2-(tx+tw-2))*t,14+top+(hy2-14-top)*t,2,2,k<4?body:bodyD)}P.rect(hx2-1,hy2-1,2,2,o.gloves||skin);
+  switch(o.prop){
+    case'basket':P.rect(hx2-3,hy2+1,7,4,'#8a6a3a');P.rect(hx2-3,hy2+1,7,1,'#a8884a');for(let k=0;k<3;k++)P.px(hx2-2+k*2,hy2+3,'#5a4224');if(o.basketC)for(let k=0;k<3;k++)P.px(hx2-2+k*2,hy2,o.basketC);break;
+    case'fish':P.rect(hx2-1,hy2+1,1,7,'#6a5a4a');for(let k=0;k<2;k++){P.rect(hx2+k*2-1,hy2+4+k,2,4,'#9ab0b8');P.px(hx2+k*2-1,hy2+8+k,'#6a8a98')}break;
+    case'lantern':P.rect(hx2,hy2+1,1,2,'#3a3a3a');P.rect(hx2-1,hy2+3,3,4,'#2a2a2a');P.rect(hx2,hy2+4,1,2,'#ffd36b');P.rect(hx2-1,hy2+7,3,1,'#3a3a3a');break;
+    case'umbrella':{P.rect(hx2,hy2-14,1,15,'#2a2a2a');const u=o.propC||'#2a2a34';for(let k=-6;k<=6;k++){const y=hy2-14-Math.round(Math.sqrt(36-k*k)*0.6);P.rect(hx2+k,y,1,hy2-14-y+1,k%3===0?sh(u,0.2):u)}P.rect(hx2-6,hy2-14,13,1,sh(u,-0.3));break}
+    case'pick':P.rect(hx2,hy2-8,1,10,'#7a5a34');for(let k=-3;k<=3;k++)P.px(hx2+k,hy2-9+Math.abs(k)*0.4,'#8a949a');break;
+    case'hammer':P.rect(hx2,hy2-1,1,9,'#6a4a2a');P.rect(hx2-2,hy2+7,5,3,'#5a5e66');P.rect(hx2-2,hy2+7,5,1,'#8a8e96');break;
+    case'tankard':P.rect(hx2-1,hy2-3,4,4,'#9a9aa0');P.rect(hx2-1,hy2-3,4,1,'#f0e8d0');P.px(hx2+3,hy2-2,'#6a6a70');break;
+    case'cane':P.rect(hx2,hy2,1,9,'#3a2a1a');P.px(hx2,hy2-1,'#e0c060');break;
+    case'crutch':P.rect(hx2+1,hy2-6,1,15,'#8a6a40');P.rect(hx2-1,hy2-6,4,1,'#8a6a40');break;
+    case'scourge':P.rect(hx2,hy2,1,2,'#5a3a1a');for(const[dx,dy]of[[1,6],[3,6],[-1,6]]){P.rect(hx2+dx/2,hy2+2,1,dy-1,'#8a3a2a')}break;
+    case'book':P.rect(hx2-2,hy2-1,5,4,'#4a2a1a');P.rect(hx2-2,hy2-1,5,1,'#c8a048');break;
+    case'pack':break;
+    case'net':for(let k=0;k<4;k++)for(let j=0;j<3;j++)P.px(hx2-2+k*1.5,hy2+1+j*2,'#a8a088');P.rect(hx2,hy2,1,2,'#6a5a3a');break;
+    case'herbs':P.rect(hx2-3,hy2+1,7,4,'#6a4a2a');P.px(hx2-2,hy2,'#7fe8d0');P.px(hx2,hy2-1,'#e88ad8');P.px(hx2+2,hy2,'#7fe8d0');P.px(hx2+1,hy2,'#8acf6a');break}
+  if(o.prop==='pack'){P.rect(tx-5,10+top,6,12,'#5a4a32');P.rect(tx-5,10+top,6,1,'#7a6a48');P.rect(tx-4,15+top,4,1,'#3a2a18');P.rect(tx-3,8+top,2,2,'#3a3a3a')}
+  // outline
+  const d=g.getImageData(0,0,48,48),px=d.data,src=new Uint8ClampedArray(px);const A=(x,y)=>x<0||y<0||x>47||y>47?0:src[(y*48+x)*4+3];
+  for(let y=0;y<48;y++)for(let x=0;x<48;x++){const i=(y*48+x)*4;if(src[i+3])continue;if(A(x-1,y)||A(x+1,y)||A(x,y-1)||A(x,y+1)){px[i]=8;px[i+1]=6;px[i+2]=10;px[i+3]=235}}
+  g.putImageData(d,0,0);return c}
+const crop32=c=>{const k=document.createElement('canvas');k.width=k.height=32;k.getContext('2d').drawImage(c,8,12,32,32,0,0,32,32);return k};
+// the named people of Saltmarrow
+const PEOPLE={
+  mara:{build:'slim',skin:'#c8946c',hair:'#1a1410',hairStyle:'bun',top:'#3a3a42',coat:'#1e1e24',coatLen:14,scarf:'#a83a2a',legs:'#2a2a30',gloves:'#5a3a20',prop:'lantern',mouth:'#8a4a3a'},
+  tobias:{build:'broad',skin:'#c88a64',hairStyle:'bald',hair:'#5a3418',beard:'#6a3a1a',top:'#6a6a70',apron:'#5a3a1e',legs:'#3a3030',prop:'hammer',reach:1},
+  agathe:{build:'slim',skin:'#d8b8a0',hat:'wimple',top:'#141418',skirt:'#141418',prop:'scourge',welts:true},
+  bram:{build:'stout',skin:'#d8a07a',hairStyle:'short',hair:'#8a5a2a',moustache:'#6a3a1a',top:'#8a2a24',apron:'#d8d0c0',legs:'#3a3434',peg:true,prop:'tankard',raise:4,blush:true},
+  hale:{build:'slim',skin:'#e0b898',hairStyle:'short',hair:'#8a8a90',moustache:'#9a9aa0',top:'#e8e0d0',coat:'#1e3a2a',coatLen:14,vest:'#6a1e1e',chain:true,hat:'tophat',legs:'#1a1a1e',prop:'cane'},
+  nell:{build:'slim',skin:'#e8e0d4',hairStyle:'long',hair:'#e8e4dc',top:'#2a4a3a',shawl:'#4a7a5a',skirt:'#2a3a30',prop:'herbs',eye:'#bfffe0'},
+  pip:{build:'child',skin:'#b8c8b0',hairStyle:'wild',hair:'#c8642a',top:'#6a6a70',apron:'#5a3a1e',legs:'#3a3030',eye:'#7fe8d0'},
+  rook:{build:'slim',skin:'#c8a080',hairStyle:'short',hair:'#2a2a2a',hat:'cap',hatC:'#3a3228',top:'#5a4a36',coat:'#4a3e2c',coatLen:13,legs:'#2a2420',prop:'pack'},
+  peddler:{build:'old',skin:'#b89878',hat:'hood',hatC:'#6a5a40',top:'#6a5a40',coat:'#5a4a30',coatLen:14,legs:'#3a3020',prop:'cane',beard:'#c8c0b0'}};
+// townsfolk: built from a seed, so each one is somebody
+const FOLK=[
+  {k:'fishwife',f:r=>({build:'stout',skin:r(['#d8a07a','#c89070','#e0b090']),hat:'bonnet',hatC:r(['#d8d0c0','#c8b8a0']),top:r(['#5a3a3a','#3a4a5a','#4a4a3a']),shawl:r(['#7a5a3a','#5a6a7a','#6a3a3a']),skirt:r(['#3a3a4a','#4a3a2a']),prop:'fish'})},
+  {k:'miner',f:r=>({build:r(['broad','slim']),skin:r(['#c88a64','#d8a07a']),hairStyle:'short',hair:r(['#2a1a10','#5a3a1a']),hat:'cap',hatC:'#2a2a30',top:r(['#4a4a52','#3a4a5a']),legs:'#2a2a2e',belt:'#2a1a10',prop:'pick',beard:r([null,'#3a2a1a'])})},
+  {k:'oldman',f:r=>({build:'old',skin:r(['#d8b090','#c8a080']),hairStyle:'bald',hair:'#c8c8c8',beard:'#d8d8d8',top:r(['#4a4038','#3a3a42']),coat:'#2a2620',coatLen:12,legs:'#2a2420',prop:'cane'})},
+  {k:'child',f:r=>({build:'child',skin:r(['#e0b090','#d8a07a','#c08060']),hairStyle:r(['short','wild','braid']),hair:r(['#c8642a','#2a1a10','#d8b060']),top:r(['#8a3a3a','#3a6a5a','#6a5a8a']),legs:'#3a3434',blush:true})},
+  {k:'mourner',f:r=>({build:'slim',skin:'#d8c0a8',hat:'veil',top:'#141418',skirt:'#141418',prop:r(['book',null])})},
+  {k:'drinker',f:r=>({build:'stout',skin:'#d89878',hairStyle:r(['short','wild']),hair:r(['#8a5a2a','#3a2a1a']),moustache:'#5a3a1a',top:r(['#6a4a2a','#4a5a3a']),vest:'#3a2a1a',legs:'#3a3030',prop:'tankard',raise:3,blush:true})},
+  {k:'gentleman',f:r=>({build:'slim',skin:'#e0b898',hairStyle:'short',hair:'#3a2a1a',top:'#d8d0c0',coat:r(['#2a2a3a','#3a2a2a']),coatLen:12,hat:'tophat',legs:'#1e1e22',prop:'umbrella',propC:'#1e1e26'})},
+  {k:'netmender',f:r=>({build:'slim',skin:r(['#c89070','#d8a888']),hairStyle:'long',hair:r(['#5a3a1a','#2a1a10']),hat:'kerchief',hatC:r(['#8a3a2a','#3a5a7a']),top:'#6a6a5a',apron:'#8a7a5a',skirt:'#3a3a3a',prop:'net'})},
+  {k:'lamplighter',f:r=>({build:'slim',skin:'#d8a07a',hairStyle:'short',hair:'#5a3a1a',hat:'cap',hatC:'#4a3a2a',top:'#3a4a3a',coat:'#2e3a2e',coatLen:10,legs:'#2a2a2a',prop:'lantern'})}];
+const PEOPLE_IMG=new Map();
+function personImg(key,spec,pose){const k=key+'|'+pose;let im=PEOPLE_IMG.get(k);if(!im){im=makePerson(Object.assign({},spec,{pose}));PEOPLE_IMG.set(k,im)}return im}
+function folkSpec(n){if(n.spec)return n.spec;let s=(n.id*2654435761)>>>0;const rnd0=()=>{s^=s<<13;s^=s>>>17;s^=s<<5;return(s>>>0)/4294967296};const rp=a=>a[Math.floor(rnd0()*a.length)];
+  const F=FOLK[Math.floor(rnd0()*FOLK.length)];const spec=F.f(rp);for(const k in spec)if(spec[k]===undefined)delete spec[k];n.spec=spec;n.folkKind=F.k;return spec}
+function npcImg(n){const mv=n.rx!=null&&(Math.abs(n.rx-n.x)>0.04||Math.abs(n.ry-n.y)>0.04);const pose=mv?(Math.floor(NOW/140)%2?'walk1':'walk2'):'idle';
+  if(n.key==='folk')return personImg('folk'+n.id,folkSpec(n),pose);const sp=PEOPLE[n.key];if(sp)return personImg(n.key,sp,pose);return SPR[NPCS[n.key]&&NPCS[n.key].spr]||SPR.n_folk}
+// portraits in conversations use the new looks
+for(const k in PEOPLE){const sp=NPCS[k]&&NPCS[k].spr;if(sp){SPR[sp]=crop32(makePerson(PEOPLE[k]));SPRW[sp]=white(SPR[sp])}}
+// merchants in the deep are drawn as people too
+{const d0=drawObj;drawObj=function(o){if(o.type==='merchant'&&PEOPLE[o.who]){const im=personImg(o.who,PEOPLE[o.who],'idle');const x=Math.round(o.x*T),y=Math.round(o.y*T);const k=T/32;
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(x+T/2,y+T-3,T*0.3,4,0,0,Math.PI*2);ctx.fill();ctx.drawImage(im,x-8*k,y-12*k,48*k,48*k);
+  if(o.who==='rook'){ctx.fillStyle=`rgba(227,165,72,${0.5+Math.sin(NOW/200)*0.2})`;ctx.fillRect(x+22,y+16,3,3)}return}return d0(o)}}
+/* ---- stairs that show where they lead ---- */
+function stairsDest(){const L=S.L;if(S.depth+1>=MAXD)return'abbey';return biomeOf(S.depth+1)}
+function drawStairsArt(x,y,kind){const c=ctx,t=NOW/1000;c.save();
+  const hole=(r,g)=>{const gr=c.createRadialGradient(x+16,y+19,2,x+16,y+19,r);gr.addColorStop(0,g||'#000');gr.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=gr;c.fillRect(x-4,y-4,40,40)};
+  if(kind==='mine'){c.fillStyle='#0a0806';c.fillRect(x+5,y+8,22,22);hole(14);
+    c.fillStyle='#6a4a2a';for(let k=0;k<5;k++){c.globalAlpha=1-k*0.18;c.fillRect(x+9,y+11+k*4,14,2)}c.globalAlpha=1;c.fillStyle='#5a3e22';c.fillRect(x+8,y+9,2,21);c.fillRect(x+22,y+9,2,21);
+    c.fillStyle='#7a5a34';c.fillRect(x+2,y+4,4,26);c.fillRect(x+26,y+4,4,26);c.fillStyle='#8a6a3e';c.fillRect(x+1,y+3,30,4);c.fillStyle='#4a3418';c.fillRect(x+1,y+6,30,1);
+    c.strokeStyle='#a8906a';c.lineWidth=1;c.beginPath();c.moveTo(x+16,y+7);c.lineTo(x+16+Math.sin(t*1.3)*1.5,y+20);c.stroke();
+    const fl=0.8+Math.sin(t*9)*0.15;c.fillStyle='#2a2a2a';c.fillRect(x+4,y+7,3,1);c.fillStyle=`rgba(255,${190+fl*30|0},90,${fl})`;c.fillRect(x+4,y+8,3,4)}
+  else if(kind==='crypt'){c.fillStyle='#050608';c.fillRect(x+6,y+6,20,26);hole(13);
+    for(let k=0;k<5;k++){const w=18-k*3;c.fillStyle=k%2?'#4a5262':'#5a6272';c.fillRect(x+16-w/2,y+12+k*4,w,3);c.fillStyle='#14161c';c.fillRect(x+16-w/2,y+15+k*4,w,1)}
+    c.fillStyle='#6a7488';c.fillRect(x+2,y+6,4,26);c.fillRect(x+26,y+6,4,26);c.beginPath();c.moveTo(x+2,y+7);c.quadraticCurveTo(x+16,y-6,x+30,y+7);c.lineTo(x+26,y+8);c.quadraticCurveTo(x+16,y-1,x+6,y+8);c.fill();
+    c.fillStyle='#dcd4bc';c.fillRect(x+13,y,6,5);c.fillStyle='#14161c';c.fillRect(x+14,y+2,1,1);c.fillRect(x+17,y+2,1,1);c.fillRect(x+15,y+4,2,1);
+    for(const cx of[x+3,x+28]){c.fillStyle='#d8d0b8';c.fillRect(cx,y+24,2,5);const fl=0.7+Math.sin(t*8+cx)*0.25;c.fillStyle=`rgba(255,210,120,${fl})`;c.fillRect(cx,y+21,2,3)}}
+  else if(kind==='fungal'){hole(15,'#04060a');c.fillStyle='#0a0610';c.beginPath();c.ellipse(x+16,y+18,12,10,0,0,Math.PI*2);c.fill();
+    const g2=c.createRadialGradient(x+16,y+20,1,x+16,y+20,10);g2.addColorStop(0,`rgba(127,232,208,${0.35+Math.sin(t*2)*0.1})`);g2.addColorStop(1,'rgba(127,232,208,0)');c.fillStyle=g2;c.fillRect(x+4,y+8,24,24);
+    c.strokeStyle='#4a2e3e';c.lineWidth=2;for(let k=0;k<6;k++){const a=k/6*Math.PI*2;c.beginPath();c.moveTo(x+16+Math.cos(a)*12,y+18+Math.sin(a)*10);c.quadraticCurveTo(x+16+Math.cos(a+0.4)*7,y+18+Math.sin(a+0.4)*6,x+16+Math.cos(a+0.2)*4,y+18+Math.sin(a+0.2)*3);c.stroke()}
+    for(let k=0;k<7;k++){const a=k/7*Math.PI*2+0.3;const px=x+16+Math.cos(a)*13,py=y+18+Math.sin(a)*11;c.fillStyle=k%2?'#e88ad8':'#7fe8d0';c.fillRect(px-2,py-2,4,2);c.fillStyle='#d8d0c0';c.fillRect(px-0.5,py,1,2)}
+    for(let k=0;k<4;k++){const ph=(t*0.4+k/4)%1;c.fillStyle=`rgba(191,255,240,${0.7*(1-ph)})`;c.fillRect(x+10+k*4+Math.sin(t+k)*2,y+20-ph*22,1.5,1.5)}}
+  else if(kind==='drowned'||kind==='abbey'){const deep=kind==='abbey';c.fillStyle='#0a1418';c.fillRect(x+4,y+4,24,26);
+    c.fillStyle='#48484f';c.fillRect(x+5,y+5,22,3);c.fillStyle='#35353c';c.fillRect(x+6,y+9,20,3);
+    const wg=c.createLinearGradient(0,y+12,0,y+30);wg.addColorStop(0,deep?'#3a1a14':'#1c3a48');wg.addColorStop(1,deep?'#0a0404':'#081218');c.fillStyle=wg;c.fillRect(x+5,y+12,22,18);
+    for(let k=0;k<3;k++){const ph=(t*0.5+k/3)%1;c.strokeStyle=deep?`rgba(255,180,90,${0.5*(1-ph)})`:`rgba(127,208,216,${0.5*(1-ph)})`;c.lineWidth=1;c.beginPath();c.ellipse(x+16,y+20,2+ph*10,1+ph*4,0,0,Math.PI*2);c.stroke()}
+    const gl=c.createRadialGradient(x+16,y+24,1,x+16,y+24,12);gl.addColorStop(0,deep?`rgba(255,140,60,${0.4+Math.sin(t*1.5)*0.15})`:`rgba(127,208,216,${0.3+Math.sin(t*1.5)*0.1})`);gl.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=gl;c.fillRect(x,y+10,32,22)}
+  else if(kind==='sewer'){c.fillStyle='#14100c';c.beginPath();c.ellipse(x+16,y+17,13,11,0,0,Math.PI*2);c.fill();c.fillStyle='#050505';c.beginPath();c.ellipse(x+16,y+18,10,8,0,0,Math.PI*2);c.fill();
+    c.fillStyle='#6a4a3a';for(let k=0;k<3;k++)c.fillRect(x+12,y+13+k*4,8,1.5);c.fillStyle='#5a3a2a';c.fillRect(x+11,y+11,1.5,14);c.fillRect(x+19.5,y+11,1.5,14);
+    for(let k=0;k<3;k++){const ph=(t*0.3+k/3)%1;c.fillStyle=`rgba(168,192,96,${0.3*(1-ph)})`;c.beginPath();c.arc(x+12+k*4,y+12-ph*14,2+ph*3,0,Math.PI*2);c.fill()}}
+  else{c.fillStyle='#050505';c.fillRect(x+6,y+8,20,20)}
+  c.restore()}
+{const dd0=drawDressing;drawDressing=function(L,TS,x0,x1,y0,y1){dd0(L,TS,x0,x1,y0,y1);try{const kind=L.bio==='sewer'&&false?'sewer':stairsDest();for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=I(x,y);if(L.map[i]===STAIRS&&L.seen[i])drawStairsArt(x*T,y*T,kind)}}catch(e){}}}
+/* ---- the lift-bell: a brass bell under a timber gallows ---- */
+{const d0=drawObj;drawObj=function(o){if(o.type!=='bell'||S.L.town)return d0(o);const x=Math.round(o.x*T),y=Math.round(o.y*T),c=ctx,t=NOW/1000;c.save();
+  c.fillStyle='rgba(0,0,0,.4)';c.beginPath();c.ellipse(x+16,y+30,14,3,0,0,Math.PI*2);c.fill();
+  c.fillStyle='#5a3e22';c.fillRect(x+2,y-14,4,44);c.fillRect(x+26,y-14,4,44);c.fillStyle='#7a5a34';c.fillRect(x+2,y-14,1,44);c.fillRect(x+26,y-14,1,44);
+  c.fillStyle='#6a4a2a';c.fillRect(x,y-18,32,5);c.fillStyle='#8a6a3e';c.fillRect(x,y-18,32,1);c.fillStyle='#3a2814';c.fillRect(x+3,y-10,6,2);c.fillRect(x+23,y-10,6,2);
+  const sw=Math.sin(t*1.1)*0.09;c.translate(x+16,y-13);c.rotate(sw);
+  c.strokeStyle='#3a3a3a';c.lineWidth=2;c.beginPath();c.moveTo(0,0);c.lineTo(0,5);c.stroke();
+  const bg=c.createLinearGradient(-10,0,10,0);bg.addColorStop(0,'#7a5a1a');bg.addColorStop(0.35,'#f0cf7a');bg.addColorStop(0.6,'#c8a040');bg.addColorStop(1,'#5a4010');c.fillStyle=bg;
+  c.beginPath();c.moveTo(-4,5);c.quadraticCurveTo(-5,8,-6,14);c.quadraticCurveTo(-8,22,-11,25);c.lineTo(11,25);c.quadraticCurveTo(8,22,6,14);c.quadraticCurveTo(5,8,4,5);c.closePath();c.fill();
+  c.fillStyle='#4a3410';c.fillRect(-11,24,22,2);c.fillStyle='#fff2c0';c.fillRect(-3,8,2,10);c.fillStyle='#3a2a10';c.fillRect(-1,25,2,4);c.beginPath();c.arc(0,30,2,0,Math.PI*2);c.fill();
+  c.restore();c.save();c.strokeStyle='#a8906a';c.lineWidth=1;c.beginPath();c.moveTo(x+20,y+4);c.quadraticCurveTo(x+24,y+18,x+21,y+28);c.stroke();c.fillStyle='#c8a060';c.fillRect(x+20,y+27,3,3);c.restore()}}
+/* ---- glows and labels, drawn above the darkness ---- */
+{const d0=draw;draw=function(){d0();try{const L=S.L;if(!L||L.town)return;const c=ctx;c.save();const ox=-camX,oy=-camY;const P=S.P;
+  for(const o of L.objs)if(o.type==='bell'&&vis[I(o.x,o.y)]){const cx=o.x*T+16+ox,cy=o.y*T+2+oy,pu=0.5+Math.sin(NOW/600)*0.2;c.globalCompositeOperation='lighter';const g=c.createRadialGradient(cx,cy,2,cx,cy,44);g.addColorStop(0,`rgba(255,215,120,${0.28*pu})`);g.addColorStop(1,'rgba(255,215,120,0)');c.fillStyle=g;c.fillRect(cx-44,cy-44,88,88);c.globalCompositeOperation='source-over';
+    if(cheb(o.x,o.y,P.x,P.y)<=6)tag(c,cx,o.y*T-26+oy,'Lift bell · back to Saltmarrow','#f0cf7a')}
+  const kind=stairsDest();const nm=kind==='abbey'?'The Chapel of the Drowned Abbot':(BIOMES[kind]||{}).name;const newB=kind==='abbey'||biomeOf(S.depth+1)!==L.bio||L.bio==='sewer';
+  for(let i=0;i<L.map.length;i++){if(L.map[i]!==STAIRS||!L.seen[i])continue;const x=i%W,y=(i/W)|0;const cx=x*T+16+ox,cy=y*T+18+oy;if(cx<-60||cy<-60||cx>VW+60||cy>VH+60)continue;
+    const col=kind==='crypt'?'220,212,188':kind==='fungal'?'127,232,208':kind==='drowned'?'127,208,216':kind==='abbey'?'255,140,60':'255,200,110';const pu=0.5+Math.sin(NOW/500)*0.25;
+    c.globalCompositeOperation='lighter';const g=c.createRadialGradient(cx,cy,2,cx,cy,36);g.addColorStop(0,`rgba(${col},${(vis[i]?0.22:0.1)*pu})`);g.addColorStop(1,`rgba(${col},0)`);c.fillStyle=g;c.fillRect(cx-36,cy-36,72,72);c.globalCompositeOperation='source-over';
+    if(vis[i]&&cheb(x,y,P.x,P.y)<=7)tag(c,cx,y*T-8+oy,newB?`Down · ${nm}`:`Down · Depth ${S.depth+1}`,`rgb(${col})`)}
+  c.restore()}catch(e){}}}
+function tag(c,x,y,txt,col){c.font='700 13px "Grenze Gotisch", Georgia, serif';c.textAlign='center';const w=c.measureText(txt).width+14;c.fillStyle='rgba(8,7,6,.72)';c.fillRect(x-w/2,y-12,w,17);c.strokeStyle='rgba(154,118,56,.55)';c.lineWidth=1;c.strokeRect(x-w/2+0.5,y-11.5,w-1,16);c.fillStyle=col;c.fillText(txt,x,y+1);c.textAlign='start'}
+window.__people={PEOPLE,personImg,folkSpec};
 /* ---------- selection ---------- */
 const SEL={id:null,valid:[],cursor:null,hover:null,reach:null,cone:null,walk:null,inspect:null};
 function refreshOverlays(){SEL.reach=null;SEL.cone=null;if(!S||!S.L)return;
