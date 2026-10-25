@@ -1585,7 +1585,7 @@ async function exploreStep(dx,dy){
   if(!inb(nx,ny))return false;
   if(P.webbed>0){P.webbed--;log(P.webbed?'You struggle in the web.':'You tear free of the web.',P.webbed?'old':'good');noise(P.x,P.y,2,true);await exploreTick();UI.render();return true}
   const m=monAt(nx,ny);if(m){await ambush(m,null);return false}
-  const np=npcAt(nx,ny);if(np){UI.talk(np.key);return false}
+  const np=npcAt(nx,ny);if(np){if(S.L.map[I(P.x,P.y)]===FLOOR&&!blockObjAt(P.x,P.y)){np.x=P.x;np.y=P.y;np.fx=-Math.sign(nx-P.x)||np.fx}else return false}
   const o=blockObjAt(nx,ny);
   if(o){const acts=featActions(o).filter(a=>!a.off);const def=o.type==='pod'||o.type==='crystal'||o.type==='brazier'||o.type==='support'||o.type==='bell'?null:acts[0];
     if(!def){if(featActions(o).length)UI.inspectAt(nx,ny);else log(`${FEAT[o.type].name}.`,'old');UI.render();return false}
