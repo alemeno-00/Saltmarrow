@@ -4913,6 +4913,27 @@ details.adv{margin-top:8px}details.adv summary{cursor:pointer;color:var(--dim);f
 .savedmark i{width:10px;height:10px;border:2px solid var(--lantern);border-top-color:transparent;border-radius:50%;animation:svspin .8s linear infinite}
 .savedmark.go{animation:svfade 2.2s ease forwards}@keyframes svfade{0%{opacity:0;transform:translateY(6px)}12%{opacity:1;transform:none}75%{opacity:1}100%{opacity:0}}@keyframes svspin{to{transform:rotate(360deg)}}
 body.bot .savedmark{bottom:auto;top:56px}`;document.head.appendChild(st)}
+/* ---------- bottom HUD: the portrait sits big in the centre, Doom-style ---------- */
+{const g=document.querySelector('.game');if(g&&!$('portBox')){const b=document.createElement('div');b.id='portBox';b.className='box';b.innerHTML='<div class="pf"></div><div class="pw"></div>';g.appendChild(b)}}
+function placePortrait(){const pb=$('portBox');if(!pb||!S||!S.P)return;const bot=document.body.classList.contains('full')&&document.body.classList.contains('bot');if(!bot)return;
+  const pf=pb.querySelector('.pf');if(PORT.cv.parentNode!==pf)pf.appendChild(PORT.cv);const ps=document.querySelector('#heroBox .pstate');pb.querySelector('.pw').innerHTML=ps?ps.innerHTML:''}
+{const r0=renderHero;renderHero=function(){r0();try{placePortrait()}catch(e){}}}
+{const a0=applyMob;applyMob=function(){a0.apply(this,arguments);try{if(S&&S.P)renderHero()}catch(e){}}}
+{const st=document.createElement('style');st.textContent=`
+#portBox{display:none}
+body.full.bot .game{grid-template-columns:minmax(0,.44fr) minmax(0,.56fr) 220px minmax(0,.44fr) minmax(0,.56fr);grid-template-rows:minmax(0,1fr) 128px 128px}
+body.full.bot .bar .slots{gap:4px}
+body.full.bot #heroBox{grid-column:1}body.full.bot .bar{grid-column:2}body.full.bot #gearBox{grid-column:4}body.full.bot #satBox{grid-column:4}body.full.bot #logBox{grid-column:5;display:block}
+body.full.bot #portBox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;grid-column:3;grid-row:2/4;padding:8px 6px;min-height:0;border:none;border-radius:0;
+  background:radial-gradient(ellipse at 50% 40%,#1e1a14 0,#0d1114 75%);border-top:2px solid #5a4528;border-bottom:2px solid #5a4528;box-shadow:inset 0 1px 0 #8a6a3a,inset 2px 0 0 #3a2c18,inset -2px 0 0 #3a2c18}
+body.full.bot #portBox .pf{padding:4px;border-radius:6px;background:linear-gradient(145deg,#8a6a3a,#3a2a16 45%,#6a5028);box-shadow:0 0 0 1px #1a1208,0 6px 18px rgba(0,0,0,.6)}
+body.full.bot #portBox canvas.portrait{width:176px;height:176px;display:block;border:none;border-radius:3px}
+body.full.bot #portBox .pw{display:flex;gap:10px;font-size:12.5px;font-family:var(--mono);letter-spacing:.02em}
+body.full.bot #heroBox{grid-template-columns:minmax(0,1fr)}body.full.bot #heroBox>.who{grid-row:auto;max-width:none}body.full.bot #heroBox>:not(.who){grid-column:1}
+body.full.bot #heroBox .pstate{display:none}
+@media (max-width:1680px){body.full.bot #logBox{display:block}}
+@media (max-width:1360px){body.full.bot .game{grid-template-columns:minmax(0,.42fr) minmax(0,.58fr) 196px minmax(0,1fr)}body.full.bot #logBox{display:none}body.full.bot #portBox canvas.portrait{width:156px;height:156px}}
+`;document.head.appendChild(st)}
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
