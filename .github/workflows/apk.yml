@@ -15,14 +15,14 @@ jobs:
   apk:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '20'
 
@@ -40,16 +40,12 @@ jobs:
           cp MainActivity.java android/app/src/main/java/com/alemeno/saltmarrow/MainActivity.java
 
       - name: App icons
-        working-directory: android-app/android/app/src/main/res
+        working-directory: android-app
         run: |
-          rm -rf mipmap-anydpi-v26
-          for d in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
-            n=${d%%:*}; s=${d##*:}
-            mkdir -p mipmap-$n
-            convert ../../../../../www/icon-512.png -resize ${s}x${s} mipmap-$n/ic_launcher.png
-            cp mipmap-$n/ic_launcher.png mipmap-$n/ic_launcher_round.png
-            rm -f mipmap-$n/ic_launcher_foreground.png
-          done
+          R=android/app/src/main/res
+          rm -rf $R/mipmap-anydpi-v26
+          rm -f $R/mipmap-*/ic_launcher_foreground.png
+          cp -r res/. $R/
 
       - name: Sync and build
         working-directory: android-app
