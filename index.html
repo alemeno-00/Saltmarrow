@@ -14,7 +14,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="theme-color" content="#090d10">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@500;700&family=UnifrakturMaguntia&family=IM+Fell+English:ital@0;1&family=Spline+Sans+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@500;700&family=UnifrakturMaguntia&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=IM+Fell+English:ital@0;1&family=Spline+Sans+Mono:wght@400;500;700&display=swap">
 <style>
 /* Layout: one dungeon screen. Map with HUD overlays + hotbar on the left, hero sheet / satchel / log on the right; stacks on phones. Single dark world by design. */
 :root{
@@ -5687,6 +5687,80 @@ body:not(.mob) #menuBtn{padding:5px 10px;font-size:12px}
 @media (orientation:landscape){body.mob header{width:auto}body.mob .bar{padding-top:48px}}`;document.head.appendChild(st)}
 {const st=document.createElement('style');st.textContent=`body.mob .tracker{top:calc(max(6px,env(safe-area-inset-top,0px)) + 44px)!important;left:auto!important;right:6px;transform:none!important;align-items:flex-end}
 body.mob .tracker .chip{font-size:10px}`;document.head.appendChild(st)}
+/* ---------- one consistent look: a single book-face for all UI text, one size scale, one height for chips and buttons, text-only gothic menus ---------- */
+if(UIP.zoomV!==2){UIP.zoomV=2;if(!UIP.zoom||UIP.zoom<1.3)UIP.zoom=1.4;saveUIP();try{applyMob()}catch(e){}}
+{const r0=renderBar;renderBar=function(){r0();try{document.body.classList.toggle('intown',!!(S&&S.L&&S.L.town));document.body.classList.toggle('incombat',!!(S&&S.mode==='combat'))}catch(e){}}}
+{const st=document.createElement('style');st.textContent=`
+:root{--ui:'EB Garamond','Iowan Old Style',Georgia,serif;--gilt:#e9c873;--ink:#0c0a08;--plate:rgba(12,10,8,.74);--rule:rgba(154,118,56,.45)}
+body,button,input,textarea,select{font-family:var(--ui)}
+body{font-size:14px;letter-spacing:.005em}
+.mono,.code,textarea.code{font-family:var(--mono)}
+/* --- buttons: one height, small caps, quiet --- */
+.btn{font-family:var(--ui);font-size:14px;font-variant:small-caps;letter-spacing:.04em;line-height:1;padding:8px 14px;min-height:32px;border-radius:2px;
+  background:linear-gradient(180deg,#1f1a14,#14110d);border:1px solid #43372a;box-shadow:inset 0 1px 0 rgba(255,225,170,.06);color:#e4d8be}
+.btn:hover:not(:disabled){border-color:#9a7638;color:var(--gilt);background:linear-gradient(180deg,#261f17,#17130f)}
+.btn.primary{border-color:#8a6a34;color:var(--gilt)}
+body.mob .btn{min-height:34px}
+/* --- HUD plates: same height, same face --- */
+.hud-tl{gap:4px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:24px;box-sizing:border-box;padding:0 9px;font-family:var(--ui);font-size:13px;line-height:1;border-radius:2px;background:var(--plate);border:1px solid var(--rule);box-shadow:0 2px 8px rgba(0,0,0,.35);color:#e4d8be;backdrop-filter:blur(2px)}
+.chip b{font-weight:600}
+.hud-tl .chip.vit{height:34px;padding:0 10px 0 2px}
+.hud-tl .chip.vit canvas{width:28px!important;height:28px!important;image-rendering:pixelated;border-radius:1px}
+.hud-tl .chip.vit .pwords{display:flex;flex-direction:column;gap:1px;font-size:12.5px;line-height:1.05}.hud-tl .chip.vit .pwords i{font-style:italic;color:var(--dim);font-size:11.5px}
+.tracker .chip{height:24px;font-size:12.5px}
+.chip.expo .eye{width:11px;height:7px}
+/* --- the log over the map --- */
+.feed p{font-family:var(--ui);font-size:13.5px;line-height:1.3;padding:3px 9px;background:rgba(12,10,8,.62);border-radius:2px;border-left:2px solid rgba(154,118,56,.35)}
+body.mob .feed p{font-size:13px}
+.feed p.whisper,.feed p.dread{font-style:italic}
+/* --- guidance --- */
+.tipcard{border-radius:3px;border-color:var(--rule);background:rgba(14,12,9,.94)}.tipcard p{font-family:var(--ui);font-size:14px!important}
+/* --- bottom bar on phones --- */
+body.mob.intown .bar{display:none}
+body.mob .bar-top .prompt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:none;font-size:12.5px;font-family:var(--ui)}
+body.mob .bar-top .prompt .s{color:var(--dim)}
+body.mob .sl .nm{font-family:var(--ui);font-size:10px}
+body.mob .dock{display:grid;grid-template-columns:repeat(4,1fr);gap:0;padding:0 0 env(safe-area-inset-bottom,0px);background:linear-gradient(180deg,#15120e,#0c0a08);border-top:1px solid var(--rule)}
+body.mob .dock .btn{background:none;border:none;border-right:1px solid rgba(154,118,56,.18);border-radius:0;box-shadow:none;height:44px;min-height:44px;font-size:15px;color:#cfc2a6}
+body.mob .dock .btn:last-child{border-right:none}body.mob .dock .btn.on{color:var(--gilt);background:rgba(217,164,65,.07)}
+/* --- desktop panels --- */
+.box .label,.label{font-family:var(--ui);font-variant:small-caps;letter-spacing:.06em;font-size:13px;color:var(--dim)}
+body.full.bot #heroBox,body.full.bot #logBox,body.full.bot .log p{font-family:var(--ui);font-size:13px}
+.who h2,.mdl h2,.mhd h2{font-family:var(--display)}
+/* --- pause menu, title, settings: text menus with gilt ornaments, not boxes --- */
+.gm{background:radial-gradient(90% 70% at 50% 40%,rgba(30,24,17,.97),rgba(12,10,8,.97));border:none;box-shadow:0 0 0 1px rgba(154,118,56,.35),0 30px 90px rgba(0,0,0,.85);border-radius:2px;padding:30px 28px 22px}
+.gm::before,.gm::after{border-color:rgba(190,150,80,.7);width:22px;height:22px}
+.gmh{margin-bottom:10px}.gmh::after{content:"";display:block;margin:12px auto 0;width:60%;height:1px;background:linear-gradient(90deg,transparent,rgba(190,150,80,.7),transparent)}
+.gms{font-family:var(--ui);font-variant:small-caps;letter-spacing:.14em;text-transform:none;font-size:13px}
+.gml{gap:2px}
+.gmb{background:none!important;border:none!important;box-shadow:none!important;border-radius:0;padding:9px 10px;font-family:var(--display);font-size:25px;font-weight:500;letter-spacing:.02em;color:#d9ccb0;position:relative;transition:color .15s,text-shadow .15s}
+.gmb small{font-family:var(--ui);font-style:italic;font-size:13px;letter-spacing:0;color:var(--dim)}
+.gmb>span{position:relative}
+.gmb:hover,.gmb:focus-visible{color:var(--gilt);text-shadow:0 0 18px rgba(217,164,65,.45)}
+.gmb:hover>span::before,.gmb:focus-visible>span::before,.gmb:hover>span::after,.gmb:focus-visible>span::after{content:"✦";position:absolute;top:50%;transform:translateY(-50%);font-size:11px;color:#b8904a}
+.gmb>span::before{right:calc(100% + 14px)}.gmb>span::after{left:calc(100% + 14px)}
+.gmb:active{transform:none;opacity:.8}
+.gmb.small{font-size:20px;min-width:0}.gmb.primary:not(:disabled){color:var(--gilt)}
+.gmf button{font-family:var(--ui);font-variant:small-caps;letter-spacing:.06em;font-size:15px}
+.gmmsg{font-family:var(--ui);font-style:italic;font-size:14px}
+.ttl .gml{gap:0}.ttl .gmb{font-size:27px;padding:7px 10px}.ttfoot{font-family:var(--ui);font-variant:small-caps;letter-spacing:.2em;font-size:12px}
+.ttsub{font-family:var(--ui)}
+.sset h3{font-size:22px;border-bottom-color:rgba(154,118,56,.35)}.srow{border-bottom-color:rgba(154,118,56,.14)}.srow b{font-family:var(--ui);font-size:16px}.srow span{font-family:var(--ui);font-style:italic;font-size:13px}
+.sv{font-family:var(--ui);font-variant:small-caps;font-size:14px;text-transform:none;background:none;border:1px solid rgba(154,118,56,.45);border-radius:2px;color:var(--gilt);min-width:104px;padding:6px 10px}
+.sv:hover{background:rgba(217,164,65,.08)}
+/* --- delver cards: cleaner --- */
+.ccard{border-radius:2px;background:radial-gradient(120% 70% at 50% 0%,#1d1813 0,#0f0d0a 80%);border-color:rgba(154,118,56,.35)}
+.cr{font-family:var(--ui);font-variant:small-caps;text-transform:none;letter-spacing:.1em;font-size:13px}.cb{font-family:var(--ui)}.cp,.ca,.cs{font-family:var(--ui)}
+/* --- dialogue boxes --- */
+.mdl{border-radius:2px}.opts .btn{font-variant:normal;letter-spacing:0;text-align:left;font-size:15px;padding:10px 14px;line-height:1.3}
+.say{font-family:var(--ui)!important}
+/* --- save slots --- */
+.slot,.svslots .slot{border-radius:2px;background:rgba(20,16,12,.8);border-color:rgba(154,118,56,.3)}.slot .sn,.slot .tag{font-family:var(--ui);font-variant:small-caps;text-transform:none;font-size:13px}
+.savedmark{font-family:var(--ui);font-size:13px;border-radius:2px}
+`;document.head.appendChild(st)}
+{const t0=UI.toast;UI.toast=(t,s)=>{const h=$('toastHost');if(h)h.innerHTML='';return t0(t,s)}}
+{const st=document.createElement('style');st.textContent=`body.full.bot #portBox .pw{font-family:var(--ui);font-size:13px;font-variant:small-caps;letter-spacing:.06em}.toast p{font-family:var(--ui);font-variant:small-caps;letter-spacing:.14em}`;document.head.appendChild(st)}
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
