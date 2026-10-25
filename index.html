@@ -670,7 +670,7 @@ const The=e=>isP(e)?'You':e.uniq?mname(e):MT(e).title||('The '+mname(e));
 const windedVal=e=>Math.floor(e.max/2);
 const winded=e=>e.stam<=windedVal(e);
 const hasC=(e,id)=>e.conds.some(c=>c.id===id);
-const rv=()=>Math.floor(S.P.max/3);
+const rv=()=>Math.max(1,Math.floor(S.P.max/3)-((S&&S.markHunger)?3:0));
 function addC(e,id,src){if(e.dead)return;const ex=e.conds.find(c=>c.id===id);if(ex){ex.left=1;return}
   e.conds.push({id,save:id==='weakened'||id==='bleeding',left:1,src:src?(isP(src)?'P':src.id||src):null});UI.fx('float',{e,text:COND_TXT[id],color:'#c9a0ff',delay:250})}
 function releaseGrabs(e){const id=isP(e)?'P':e.id;e.conds=e.conds.filter(c=>c.id!=='grabbed');
@@ -1065,7 +1065,7 @@ const TIPS={
   bell:'A lift-bell. Kill whatever guards it, then ring it to ride home with everything you carry.',
   dread:'Dread. Horrors, darkness and forbidden books raise it. Light, shrines and going home calm it. At 10 your mind breaks.',
   unlock:'More actions are open to you now: Shift, Shove, Hide, Defend and Dash. Hover any button to read it.',
-  death:'Your pack stays where you fell. Reach that depth again to take it back.',
+  death:'Death takes everything you carried, your levels and your depth. Banked silver, kits, guild training and what you have learned of the story stay.',
 };
 function tip(k){if(META.tips&&META.tips[k])return;META.tips=META.tips||{};META.tips[k]=1;saveMeta();UI.tip(TIPS[k])}
 const firstDelve=()=>META.runs<=1&&!META.deepest;
@@ -1366,7 +1366,7 @@ function enterTown(why){const cls0=S&&S.cls?S.cls:'riptide';
   else{log('Saltmarrow smells of brine and coal smoke. The sea left two hundred years ago. The town still listens for it. The lift head waits at the end of the street.','gold');UI.toast('Saltmarrow','A mining village above a dead sea')}
   META.smith=null;saveMeta();UI.save();UI.render()}
 /* ---- dives ---- */
-const startDepths=()=>[1,3,5,7].filter(d=>d===1||META.deepest>=d-1);
+const startDepths=()=>{const r=META.reach!=null?META.reach:META.deepest;return[1,3,5,7].filter(d=>d===1||r>=d-1)};
 function newRun(cls,startD,loadout){const sup=META.supplies||(META.supplies={draught:0,charge:0,ink:0,oil:0,tea:0});
   S={v:5,cls,depth:startD,turn:0,mode:'explore',P:null,L:null,C:null,log:[],victories:0,xp:0,gold:0,inv:(loadout.omens||[]).includes('famine')?{draught:0,charge:0,ink:0,oil:0,tea:0}:{draught:1+META.upg.prov,charge:1,ink:1,oil:1,tea:0},trinkets:[],kills:0,nextId:1,over:false,won:false,pitWarn:-1,busy:false,omens:loadout.omens||[],kit:loadout.kit||null,kitEff:loadout.kit?Object.assign({},KITS[loadout.kit].eff):null,
     gear:{weapon:null,tomes:[],arm:{}},bag:[],bless:loadout.bless?Object.assign({},BLESS[loadout.bless].eff):null,blessName:loadout.bless||null,startDepth:startD};
@@ -1382,11 +1382,12 @@ function carriedItems(){const out=[...S.bag];if(S.gear.weapon)out.push(S.gear.we
 async function ringBell(){if(S.mode==='combat'){log('Not with enemies on you.','bad');return}
   if(S.L.mons.some(m=>MT(m).boss&&!MT(m).final&&m.type!=='stalker')){log('The bell will not ring. Its guardian still lives.','bad');UI.render();return}
   UI.fx('ring',{x:S.P.x,y:S.P.y,r:12});log('You haul on the bell rope. The note rolls up the shaft, and far above, the winch begins to turn.','gold');
-  const d=S.depth;META.deepest=Math.max(META.deepest,d);if(d===2)setFlag('bell1');if(d===4)setFlag('bell2');if(d===6)setFlag('bell3');
+  const d=S.depth;META.deepest=Math.max(META.deepest,d);META.reach=Math.max(META.reach!=null?META.reach:0,d);if(d===2)setFlag('bell1');if(d===4)setFlag('bell2');if(d===6)setFlag('bell3');
   if(d>=4)openQuest('tithe');
-  const banked=Math.round(S.gold*silverMul());META.silver+=banked;for(const it of carriedItems())META.stash.push(it);const sup=META.supplies||(META.supplies={});for(const k of['draught','charge','ink','oil','tea'])sup[k]=(sup[k]||0)+(S.inv[k]||0);
-  saveMeta();await UI.sleep(700);S.cls=S.cls;enterTown('bell');log(`You bank ${banked} silver and stow what you carried in your cottage.`,'gold')}
-function deathToTown(){META.deaths++;let g=S.gold;if(META.runs<=3){const h=Math.floor(g/2);META.silver+=h;g-=h;S.deathMercy=h}META.grave={d:S.depth,gold:g,items:carriedItems()};saveMeta();const mercy=S.deathMercy;enterTown('death');if(mercy)log(`Mara's crew hauled half your purse up with you: ${mercy} silver banked.`,'gold');log(`Your pack lies where you fell, at depth ${META.grave.d}. Reach that depth again to take it back. Die first, and it is lost.`,'dread');tip('death')}
+  const banked=Math.round(S.gold*silverMul());META.silver+=banked;META.carryEq={w:S.gear.weapon&&S.gear.weapon.id,t:S.gear.tomes.map(t=>t.id),r:S.gear.relic&&S.gear.relic.id};for(const it of carriedItems()){delete it.bx;delete it.by;META.stash.push(it)}const sup=META.supplies||(META.supplies={});for(const k of['draught','charge','ink','oil','tea'])sup[k]=(sup[k]||0)+(S.inv[k]||0);
+  saveMeta();await UI.sleep(700);S.cls=S.cls;enterTown('bell');log(`You bank ${banked} silver. What you carry stays on your back.`,'gold')}
+function deathToTown(){META.deaths++;const fell=S.depth,cls0=S.cls;META.grave=null;META.stash=[];META.carryEq=null;META.reach=0;META.heroes=META.heroes||{};delete META.heroes[cls0];META.supplies={draught:0,charge:0,ink:0,oil:0,tea:0};
+  const mark=rollMark();saveMeta();enterTown('death');log(`You fell at depth ${fell}. Everything you carried is still down there. Your body forgets every lesson it learned. The lift will start you at the top again.`,'dread');tip('death');if(mark)setTimeout(()=>{try{UI.markPick()}catch(e){}},600)}
 
 /* ================= building interiors ================= */
 const ROOMS={smith:[11,7],chapel:[13,9],hall:[11,7],tavern:[13,8],archive:[11,7],cottage:[9,6],apoth:[10,7]};
@@ -2978,6 +2979,32 @@ const SELF_END=["You read the last page aloud. The words are older than the Orde
   const tail=L.length-1;L.splice(tail,0,...ins);return L}}
 {const r0=encResolve;encResolve=function(o,opt){const r=r0(o,opt);if(o.keepOpen){o.done=false;o.keepOpen=0}return r}}
 {const e0=enterTown;enterTown=function(why){const r=e0(why);try{const c=S.cls;if(MOTIVE[c]&&!flag('motiveSeen_'+c)&&!why){setFlag('motiveSeen_'+c);log(MOTIVE[c].intro,'whisper')}}catch(e){}return r}}
+/* ---------- death is final for the delver: the Mother sometimes sends them back marked ---------- */
+const MARKS={
+  salteyes:{name:'Salt-Eyes',boon:'You see 2 squares farther with your lantern shuttered.',cost:'Your lantern lights 1 square less.',eff:{light:-1}},
+  gills:{name:'Gill-Slits',boon:'Water no longer betrays your steps, and you tire half as fast.',cost:'−4 max stamina.',eff:{wade:1,hardy:1,stam:-1}},
+  scales:{name:'The Scaled Hand',boon:'+1 damage with every strike.',cost:'Recoveries heal 3 less.',eff:{dmg:1},hunger:1},
+  saltblood:{name:'Salt Blood',boon:'Start every fight with 4 temporary stamina.',cost:'You begin each delve with 2 Dread.',eff:{startTemp:4},dread:2},
+  smile:{name:"The Mother's Smile",boon:'+1 heroic resource whenever you kill.',cost:'−1 Recovery.',eff:{resKill:1,recov:-1}},
+  barnacle:{name:'Barnacle Skin',boon:'+8 max stamina and +1 stability.',cost:'−1 speed.',eff:{stam:2,stab:1,speed:-1}},
+  drowned:{name:'Drowned Lungs',boon:'Dread rises more slowly.',cost:'Your footsteps are a little louder.',eff:{steady:1,noisy:1}},
+  stillheart:{name:'The Still Heart',boon:'Enemies spot you a square later.',cost:'All healing you receive is 2 less.',eff:{stealthR:1}},
+};
+const MARK_MAX=5,MARK_CHANCE=0.4;
+function marksOf(){return(META&&META.marks)||[]}
+// a mark comes only on some deaths: 40%, and never more than three deaths in a row without one
+function rollMark(){if(marksOf().length>=MARK_MAX)return false;META.markDry=(META.markDry||0)+1;if(Math.random()<MARK_CHANCE||META.markDry>=4){META.markDry=0;META.markPending=1;return true}return false}
+function markChoices(){const own=new Set(marksOf());return shuffle(Object.keys(MARKS).filter(k=>!own.has(k))).slice(0,3)}
+function takeMark(k){META.marks=META.marks||[];if(!META.marks.includes(k))META.marks.push(k);META.markPending=0;META.markNew=k;saveMeta()}
+function markSum(k){let v=0;for(const m of marksOf()){const M=MARKS[m];if(M&&M.eff[k])v+=M.eff[k]}return v}
+{const g0=gearSum;gearSum=function(k){return g0(k)+(S&&S.L&&!S.L.town?markSum(k):0)}}
+{const f0=fovR;fovR=function(){let r=f0();const P=S.P;if(marksOf().includes('salteyes')&&S.L&&!S.L.town&&!P.lantern&&!inSmoke(P))r+=2;return r}}
+{const h0=heal;heal=function(a){if(a>2&&marksOf().includes('stillheart')&&S.L&&!S.L.town)a-=2;return h0(a)}}
+// what the delver owns between delves: equipped things go back on first
+function carryEqd(it){const E=META.carryEq;return!!(E&&(E.w===it.id||E.r===it.id||(E.t||[]).includes(it.id)))}
+function carryOrder(){const E=META.carryEq||{};const st=META.stash||[];const rank=it=>it.id===E.w||it.id===E.r?0:(E.t||[]).includes(it.id)?1:2;return st.slice().sort((a,b)=>rank(a)-rank(b)).map(i=>i.id)}
+{const n0=newRun;newRun=function(cls,d,lo){if(META.reach==null)META.reach=META.deepest||0;n0(cls,d,lo);try{let dr=0,hu=0;for(const m of marksOf()){const M=MARKS[m];if(!M)continue;dr+=M.dread||0;hu+=M.hunger||0}
+  if(dr&&S.P){S.P.dread=Math.max(S.P.dread||0,dr)}if(hu)S.markHunger=hu;refreshHero();S.P.stam=S.P.max;S.P.recov=S.P.recovMax}catch(e){}}}
 /* ================= heroes & runs ================= */
 function newHero(k){const c=CLASSES[k];const bm=c.stam+META.upg.stam*4,br=c.recov+META.upg.recov;
   return{id:'P',x:0,y:0,rx:0,ry:0,stam:bm,max:bm,baseMax:bm,temp:0,lvl:1,chars:Object.assign({},c.chars),recov:br,recovMax:br,baseRecov:br,res:0,lantern:true,hidden:false,defending:false,conds:[],fx:1,fy:0,stab:c.stab,webbed:0,dread:0,lens:META.upg.lamp?1:0}}
@@ -3391,6 +3418,18 @@ function armBody(P,b,tx0,tw){const p=APAL[b.base][1],t=ATRIM[b.rar];
   if(t)P.rect(tx0,13,tw,1,t)}
 /* ---- kits: the same kit, worn differently by each delver ---- */
 const KC={iron:'#7a7e84',ironH:'#b8bcc2',ironD:'#4a4e54',lea:'#6a4424',leaD:'#3a2414',leaH:'#8a5a34',chain:'#9a9ea4',chainD:'#3a3e44',rope:'#b89a68',ropeD:'#7a6440',bone:'#e4dcc4',boneD:'#a89c80',salt:'#eef2f0',glass:'#7ac8c0',gold:'#d8b04a',flame:'#ffb347',flameH:'#fff2b0',oil:'#3a4030',oilH:'#55604a',reed:'#c8b070',reedD:'#8a7840',tar:'#2a3024',tarH:'#3e4a36',pink:'#c89a98'};
+function markLook(L,marks){if(!marks||!marks.length)return L;const D=Object.create(L);if(marks.includes('scales'))D.gloves='#5a7a6a';if(marks.includes('drowned')){D.skinD=ashade(L.skinD,0.85)}return D}
+const EYES={riptide:[[17,8],[18,8]],shadow:[[17,8],[18,8]],storm:[[17,8],[18,8]],flag:[[17,9],[18,9]],occult:[[16,9],[18,9]]};
+function markDraw(ph,P,m,cls,L,g){const{tx0,tw}=g;
+  if(ph==='head'){switch(m){
+    case'salteyes':for(const[x,y]of EYES[cls]||EYES.riptide){P.px(x,y,'#bff4ff')}P.px((EYES[cls]||EYES.riptide)[1][0]+1,(EYES[cls]||EYES.riptide)[1][1],'rgba(191,244,255,.5)');break;
+    case'gills':for(const y of[9,10,11])P.px(12+(y===10?1:0),y,'#2a6a6a');break;
+    case'saltblood':for(const[x,y]of[[19,6],[12,9],[18,11],[13,7]])P.px(x,y,'#eef2f0');break;
+    case'smile':P.px(15,11,'#8a2a3a');P.line(16,12,18,12,'#8a2a3a');P.px(19,11,'#8a2a3a');P.px(17,12,'#e8d0c0');break;
+    case'drowned':P.px(17,11,'#4a6aa0');P.px(18,11,'#4a6aa0');P.px(19,12,'#6ab0e0');P.px(19,13,'rgba(106,176,224,.6)');break}}
+  if(ph==='body'){switch(m){
+    case'barnacle':for(const[x,y,c]of[[tx0,15,'#a8a898'],[tx0+1,17,'#8a8a7a'],[tx0,19,'#a8a898'],[tx0+2,14,'#8a8a7a']])P.px(x,y,c);break;
+    case'stillheart':{const x=tx0+Math.floor(tw/2)-1;P.rect(x,15,2,2,'#1a1424');P.px(x-1,14,'#4a3a5a');P.px(x+2,17,'#4a3a5a');P.px(x+2,14,'#4a3a5a');break}}}}
 function kitLook(L,kit,cls){if(!kit)return L;const D=Object.create(L);
   if(kit==='fenwalker'){if(L.legs)D.legs=[KC.tarH,KC.tar];D.boots=[KC.tarH,KC.tar]}
   if(kit==='lamplighter'&&L.build!=='robe'&&cls!=='riptide'){D.over=[KC.oil,ashade(KC.oil,0.7),KC.oilH]}
@@ -3447,7 +3486,7 @@ function kitDraw(ph,P,kit,cls,L,g){if(!kit)return;const{tx0,tw,robe}=g,R=tx0+tw-
   case'bonereader':
     if(ph==='body'){P.rect(tx0-1,18,4,4,KC.leaD);P.rect(tx0-1,18,4,1,KC.lea);P.px(tx0,20,KC.bone);P.px(tx0+2,19,KC.bone);P.line(tx0+1,13,tx0-1,18,KC.lea)}
     if(ph==='head'){const fc=cls==='storm'?'#4a6a9a':cls==='flag'?'#e8e0d0':'#2a2a2a';P.line(12,2,10,-1,fc);P.px(13,2,KC.bone);P.line(13,2,12,0,ashade(fc,1.4))}break}}
-function makeHero(cls,o){const L=kitLook(armLook(HERO_LOOK[cls]||HERO_LOOK.riptide,o.arm),o.kit,cls);const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');const OX=8,OY=12;
+function makeHero(cls,o){const L=markLook(kitLook(armLook(HERO_LOOK[cls]||HERO_LOOK.riptide,o.arm),o.kit,cls),o.marks);const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');const OX=8,OY=12;
   const P={px:(x,y,col)=>{x=(x|0)+OX;y=(y|0)+OY;if(x<0||y<0||x>47||y>47)return;g.fillStyle=col;g.fillRect(x,y,1,1)},rect:(x,y,w,h,col)=>{g.fillStyle=col;g.fillRect((x|0)+OX,(y|0)+OY,w|0,h|0)},
     line(x0,y0,x1,y1,col){x0|=0;y0|=0;x1|=0;y1|=0;const dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1;let e=dx+dy;for(;;){this.px(x0,y0,col);if(x0===x1&&y0===y1)break;const e2=2*e;if(e2>=dy){e+=dy;x0+=sx}if(e2<=dx){e+=dx;y0+=sy}}}};
   const pose=o.pose||'idle',walk=pose==='walk1'?1:pose==='walk2'?-1:0,strike=pose==='strike';const broad=L.build==='broad',robe=L.build==='robe';
@@ -3457,7 +3496,7 @@ function makeHero(cls,o){const L=kitLook(armLook(HERO_LOOK[cls]||HERO_LOOK.ripti
   if(L.cloak){P.rect(9,12,4,15,L.cloak[0]);P.rect(9,12,1,15,L.cloak[1]);P.rect(10,26,3,1,L.cloak[1]);P.px(9,27,L.cloak[1])}
   // back hand: lantern
   const lantern=(x,y)=>{P.rect(x,y,1,2,'#3a3a3a');P.rect(x-1,y+2,3,4,'#2a2a2a');P.rect(x,y+3,1,2,o.lit?'#ffd36b':'#5a4a2a');if(o.lit){P.px(x,y+3,'#fff2b0')}P.rect(x-1,y+6,3,1,'#3a3a3a')};
-  const KG=()=>({tx0,tw,robe});if(o.kit)kitDraw('back',P,o.kit,cls,L,KG());
+  const KG=()=>({tx0,tw,robe});if(o.kit)kitDraw('back',P,o.kit,cls,L,KG());if(o.marks)for(const m of o.marks)markDraw('back',P,m,cls,L,KG());
   // legs and feet
   if(!robe){const Lg=L.legs;const bx=13-walk,fx=16+walk;P.rect(bx,22,3,5,Lg[1]);P.rect(fx,22,3,5,Lg[0]);P.px(fx,22,Lg[1]);
     P.rect(bx,26,3,3,L.boots[1]);P.rect(bx+3,28,1,1,L.boots[1]);P.rect(fx,26,3,3,L.boots[0]);P.rect(fx+3,28,1,1,L.boots[0]);P.rect(fx,26,3,1,L.boots[1])}
@@ -3482,13 +3521,13 @@ function makeHero(cls,o){const L=kitLook(armLook(HERO_LOOK[cls]||HERO_LOOK.ripti
   // tomes on the hip
   (o.tomes||[]).slice(0,2).forEach((r,k)=>{const col=(RARITY[r]||RARITY.fine).col;const x=k?tx0+tw-1:tx0-2,y=19+k;P.rect(x,y,3,4,'#2a1e16');P.rect(x,y,3,1,col);P.rect(x+2,y,1,4,col);P.px(x,y+3,'#000')});
   if(o.lantern)lantern(bh[0],bh[1]);
-  if(o.kit)kitDraw('body',P,o.kit,cls,L,KG());
+  if(o.kit)kitDraw('body',P,o.kit,cls,L,KG());if(o.marks)for(const m of o.marks)markDraw('body',P,m,cls,L,KG());
   // neck & relic
   P.rect(14,12,4,1,L.skinD);if(o.relic){P.px(16,14,'#e0c060');P.px(16,15,'#fff2b0');P.px(15,13,'#5a4a30');P.px(17,13,'#5a4a30')}
   // head
   P.rect(11,5,9,8,L.skin);P.rect(11,5,2,8,L.skinD);P.rect(18,6,2,2,L.skin);P.px(20,9,L.skin);P.px(20,10,L.skinD);
   P.px(17,8,'#140c08');P.px(18,8,'#140c08');P.px(17,7,'#3a2418');P.px(18,7,'#3a2418');P.px(18,8,'#f4ecd8');P.px(15,11,L.skinD);
-  L.head.call(L,P.px,P);if(o.arm&&o.arm.head)armHead(P,o.arm.head);if(o.kit)kitDraw('head',P,o.kit,cls,L,KG());
+  L.head.call(L,P.px,P);if(o.arm&&o.arm.head)armHead(P,o.arm.head);if(o.kit)kitDraw('head',P,o.kit,cls,L,KG());if(o.marks)for(const m of o.marks)markDraw('head',P,m,cls,L,KG());
   // front arm and weapon
   const W=o.w||L.def;const rc=RARE_COL[o.rar||'fine']||RARE_COL.fine;const elc=o.el&&ELEM[o.el]?ELEM[o.el].col:null;
   const hx=sw?Math.round(sw.hx):strike?23:20,hy=sw?Math.round(sw.hy):strike?16:20;
@@ -4557,10 +4596,10 @@ UI.shop=(kind,tab)=>{const town=!!(S.L&&S.L.town);shopTab=tab||shopTab;const mmu
     if(a==='mbuy'){const o=shopObj(kind);if(!o||!o.stock)return;const i=o.stock.findIndex(x=>x.id===id),it=o.stock[i],p=Math.round(it.value*mmul);if(S.gold>=p){S.gold-=p;o.stock.splice(i,1);S.bag.push(it)}}
     if(a==='msell'){const i=S.bag.findIndex(x=>x.id===id);if(i>=0){S.gold+=Math.round(S.bag[i].value*(kind==='rook'?0.6:0.35));S.bag.splice(i,1)}}
     saveMeta();UI.save();UI.shop(kind,shopTab)})};
-function stashCards(filter,btns,empty){const list=META.stash.filter(filter);return`<div class="cards">${list.map(it=>card(it,btns(it))).join('')||`<p class="purse">${empty||'Nothing in your cottage stash.'}</p>`}</div>`}
+function stashCards(filter,btns,empty){const list=META.stash.filter(filter);return`<div class="cards">${list.map(it=>card(it,btns(it))).join('')||`<p class="purse">${empty||'You carry nothing you could sell.'}</p>`}</div>`}
 /* ---- cottage, archive, journal ---- */
 UI.cottage=()=>{const el=modal(`${head(null,'Your Cottage','A cold room above the cobbler\'s, rented by the council')}<div class="row"><span class="purse">Banked silver <b>${META.silver}</b> · supplies: ${Object.entries(META.supplies||{}).filter(([k,v])=>v).map(([k,v])=>`${v} ${SUP[k].n.toLowerCase()}${v>1?'s':''}`).join(', ')||'none'}</span><span class="purse">Delves ${META.runs} · deaths ${META.deaths}</span></div>
-  <p class="sect">Stash</p>${stashCards(()=>true,it=>`<button class="btn" data-act="drop" data-id="${it.id}">Discard</button>`,'Empty. Weapons and tomes you bring home are kept here, and you choose what to take at the lift head.')}`,true);
+  <p class="sect">What you carry</p>${stashCards(()=>true,it=>`<button class="btn" data-act="drop" data-id="${it.id}">Discard</button>`,'Nothing. Gear you bring up stays on your delver, and goes down with them next time.')}<p class="purse">Nothing is kept here for a dead delver. If you die, what you carry stays in the deep. Only banked silver, kits and what you have learned survive you.</p>`,true);
   bindCards(el,(a,id)=>{if(a==='drop'){const i=META.stash.findIndex(x=>x.id===id);if(i>=0)META.stash.splice(i,1);saveMeta();UI.cottage()}})};
 UI.archive=tab=>{tab=tab||'beasts';const seenK=Object.keys(META.bestiary).filter(k=>MON[k]);let body='';
   if(tab==='beasts')body=`<div class="cards">${seenK.map(k=>{const b=META.bestiary[k],M=MON[k];return`<div class="itm"><div class="t"><img src="${monIcon(k)}" alt=""><div><b>${esc(M.title||M.name.replace(/^./,c=>c.toUpperCase()))}</b><div class="r" style="color:var(--dim)">${AI_TXT[M.ai]} · slain ${b.kills}</div></div></div><ul><li>${esc(M.desc)}</li>${b.kills>=2&&M.weak?`<li>Weak to ${M.weak.join(', ')}</li>`:''}${b.kills>=2&&M.resist?`<li>Resists ${M.resist.join(', ')}</li>`:''}${b.kills<2?'<li>Slay two to learn its weaknesses.</li>':''}</ul></div>`}).join('')||'<p class="purse">Nothing recorded yet. Creatures you see below are written here.</p>'}</div>`;
@@ -4582,11 +4621,11 @@ UI.lift=()=>{if(!(S.L&&S.L.town)){return}const ds=startDepths();if(!liftSel)lift
     <p class="sect">Depth</p><div class="tabs">${ds.map(d=>`<button class="btn${liftSel.d===d?' on':''}" data-d="${d}">Depth ${d} · ${BIOMES[biomeOf(d)].name}${d>1?` (start at level ${1+Math.floor((d-1)/2)})`:''}</button>`).join('')}</div>
     ${kits.length?`<p class="sect">Kit</p><div class="tabs"><button class="btn${!liftSel.kit?' on':''}" data-kit="">None</button>${kits.map(k=>`<button class="btn${liftSel.kit===k?' on':''}" data-kit="${k}" title="${esc(KITS[k].desc)}">${KITS[k].name}</button>`).join('')}</div>`:''}
     ${omensOpen()?`<p class="sect">Omens (harder delves, more silver)</p><div class="tabs">${Object.entries(OMENS).map(([k,O])=>`<button class="btn${liftSel.omens.includes(k)?' on':''}" data-omen="${k}" title="${esc(O.desc)}">${O.name} ×${O.mul}</button>`).join('')}</div>`:''}
-    <p class="sect">Take from your stash (1 weapon, up to 2 tomes, 1 relic)</p>${gear.length?`<div class="cards">${gear.map(it=>{const on=liftSel.items.includes(it.id);const can=on||(it.kind==='weapon'?wSel<1:it.kind==='relic'?rSel<1:it.kind==='armor'?aSel(it.slot)<1:tSel<2);return card(it,`<button class="btn${on?' primary':''}" data-act="take" data-id="${it.id}" ${can?'':'disabled'}>${on?'Taking':'Take'}</button>`,{eq:on})}).join('')}</div>`:'<p class="purse">Your stash is empty. You go down with bare hands and your class abilities.</p>'}
+    <p class="sect">What your delver carries</p>${gear.length?`<p class="purse">Everything below goes down with you. If you die, it is gone for good.</p><div class="cards">${gear.map(it=>card(it,'',{eq:carryEqd(it)})).join('')}</div>`:'<p class="purse">Nothing but bare hands and your class training. Whatever you find down there is yours until you die.</p>'}
     <div class="row" style="align-items:center;flex-wrap:wrap;gap:10px"><span class="purse">${META.pendingBless?`Blessed: <b>${BLESS[META.pendingBless].name}</b> · `:''}Supplies: ${1+META.upg.prov+((META.supplies||{}).draught||0)} draughts, ${1+((META.supplies||{}).charge||0)} charges, ${1+((META.supplies||{}).ink||0)} smoke, ${1+((META.supplies||{}).oil||0)} firepots${(META.supplies||{}).tea?`, ${META.supplies.tea} tea`:''}</span><button class="btn primary" id="goDown">Ride the lift down</button></div>`,true);
   el.querySelectorAll('[data-cls]').forEach(b=>b.onclick=()=>{liftSel.cls=b.dataset.cls;UI.lift()});el.querySelectorAll('[data-kit]').forEach(b=>b.onclick=()=>{liftSel.kit=b.dataset.kit||null;UI.lift()});el.querySelectorAll('[data-omen]').forEach(b=>b.onclick=()=>{const k=b.dataset.omen,i=liftSel.omens.indexOf(k);if(i>=0)liftSel.omens.splice(i,1);else liftSel.omens.push(k);UI.lift()});el.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{liftSel.d=+b.dataset.d;UI.lift()});
   bindCards(el,(a,id)=>{const i=liftSel.items.indexOf(id);if(i>=0)liftSel.items.splice(i,1);else liftSel.items.push(id);UI.lift()});
-  $('goDown').onclick=()=>{const L0=liftSel;const bless=META.pendingBless;META.pendingBless=null;liftSel=null;ov.hidden=true;newRun(L0.cls,L0.d,{items:L0.items,bless,kit:L0.kit,omens:L0.omens});if(S.gear.tomes.length)for(const t of S.gear.tomes)if(!t.read){t.read=1;META.tomeReads++}saveMeta();camInit=false;UI.render()}};
+  $('goDown').onclick=()=>{const L0=liftSel;const bless=META.pendingBless;META.pendingBless=null;liftSel=null;ov.hidden=true;newRun(L0.cls,L0.d,{items:carryOrder(),bless,kit:L0.kit,omens:L0.omens});if(S.gear.tomes.length)for(const t of S.gear.tomes)if(!t.read){t.read=1;META.tomeReads++}saveMeta();camInit=false;UI.render()}};
 /* ---- gear in the dungeon ---- */
 UI.gear=()=>{if(S.L&&S.L.town){UI.cottage();return}const w=S.gear.weapon,tm=S.gear.tomes,inC=S.mode==='combat';
   const el=modal(`${head(ICON[S.cls],'Gear',inC?'You cannot change gear mid-fight':'Equip, swap or drop what you carry')}
@@ -4712,7 +4751,7 @@ function showHelp(back){const ov=$('overlay');closeInspect();hideTip();
   </div><button class="btn primary" id="helpBack">Back</button></div>`;
   ov.hidden=false;$('helpBack').onclick=()=>{if(back)back();else ov.hidden=true}}
 UI.over=(kind,src)=>{const ov=$('overlay');const P=S.P;closeInspect();hideTip();
-  const lost=carriedItems().length;ov.innerHTML=`<div class="card"><h2>The deep keeps you</h2><p class="say" style="text-align:center">${esc(`You fell at depth ${S.depth}, in ${BIOMES[S.L.bio].name.toLowerCase()}, to ${src?nameOf(src):'the dark'}.`)}</p><p>${S.gold} silver and ${lost} item${lost===1?'':'s'} are lost with you. What you left in your cottage is safe.</p><button class="btn primary" id="again">Wake in Saltmarrow</button></div>`;
+  const lost=carriedItems().length;ov.innerHTML=`<div class="card"><h2>The deep keeps you</h2><p class="say" style="text-align:center">${esc(`You fell at depth ${S.depth}, in ${BIOMES[S.L.bio].name.toLowerCase()}, to ${src?nameOf(src):'the dark'}.`)}</p><p>${S.gold} silver and ${lost} item${lost===1?'':'s'} are lost with you, and so is everything your body learned. Banked silver, kits and guild training are safe.</p><button class="btn primary" id="again">Wake in Saltmarrow</button></div>`;
   setTimeout(()=>{ov.hidden=false;const a=$('again');a.onclick=()=>{ov.hidden=true;deathToTown()};a.focus()},900);UI.render()};
 UI._overOld=(kind,src)=>{const won=kind==='won';const P=S.P;
   ov.innerHTML=`<div class="card"><h2>${won?'You climb back to daylight':'The deep keeps you'}</h2><p>${won?`The Abbot is ended and the bells fall quiet. A level ${P.lvl} ${cls().name}, with ${S.gold} silver and ${S.kills} foes slain.`:`Fallen at depth ${S.depth}, in ${BIOMES[S.L.bio].name.toLowerCase()}, to ${src?nameOf(src):'the dark'}. Level ${P.lvl} ${cls().name}, ${S.kills} foes slain, ${S.gold} silver.`}</p><button class="btn primary" id="again">Dive again</button></div>`;
@@ -6381,6 +6420,40 @@ function drawFx2(){const A=FX.x;if(!A.length)return;ctx.save();
 {const d0=drawAnims;drawAnims=function(){d0();try{drawFx2()}catch(e){}}}
 // quick look-up so a tester can see which animation every move uses
 setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{ABANIM,flashAttack:(...a)=>flashAttack(...a),AB})}catch(e){}},450);
+/* ---------- the Mother's Marks: choosing one, wearing it, and the town noticing ---------- */
+{const k0=heroLookKey;heroLookKey=function(){const k=k0();if(!k)return k;const m=marksOf();return m.length?k+'|mk:'+m.join(','):k}}
+{const n0=heroLookNow;heroLookNow=function(pose){const o=n0(pose);const m=marksOf();if(m.length)o.marks=m.slice();return o}}
+function markPreview(cls,mk,size){try{const c=makeHero(cls,{lantern:true,lit:true,pose:'idle',w:HERO_LOOK[cls].def,kit:S&&S.kit,marks:[...marksOf(),mk]});return`<img class="kitpv" src="${c.toDataURL()}" alt="" style="width:${size}px;height:${size}px;image-rendering:pixelated">`}catch(e){return''}}
+UI.markPick=()=>{if(!META.markPending)return;const ch=markChoices();if(!ch.length){META.markPending=0;saveMeta();return}const cls=META.hero||S.cls||'riptide';
+  const el=modal(`<div class="gmh"><div class="gmt">Something is different</div></div>
+    <p class="say">You wake on the chapel floor with salt in your mouth. Sister Agathe is praying very fast. You remember water, and a voice that was not a voice, and a hand that turned you over the way a sleeper turns a coin. She sent you back. She left something on you.</p>
+    <p class="purse">Choose the mark you carry from now on. It stays through every death.</p>
+    <div class="cards">${ch.map(k=>{const M=MARKS[k];return`<div class="itm"><div class="t">${markPreview(cls,k,80)}<div><b style="color:#9fd8f0">${esc(M.name)}</b><div class="r" style="color:var(--dim)">A mark of the Mother</div></div></div><ul><li>${esc(M.boon)}</li><li class="cur">${esc(M.cost)}</li></ul><div class="row2"><span></span><button class="btn primary" data-act="mk" data-id="${k}">Take it</button></div></div>`}).join('')}</div>`,true);
+  bindCards(el,(a,id)=>{if(a!=='mk')return;takeMark(id);closeModal();log(`${MARKS[id].name}. ${MARKS[id].boon} ${MARKS[id].cost}`,'dread');UI.toast&&UI.toast('Marked',MARKS[id].name);
+    setTimeout(()=>{try{const L=MARK_SAY[id];if(L)log(`Sister Agathe: '${L[0]}'`,'dread')}catch(e){}},700);UI.save();UI.render()})};
+// if the game closed before a mark was chosen, offer it on the next quiet moment in town
+{let pend=false;const r0=UI.render;UI.render=function(){r0.apply(this,arguments);if(pend||!META||!META.markPending||!S||!S.L||!S.L.town||!$('overlay').hidden)return;pend=true;setTimeout(()=>{pend=false;if(META.markPending&&$('overlay').hidden)UI.markPick()},900)}}
+// what people say about your marks
+const MARK_SAY={
+  salteyes:["Your eyes catch the candle like a cat's. Don't look at me like that in the dark.","Mara says you don't need the lamp much now. Mara is frightened of you."],
+  gills:["There are slits in your neck. They open when you breathe. Keep your collar up in the market.","Bram swears you held your breath through a whole song in the bath-house."],
+  scales:["Your hand. Let me see. No. Put it away. Pray with the other one.","Tobias won't shake your hand any more. He makes a joke of it. It isn't one."],
+  saltblood:["You bled on my altar cloth and it dried white. Salt. Just salt.","The children say you taste like the sea. I don't ask how they know."],
+  smile:["Stop smiling. You don't know you're doing it, do you.","Hale says you grinned at the lottery drawing. Everyone else wept."],
+  barnacle:["Your shoulder is crusted like a pier post. Does it hurt? It should hurt.","The fishwives knock on your arm for luck now. It sounds hollow."],
+  drowned:["Your lips are blue in summer. Breathe for me. Slowly. There.","You cough up seawater in your sleep. Your landlady told me. She wants more rent."],
+  stillheart:["I couldn't find your heartbeat. I looked for a long time. Then it came back, once.","You don't flinch any more. I think that's the worst of it."]};
+{const e0=enterTown;enterTown=function(why){e0(why);try{const m=marksOf();if(!m.length||why==='death')return;if(META.markNew){const k=META.markNew;META.markNew=null;saveMeta();const L=MARK_SAY[k];if(L)log(`${pick(['Mara','Bram','Sister Agathe','Old Tobias'])}: '${L[1]}'`,'dread')}
+  else if(Math.random()<0.3){const k=pick(m),L=MARK_SAY[k];if(L)log(`Someone in the street: '${pick(L)}'`,'old')}}catch(e){}}}
+
+/* ---------- why the deep is never the same twice ---------- */
+const SHIFT_LORE=LORE.length;LORE.push({d:99,t:'The Turning of the Rock',x:"Every shift-captain knows it and none of them write it down: the tunnels are not where you left them. Chalk marks end at bare stone. A ladder you climbed on Tuesday goes nowhere on Friday. The old Brotherhood said the Mother turns in her sleep, and the rock turns with her, the way blankets follow a sleeper. Map what you like. She will dream it differently by morning."});
+const SHIFT_SAY=["Mara, on the speaking tube: 'Don't trust last week's chalk. She's turned over again. Nothing down there is where you left it.'",
+  "The lift cage shudders as it drops. Below, rock grinds against rock, settling into some new shape.","Mara, on the speaking tube: 'The crew heard her rolling in the night. New tunnels. Same teeth.'",
+  "You pass the place where the old passage used to open. It is solid stone now, and warm.","The walls are not where they were. They never are. The miners stopped arguing about it years ago."];
+{const n0=newRun;newRun=function(cls,d,lo){n0(cls,d,lo);try{if(META.runs>=2){if(!META.lore[SHIFT_LORE]){META.lore[SHIFT_LORE]=1;saveMeta();log("Mara, on the speaking tube: 'You'll find it's all moved. It does that. It's her, turning in her sleep. Ask the Archive if you want the long version.'",'dread');UI.toast&&UI.toast('Lore found','The Turning of the Rock')}
+  else if(Math.random()<0.45)log(pick(SHIFT_SAY),'dread')}}catch(e){}}}
+setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{MARKS,takeMark:(k)=>takeMark(k),markPick:()=>UI.markPick(),deathToTown:()=>deathToTown(),markPv:(c,k)=>markPreview(c,k,100)})}catch(e){}},460);
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
