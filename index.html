@@ -511,7 +511,7 @@ const AB={
   fishhook:{name:'Barbed Dart',icon:'dart',cost:0,act:'main',kind:'ranged',range:5,stat:'A',t:[{d:2},{d:4,cond:'slowed'},{d:6,cond:'slowed'}],desc:'A thrown barb. Tier 2 and up leaves the target slowed.'},
   knife:{name:'Knife in the Dark',icon:'moon',cost:3,act:'main',kind:'melee',range:1,stat:'A',hiddenDouble:true,t:[{d:6},{d:10},{d:14}],desc:'Gains a double edge if you strike from hiding.'},
   inkcloud:{name:'Smoke Bomb',icon:'cloud',cost:2,act:'maneuver',kind:'self',desc:'Smoke fills the squares around you for 3 rounds and you hide.'},
-  eelstep:{name:'Shadow Step',icon:'steps',cost:1,act:'maneuver',kind:'step',range:4,desc:'Slip up to 4 squares without provoking free strikes.'},
+  eelstep:{name:'Tumble',icon:'steps',cost:1,act:'maneuver',kind:'step',range:4,desc:'Roll and duck up to 4 squares through a fight without provoking free strikes. Unlike Shadowstep, it works in the light.'},
   brinebolt:{name:'Torrent Bolt',icon:'drop',cost:0,act:'main',kind:'ranged',range:10,stat:'R',el:'frost',t:[{d:3},{d:5},{d:7,cond:'slowed'}],desc:'A bolt of freezing water.'},
   squall:{name:'Squall',icon:'wind',cost:0,act:'main',kind:'ranged',range:10,stat:'R',t:[{d:1,push:2},{d:2,push:3},{d:3,push:4}],desc:'A gust that hurls the target away. Aim at walls, pits and fires.'},
   grasp:{name:'Undertow',icon:'swirl',cost:2,act:'maneuver',kind:'ranged',range:8,stat:'R',t:[{d:0,pull:2},{d:0,pull:3},{d:0,pull:4,cond:'slowed'}],desc:'A tendril of water drags the target toward you.'},
@@ -525,7 +525,7 @@ const AB={
   mindspike:{name:'Mind Spike',icon:'eye2',cost:0,act:'main',kind:'ranged',range:8,stat:'I',el:'void',t:[{d:3},{d:5},{d:7,cond:'dazed'}],desc:'Drive a thought into a skull.'},
   gaze:{name:'Abyssal Gaze',icon:'eye2',cost:2,act:'maneuver',kind:'ranged',range:6,stat:'I',el:'void',t:[{d:0,cond:'weakened'},{d:0,push:2,cond:'weakened'},{d:2,push:3,cond:'weakened'}],desc:'Show a creature what waits below. It recoils, weakened.'},
   veil:{name:'Veil of the Other',icon:'eye',cost:1,act:'maneuver',kind:'none',desc:'Fold yourself out of sight even while watched, unless an enemy is adjacent.'},
-  unravel:{name:'Unravel',icon:'swirl',cost:3,act:'main',kind:'area',range:8,radius:1,stat:'I',el:'void',t:[{d:3},{d:5},{d:8}],desc:'Unpick the world in a 3×3 area.'},
+  unravel:{name:'Unravel',icon:'swirl',cost:3,act:'main',kind:'area',range:8,radius:1,stat:'I',el:'void',strip:true,t:[{d:3},{d:5,cond:'weakened'},{d:8,cond:'weakened'}],desc:'Unpick a 3×3 area thread by thread. Tears away wards and borrowed stamina first, and leaves what remains weakened.'},
   rend:{name:'Rend the Veil',icon:'eye2',cost:5,act:'main',kind:'area',range:8,radius:1,stat:'I',el:'void',dreadSelf:2,t:[{d:6},{d:9},{d:13,cond:'dazed'}],desc:'Open a door that should stay shut. Raises your Dread by 2.'},
   shift:{name:'Shift',icon:'shift',act:'move',kind:'step',range:1,univ:true,desc:'Step 1 square without provoking free strikes. Uses your move.'},
   shove:{name:'Shove',icon:'shove',cost:0,act:'maneuver',kind:'melee',range:1,stat:'M',univ:true,shove:true,t:[{d:0,push:1},{d:0,push:1},{d:0,push:2}],desc:'Push an adjacent creature, keg or cart.'},
@@ -1355,7 +1355,7 @@ function npcTick(){if(!S.L.npcs)return;for(const n of S.L.npcs){if(!n.r||Math.ra
 function townHero(){const k=S&&S.cls&&classOpen(S.cls)?S.cls:'riptide';const P=newHero(k);return P}
 function enterTown(why){const cls0=S&&S.cls?S.cls:'riptide';
   S={v:5,cls:cls0,depth:0,turn:0,mode:'explore',P:null,L:null,C:null,log:S&&S.log?S.log.slice(-30):[],victories:0,xp:0,gold:0,inv:{},trinkets:[],kills:0,nextId:1,over:false,won:false,pitWarn:-1,busy:false,gear:{weapon:null,tomes:[],arm:{}},bag:[],bless:null};
-  S.P=townHero();genTown();S.P.x=53;S.P.y=16;S.P.rx=53;S.P.ry=16;S.P.lantern=true;S.P.dread=0;computeFov();
+  S.P=townHero();{const kk=(META.heroes||{})[cls0];if(kk&&S.P)S.P.lvl=kk.lvl}genTown();S.P.x=53;S.P.y=16;S.P.rx=53;S.P.ry=16;S.P.lantern=true;S.P.dread=0;computeFov();
   if(why==='death'){log('You wake on the cold floor of the chapel. You do not remember the climb. Your pack is gone.','dread');UI.toast('Saltmarrow','You do not remember the climb')}
   else if(why==='bell'){log('The lift groans up out of the dark. Rain, gas lamps, and the smell of the sea.','gold');UI.toast('Saltmarrow','You made it back')}
   else{log('Saltmarrow smells of brine and coal smoke. The sea left two hundred years ago. The town still listens for it. The lift head waits at the end of the street.','gold');UI.toast('Saltmarrow','A mining village above a dead sea')}
@@ -1367,7 +1367,7 @@ function newRun(cls,startD,loadout){const sup=META.supplies||(META.supplies={dra
     gear:{weapon:null,tomes:[],arm:{}},bag:[],bless:loadout.bless?Object.assign({},BLESS[loadout.bless].eff):null,blessName:loadout.bless||null,startDepth:startD};
   if(!S.omens.includes('famine'))for(const k in sup){S.inv[k]=(S.inv[k]||0)+sup[k];sup[k]=0}
   for(const id of loadout.items||[]){const i=META.stash.findIndex(it=>it.id===id);if(i<0)continue;const it=META.stash.splice(i,1)[0];if(it.kind==='relic'&&!S.gear.relic)S.gear.relic=it;else if(it.kind==='weapon'&&!S.gear.weapon)S.gear.weapon=it;else if(it.kind==='tome'&&S.gear.tomes.length<2)S.gear.tomes.push(it);else if(it.kind==='armor'&&!S.gear.arm[it.slot])S.gear.arm[it.slot]=it;else S.bag.push(it)}
-  S.P=newHero(cls);const lv=1+Math.floor((startD-1)/2);while(S.P.lvl<lv){S.xp=XPT[S.P.lvl];gainXp(0)}
+  S.P=newHero(cls);const keep=(META.heroes||{})[cls];const lv=Math.max(1+Math.floor((startD-1)/2),keep?keep.lvl:1);S._rk=1;const nl=S.log.length;while(S.P.lvl<lv){S.xp=XPT[S.P.lvl];gainXp(0)}S.log.length=nl;if(keep){S.xp=Math.max(S.xp,keep.xp||0);restoreKeep(keep)}delete S._rk;
   for(const t of S.gear.tomes)registerTome(t);if(S.gear.weapon)S.gear.weapon.ident=true;refreshHero();S.P.stam=S.P.max;S.P.recov=S.P.recovMax;
   if(S.omens.includes('lightless'))S.P.lantern=false;
   META.runs++;saveMeta();genLevel();if(firstDelve())tip('start');
@@ -1653,7 +1653,7 @@ async function descend(fell){if(S.mode==='combat'&&!fell){log('You can\'t take t
   UI.save();UI.render()}
 
 /* ================= damage, death, xp ================= */
-function damage(e,amt,src){if(amt<=0||e.dead||S.over)return;if(isP(e)&&amt>1){const ar=armorTotal();if(ar>0){const cut=Math.min(ar,Math.floor(amt*0.4));if(cut>0){amt-=cut;e.lastBlock=cut}}}let a=amt;if(e.temp){const u=Math.min(e.temp,a);e.temp-=u;a-=u}
+function damage(e,amt,src){if(amt<=0||e.dead||S.over)return;if(isP(e)&&amt>1){const ar=armorTotal();if(ar>0){const cut=Math.min(Math.floor(amt*0.3),Math.floor(ar/2)+((ar%2)&&Math.random()<0.5?1:0));if(cut>0){amt-=cut;e.lastBlock=cut}}}let a=amt;if(e.temp){const u=Math.min(e.temp,a);e.temp-=u;a-=u}
   const wasW=winded(e);e.stam-=a;UI.fx('hit',{e,amt});
   if(isP(e)){const C=S.C;
     if(C&&S.cls==='riptide'){if(!C.flags.hurt){C.flags.hurt=1;e.res++}if(!wasW&&winded(e)&&!C.flags.wind){C.flags.wind=1;e.res++}}
@@ -1875,10 +1875,12 @@ async function heroAttack(id,tx,ty){const ab=AB[id],P=S.P,C=S.C;
     if(ab.flood||el==='frost')for(const c of areaOf(ab,cx,cy)){S.L.fire[I(c.x,c.y)]=0}}
   else if(el==='fire'&&t0)igniteAt(t0.x,t0.y,0);
   let dealt=0;const pushB=gearSum('push'),pullB=gearSum('pull')+((wpn()&&wpn().aff.push)||0);
-  for(const t of targets){if(t.dead||S.over)continue;const dmg=heroDmg(ab,tier,t,r);
+  if(ab.rubble){for(const c of areaOf(ab,cx,cy)){const i=I(c.x,c.y),tt=S.L.map[i];if(tt===FLOOR||tt===GRASS||tt===WEB||tt===BONES)S.L.map[i]=RUBBLE}UI.fx('shake',{m:9});for(const c of areaOf(ab,cx,cy))UI.fx('debris',{x:c.x,y:c.y})}
+  for(const t of targets){if(t.dead||S.over)continue;if(ab.strip&&t.temp)t.temp=0;const dmg=heroDmg(ab,tier,t,r);
     if(dmg>0){damage(t,dmg,P);dealt+=dmg}if(t.dead||S.over)continue;
     if(tier.push)await forceMove(t,ab.kind==='burst'?cx:P.x,ab.kind==='burst'?cy:P.y,tier.push+pushB,'push');
     else if(tier.out){if(t.x===cx&&t.y===cy){const d=pick(DIR8);await forceMove(t,cx-d[0],cy-d[1],tier.out+pushB,'push')}else await forceMove(t,cx,cy,tier.out+pushB,'push')}
+    else if(tier.in&&!(t.x===cx&&t.y===cy))await forceMove(t,cx,cy,tier.in,'pull');
     if(t.dead||S.over)continue;
     if(tier.pull)await forceMove(t,P.x,P.y,tier.pull+pullB,'pull');
     if(t.dead||S.over)continue;
@@ -2593,7 +2595,7 @@ function puzzleUse(o){const L=S.L;const sr=(L.secrets||[]).find(s=>s.puzzle&&!s.
   if(!okSoFar){log(o.type==='plever'?'Gears grind and the levers slam back. Wrong order.':'The flames gutter out all at once. Wrong order.','bad');pz.seq=[];noise(o.x,o.y,7);
     for(const q of L.objs){if(q.type==='plever')q.on=false;if(q.type==='brazier'&&q.puz)q.lit=false}computeLight();computeFov();return true}
   log(o.type==='plever'?`The ${SYMN[o.sym]} lever locks in place with a clack.`:`The ${SYMN[o.sym]} brazier catches with a strange, steady flame.`,'good');if(pz.seq.length===3)openSecret(sr,'puzzle');return true}
-const PLAQUE_TXT=(o)=>{const o2=o.order.map(s=>SYMN[s]);return o.kind==='lever'?`Worn letters: "First ${o2[0]} sleeps, then ${o2[1]} wakes, and last ${o2[2]} calls the faithful home."`:`A scorched inscription: "Light ${o2[0]} for the lost, ${o2[1]} for the drowned, and ${o2[2]} for the ones still digging."`};
+const PLAQUE_TXT=(o)=>{if(!o.order||!o.order.length)return'The letters are worn away to nothing.';const o2=o.order.map(s=>SYMN[s]);return o.kind==='lever'?`Worn letters: "First ${o2[0]} sleeps, then ${o2[1]} wakes, and last ${o2[2]} calls the faithful home."`:`A scorched inscription: "Light ${o2[0]} for the lost, ${o2[1]} for the drowned, and ${o2[2]} for the ones still digging."`};
 
 /* ---------- 4. chain reactions ---------- */
 function placeChains(){const L=S.L;if(L.town||S.depth>=MAXD)return;L.gas=L.gas||new Array(W*H).fill(0);L.oil=L.oil||new Array(W*H).fill(0);L.weak=L.weak||new Array(W*H).fill(0);const P=S.P;
@@ -2743,21 +2745,21 @@ Object.assign(AB,{
   // Saltbreaker
   quake:{name:'Ground Slam',icon:'maul',cost:3,act:'main',kind:'burst',radius:1,stat:'M',t:[{d:2},{d:4,cond:'slowed'},{d:6,cond:'dazed'}],desc:'Bring the maul down so hard the floor buckles. Every adjacent enemy staggers.'},
   headbutt:{name:'Headbutt',icon:'shove',cost:2,act:'maneuver',kind:'melee',range:1,stat:'M',t:[{d:1},{d:2,cond:'dazed'},{d:4,cond:'dazed'}],desc:'A maneuver, not your main action. Rings their skull and leaves them dazed.'},
-  chainlash:{name:'Chain Lash',icon:'chain',cost:2,act:'main',kind:'ranged',range:3,stat:'M',t:[{d:3,pull:1},{d:5,pull:2},{d:7,pull:2,cond:'slowed'}],desc:'Whip the chain out three squares, tear into the target and reel it in.'},
+  chainlash:{name:'Hurl Rubble',icon:'stone',cost:2,act:'main',kind:'ranged',range:5,stat:'M',t:[{d:3},{d:5,cond:'slowed'},{d:7,cond:'dazed'}],desc:'Wrench a chunk of stone out of the wall and throw it. A clean hit leaves them reeling.'},
   bloodrage:{name:'Blood Rage',icon:'heart',cost:0,act:'maneuver',kind:'none',desc:'Bite down and see red. Lose 3 stamina, gain 3 Ferocity.'},
-  caveblow:{name:'Cave-In',icon:'bone',cost:5,act:'main',kind:'melee',range:1,stat:'M',t:[{d:7,push:1},{d:11,push:2},{d:15,push:3,cond:'dazed'}],desc:'Forty years of breaking rock in one blow. Hurls the target back.'},
+  caveblow:{name:'Cave-In',icon:'bone',cost:5,act:'main',kind:'area',range:3,radius:1,stat:'M',rubble:true,t:[{d:5,cond:'slowed'},{d:8,cond:'slowed'},{d:12,cond:'dazed'}],desc:'Strike the rock just so and bring the roof down on a 3×3 area up to 3 squares away. Leaves the floor choked with rubble.'},
   // Cutpurse
   flurry:{name:'Flurry of Knives',icon:'dagger',cost:3,act:'main',kind:'burst',radius:1,stat:'A',t:[{d:3},{d:5,cond:'bleeding'},{d:7,cond:'bleeding'}],desc:'Blades everywhere at once. Cuts every adjacent enemy.'},
   garrote:{name:'Garrote',icon:'chain',cost:2,act:'main',kind:'melee',range:1,stat:'A',hiddenDouble:true,t:[{d:3,cond:'slowed'},{d:5,cond:'dazed'},{d:8,cond:'dazed'}],desc:'A wire from behind. Double edge from hiding, and they cannot cry out.'},
   caltrops:{name:'Caltrops',icon:'stone',cost:1,act:'maneuver',kind:'area',range:5,radius:1,stat:'A',t:[{d:1,cond:'slowed'},{d:2,cond:'slowed'},{d:3,cond:'slowed'}],desc:'Scatter iron spikes over a 3×3 area. Everything there is slowed.'},
   venomdart:{name:'Venom Dart',icon:'dart',cost:2,act:'main',kind:'ranged',range:6,stat:'A',t:[{d:2,cond:'weakened'},{d:3,cond:'weakened'},{d:5,cond:'bleeding'}],desc:'A dart dipped in something from Nell\'s back shelf. Leaves the target weakened.'},
-  vanish:{name:'Vanish',icon:'moon',cost:2,act:'maneuver',kind:'none',desc:'A flick of ash and you are gone, even while watched. Smoke fills your square.'},
+  vanish:{name:'Hamstring',icon:'dagger',cost:2,act:'main',kind:'melee',range:1,stat:'A',t:[{d:3,cond:'slowed'},{d:5,cond:'slowed'},{d:6,cond:'grabbed'}],desc:'Cut low, behind the knee. They limp, and on a clean hit they cannot move at all.'},
   // Stormcaller
   hail:{name:'Hailstorm',icon:'drop',cost:3,act:'main',kind:'area',range:10,radius:1,stat:'R',el:'frost',t:[{d:3},{d:5},{d:7,cond:'slowed'}],desc:'Ice hammers down on a 3×3 area. Puts out fires and slows.'},
   forked:{name:'Forked Lightning',icon:'bolt',cost:2,act:'main',kind:'ranged',range:8,stat:'R',el:'lightning',t:[{d:4},{d:6},{d:9,cond:'dazed'}],desc:'A crack of lightning at one target. Double damage if they stand in water.'},
   maelstrom:{name:'Maelstrom',icon:'wind',cost:4,act:'main',kind:'burst',radius:1,stat:'R',el:'frost',t:[{d:3,push:2},{d:5,push:2},{d:7,push:3}],desc:'A whirl of freezing wind throws every adjacent enemy away from you.'},
   seafog:{name:'Sea Fog',icon:'cloud',cost:2,act:'maneuver',kind:'none',desc:'Call the fog off the dead sea. Thick mist all around you, and you are hidden in it.'},
-  ballstorm:{name:'Ball Lightning',icon:'bolt',cost:5,act:'main',kind:'area',range:10,radius:1,stat:'R',lightning:true,el:'lightning',t:[{d:6},{d:9},{d:12,cond:'dazed'}],desc:'A crackling sphere bursts over a 3×3 area. Ignites kegs and webs.'},
+  ballstorm:{name:'Whirlpool',icon:'wind',cost:4,act:'main',kind:'area',range:10,radius:1,stat:'R',el:'frost',flood:true,t:[{d:4,in:1},{d:6,in:1},{d:9,in:1,cond:'slowed'}],desc:'The floor turns to sucking black water. Everything in a 3×3 area is dragged to the middle.'},
   // Flagellant
   brand:{name:'Holy Brand',icon:'sun',cost:2,act:'main',kind:'melee',range:1,stat:'P',el:'holy',t:[{d:4,cond:'weakened'},{d:6,cond:'weakened'},{d:9,cond:'dazed'}],desc:'Press a red-hot sigil into the flesh. The marked one weakens.'},
   pillar:{name:'Pillar of Fire',icon:'flame',cost:4,act:'main',kind:'area',range:8,radius:1,stat:'P',el:'fire',t:[{d:4},{d:7},{d:10}],desc:'Fire falls from nowhere onto a 3×3 area and sets it burning.'},
@@ -2771,7 +2773,7 @@ Object.assign(AB,{
   rift:{name:'Void Rift',icon:'swirl',cost:4,act:'main',kind:'area',range:8,radius:1,stat:'I',el:'void',t:[{d:4,out:1},{d:6,out:1},{d:9,out:2}],desc:'Tear a hole in a 3×3 area. Whatever survives is flung out of it.'}});
 const MOVE_POOL={riptide:['quake','headbutt','chainlash','bloodrage','caveblow'],shadow:['flurry','garrote','caltrops','venomdart','vanish'],storm:['hail','forked','maelstrom','seafog','ballstorm'],flag:['brand','pillar','offering','rebuke','judgement'],occult:['leech','whispers','hex','rift']};
 const LEARN_AT=[2,3,5];
-const MOVE_UTIL=['bloodrage','vanish','seafog','offering'];
+const MOVE_UTIL=['bloodrage','seafog','offering'];
 // the class's move list is its base kit plus whatever this hero has learned
 for(const k in CLASSES){const base=CLASSES[k].abilities.slice();Object.defineProperty(CLASSES[k],'abilities',{configurable:true,get(){return S&&S.cls===k&&S.learned&&S.learned.length?base.concat(S.learned):base},set(v){base.length=0;base.push(...v)}})}
 function moveChoices(){const pool=(MOVE_POOL[S.cls]||[]).filter(id=>!(S.learned||[]).includes(id));return shuffle(pool.slice()).slice(0,2)}
@@ -2785,6 +2787,17 @@ function learnMove(id){S.learned=S.learned||[];if(!S.learned.includes(id))S.lear
   case'seafog':makeSmoke(P.x,P.y,2,9);P.hidden=true;P.lantern=false;log('Fog rolls in off a sea that is not there. You vanish inside it.','good');computeFov();return;
   case'offering':heal(8);easeDread(1);log('You pray through the pain, and the pain answers.','good');computeFov();return}
   return d0(id,tx,ty)}}
+
+/* ---------- your delver keeps their levels, perks and learned moves between delves ---------- */
+function heroKeep(){if(!S||!S.P||!S.cls||S._rk||(S.L&&S.L.town))return;META.heroes=META.heroes||{};const o=META.heroes[S.cls];
+  if(o&&o.lvl>S.P.lvl)return;META.heroes[S.cls]={lvl:S.P.lvl,xp:S.xp,learned:(S.learned||[]).slice(),perks:(S.perks||[]).slice()};saveMeta()}
+function restoreKeep(k){S.learned=(k.learned||[]).filter(id=>AB[id]);S.perks=[];S.perkEff={};
+  for(const p of k.perks||[]){let P0=null;try{P0=perkInfo(p)}catch(e){}if(!P0)continue;S.perks.push(p);for(const e in P0.eff)S.perkEff[e]=(S.perkEff[e]||0)+P0.eff[e]}
+  const lv=S.P.lvl;S.perkQ=Math.max(0,(lv-1)-S.perks.length);const due=LEARN_AT.filter(l=>l<=lv).length;S.moveQ=Math.max(0,Math.min(due-S.learned.length,moveChoices().length));
+  refreshHero();S.P.stam=S.P.max;S.P.recov=S.P.recovMax}
+{const g0=gainXp;gainXp=function(n){g0(n);try{heroKeep()}catch(e){}}}
+{const t0=takePerk;takePerk=function(k){t0(k);try{heroKeep()}catch(e){}}}
+{const l0=learnMove;learnMove=function(id){l0(id);try{heroKeep()}catch(e){}}}
 /* ---------- the Undercity Sewers: a secret side level under Saltmarrow, reached through a hidden grate on depth 1 or 2 ---------- */
 BIOMES.sewer={name:'The Undercity Sewers',blurb:'Brick tunnels under Saltmarrow. Everything the town flushes away ends up down here, and so does everything it wants forgotten.'};
 MON.ratking={name:'the Rat King',ai:'brute',stam:30,speed:5,stab:2,bonus:3,free:3,xp:24,pts:12,ab:[{name:'Gnawing Mass',kind:'melee',range:1,t:[{d:4},{d:6,cond:'bleeding'},{d:8,cond:'bleeding'}]}],mal:{cost:3,name:'Call the Swarm',type:'extra'},
@@ -2966,7 +2979,7 @@ function newHero(k){const c=CLASSES[k];const bm=c.stam+META.upg.stam*4,br=c.reco
 function newGame(k,d){newRun(k,d||1,{items:[]})}
 
 /* ================= export for tests ================= */
-if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,enterTown,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems};return}
+if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems};return}
 /* =====================================================================
    BROWSER: sprites, rendering, animation, UI
    ===================================================================== */
@@ -3791,8 +3804,10 @@ function drawIntent(){const L=S.L,P=S.P;
   d0(o);if(!o.searched&&SEARCH_T[o.type]&&!S.L.town&&vis[I(o.x,o.y)]&&!REDUCE){const a=0.35+Math.sin(NOW/500+o.id)*0.25;if(a>0.45){ctx.fillStyle=`rgba(255,240,200,${(a-0.45)*1.2})`;ctx.fillRect(Math.round(o.x*T)+22,Math.round(o.y*T)+6,2,2)}}}}
 /* emit animations from attacks */
 {const h0=heroAttack;heroAttack=async function(id,tx,ty){const ab=AB[id],P=S.P;try{const el=ab.el||weaponEl();const col=el?ELEM[el].col:'#f4ecd8';let wind=0;
-    if(tx!=null&&(ab.kind==='melee'||ab.kind==='ranged')){const st=STYLE[id]||(ab.kind==='melee'?'slash':CASTERS.has(S.cls)||ab.tome?'cast':'throw');wind=flashAttack(P,{x:tx,y:ty},st,st==='cast'&&!el?'#8fe0f0':col)}
-    else if(ab.kind==='area'){wind=flashAttack(P,{x:tx,y:ty},'cast',el?col:'#8fe0f0')}else if(ab.kind==='burst'){wind=flashAttack(P,{x:P.x,y:P.y},'spin',col)}
+    const AN=ABANIM[id];const cc=ABCOL[id]||col;
+    if(tx!=null&&(ab.kind==='melee'||ab.kind==='ranged')){const st=AN||STYLE[id]||(ab.kind==='melee'?'slash':CASTERS.has(S.cls)||ab.tome?'cast':'throw');wind=flashAttack(P,{x:tx,y:ty},st,st==='cast'&&!el&&!ABCOL[id]?'#8fe0f0':cc)}
+    else if(ab.kind==='area'){wind=flashAttack(P,{x:tx,y:ty},AN||'cast',el||ABCOL[id]?cc:'#8fe0f0')}else if(ab.kind==='burst'){wind=flashAttack(P,{x:P.x,y:P.y},AN||'spin',cc)}
+    if(AN&&CASTK.has(AN))P.windup=null;
     if(wind)await UI.sleep(wind)}catch(e){}
   return h0(id,tx,ty)}}
 const BITERS=new Set(['rat','wolf','direwolf','ghoul','eel','bat','gaunt','deepone','spider']);
@@ -4380,7 +4395,7 @@ function slot(id,key,opt){opt=opt||{};const ab=AB[id];const u=opt.ok!=null?{ok:o
   const cl=act==='main'?'main':act==='maneuver'?'man':'move';const icon=opt.icon||(ab&&ab.item?ICON[ab.item]:iconURL(ab.icon,ACT_COLOR[act]||'#e2d9c6'));
   const q=opt.q!=null?`<span class="q n">${opt.q}</span>`:c?`<span class="q">${c}</span>`:'';
   return`<button class="sl ${cl}${SEL.id===id?' sel':''}" data-ab="${id}" ${u.ok&&!S.busy?'':'disabled'} aria-label="${esc(opt.name||ab.name)}">${key!=null?`<span class="k">${key}</span>`:''}${q}<img src="${icon}" alt=""><span class="nm">${esc(opt.short||(opt.name||ab.name).split(' ').slice(-1)[0])}</span></button>`}
-const SHORT={shadowstep:'Shadow',camp:'Camp',autoexp:'Explore',clapper:'Clapper',scourge:'Scourge',smite:'Smite',penance:'Penance',litany:'Litany',martyr:'Martyr',mindspike:'Spike',gaze:'Gaze',veil:'Veil',unravel:'Unravel',rend:'Rend',tea:'Tea',undertow:'Maul',gaff:'Hook',breakwater:'Whirl',redtide:'Break',gutter:'Strike',fishhook:'Dart',knife:'Knife',inkcloud:'Smoke',eelstep:'Step',brinebolt:'Bolt',squall:'Squall',grasp:'Undertow',staticlash:'Lash',waterspout:'Geyser',breath:'Breathe',escape:'Break free',stone:'Stone',draught:'Draught',charge:'Charge',ink:'Smoke',oil:'Firepot'};
+const SHORT={shadowstep:'Shadow',camp:'Camp',autoexp:'Explore',clapper:'Clapper',scourge:'Scourge',smite:'Smite',penance:'Penance',litany:'Litany',martyr:'Martyr',mindspike:'Spike',gaze:'Gaze',veil:'Veil',unravel:'Unravel',rend:'Rend',tea:'Tea',undertow:'Maul',gaff:'Hook',breakwater:'Whirl',redtide:'Break',gutter:'Strike',fishhook:'Dart',knife:'Knife',inkcloud:'Smoke',eelstep:'Tumble',brinebolt:'Bolt',squall:'Squall',grasp:'Undertow',staticlash:'Lash',waterspout:'Geyser',breath:'Breathe',escape:'Break free',stone:'Stone',draught:'Draught',charge:'Charge',ink:'Smoke',oil:'Firepot'};
 function renderBar(){const c=cls(),P=S.P,top=$('barTop'),sl=$('slots');if(S.over){top.innerHTML='';sl.innerHTML='';return}
   if(S.L.town){top.innerHTML=`<div class="prompt"><b>Saltmarrow.</b> <span class="s">Walk into a door or a person to go in or talk. The lift head is at the east end of the street.</span></div>`;sl.innerHTML='';return}
   if(SEL.id){const ab=AB[SEL.id];top.innerHTML=`<div class="prompt"><b>${ab.name}</b> <span>${ab.kind==='step'?'choose where to go':ab.kind==='point'||ab.kind==='area'?'choose a spot':ab.kind==='burst'?'click again or press Enter to unleash':'choose a target'}</span><span class="s">Tab cycles · Enter confirms · Esc cancels</span></div><button class="btn" id="cancelSel">Cancel</button>`}
@@ -4439,8 +4454,9 @@ const SUP={draught:{n:'Healing draught',p:20},charge:{n:'Blasting charge',p:25},
 function supplyRow(k,price,town){const have=town?((META.supplies||{})[k]||0):(S.inv[k]||0);const can=(town?META.silver:S.gold)>=price;return`<div class="itm"><div class="t"><img src="${ICON[k]}" alt=""><div><b>${SUP[k].n}</b><div class="r" style="color:var(--dim)">You have ${have}</div></div></div><ul><li>${esc(AB[k].desc)}</li></ul><div class="row2"><span class="pr">${price} silver</span><button class="btn" data-act="sup" data-id="${k}" ${can?'':'disabled'}>Buy</button></div></div>`}
 function buySupply(k,price,town){if(town){if(META.silver<price)return;META.silver-=price;const s=META.supplies||(META.supplies={});s[k]=(s[k]||0)+1;saveMeta()}else{if(S.gold<price)return;S.gold-=price;S.inv[k]=(S.inv[k]||0)+1}}
 let shopTab=null;
-UI.shop=(kind,tab)=>{const town=!!(S.L&&S.L.town);shopTab=tab||shopTab;const mmul=kind==='rook'?1.3:0.9;
-  const N={smith:'tobias',chapel:'agathe',tavern:'bram',hall:'hale',apoth:'nell',rook:'rook',peddler:'peddler'}[kind];const NP=NPCS[N];
+const shopObj=kind=>S.L.objs.find(o=>kind==='silas'?o.type==='rival':o.type==='merchant'&&o.who===kind);
+UI.shop=(kind,tab)=>{const town=!!(S.L&&S.L.town);shopTab=tab||shopTab;const mmul=kind==='rook'?1.3:kind==='silas'?1.15:0.9;
+  const N={smith:'tobias',chapel:'agathe',tavern:'bram',hall:'hale',apoth:'nell',rook:'rook',peddler:'peddler',silas:'silas'}[kind];const NP=NPCS[N];
   let body='',tabs=[];const T=(id,l)=>{tabs.push([id,l]);return shopTab===id};
   if(kind==='smith'){if(!META.smith){META.smith=[0,1,2,3,4,5].map(i=>{const d=Math.max(1,META.deepest+1),r=pick(['worn','fine','fine','storied']);const it=i<3?genWeapon(d,r):genArmor(d,r);it.ident=true;return it});saveMeta()}
     if(!['buy','sell','forge','kits'].includes(shopTab))shopTab='buy';T('buy','Buy');T('kits','Kits');T('sell','Sell');T('forge',flag('pipFreed')?'Reforge':'Reforge (needs Pip)');
@@ -4456,10 +4472,10 @@ UI.shop=(kind,tab)=>{const town=!!(S.L&&S.L.town);shopTab=tab||shopTab;const mmu
     if(shopTab==='sell')body=stashCards(()=>true,it=>`<button class="btn" data-act="sell" data-id="${it.id}">Sell ${Math.round(it.value*0.45)}</button>`)}
   if(kind==='apoth'){shopTab='sup';T('sup','Remedies');body=`<div class="cards">${supplyRow('tea',25,true)}${supplyRow('draught',15,true)}</div>`}
   if(kind==='hall'){shopTab='up';T('up','Guild training');body=`<div class="cards">${Object.entries(UPGRADES).map(([k,u])=>{const r=META.upg[k]||0,c=u.cost[r];return`<div class="itm${r>=u.max?' eq':''}"><div class="t"><div><b>${u.name}</b><div class="r" style="color:var(--dim)">Rank ${r} of ${u.max}</div></div></div><ul><li>${esc(u.desc)}</li></ul><div class="row2"><span class="pr">${r<u.max?c+' silver':'Mastered'}</span>${r<u.max?`<button class="btn" data-act="up" data-id="${k}" ${META.silver>=c?'':'disabled'}>Train</button>`:''}</div></div>`}).join('')}</div>`}
-  if(kind==='rook'||kind==='peddler'){const o=S.L.objs.find(o=>o.type==='merchant'&&o.who===kind);if(o&&!o.stock){o.stock=kind==='rook'?[rollGear(10),rollGear(5)].map(it=>{it.ident=true;return it}):[rollGear(0)]}
+  if(kind==='rook'||kind==='peddler'||kind==='silas'){const o=shopObj(kind);if(o&&!o.stock){o.stock=kind==='rook'||kind==='silas'?[rollGear(10),rollGear(5)].map(it=>{it.ident=true;return it}):[rollGear(0)]}
     if(!['buy','sup','sell'].includes(shopTab))shopTab='buy';T('buy','Wares');T('sup','Supplies');T('sell','Sell');
     if(shopTab==='buy')body=`<div class="cards">${(o&&o.stock||[]).map(it=>card(it,`<button class="btn" data-act="mbuy" data-id="${it.id}" ${S.gold>=Math.round(it.value*mmul)?'':'disabled'}>Buy</button>`,{price:Math.round(it.value*mmul)})).join('')||'<p class="purse">Nothing left.</p>'}</div>`;
-    if(shopTab==='sup')body=`<div class="cards">${['draught','charge','ink','oil'].map(k=>supplyRow(k,Math.round(SUP[k].p*(kind==='rook'?1.4:0.8)),false)).join('')}</div>`;
+    if(shopTab==='sup')body=`<div class="cards">${['draught','charge','ink','oil'].map(k=>supplyRow(k,Math.round(SUP[k].p*(kind==='rook'?1.4:kind==='peddler'?0.8:1)),false)).join('')}</div>`;
     if(shopTab==='sell')body=`<div class="cards">${S.bag.map(it=>card(it,`<button class="btn" data-act="msell" data-id="${it.id}">Sell ${Math.round(it.value*(kind==='rook'?0.6:0.35))}</button>`)).join('')||'<p class="purse">Your pack holds nothing to sell. Unequip gear first.</p>'}</div>`}
   const el=modal(`${head(ICON_N(NP.spr),NP.name,NP.role)}<div class="row" style="align-items:center"><div class="tabs">${tabs.map(([id,l])=>`<button class="btn${shopTab===id?' on':''}" data-tab="${id}">${l}</button>`).join('')}</div>${purse()}</div>${body}`,true);
   el.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>UI.shop(kind,b.dataset.tab));
@@ -4473,7 +4489,7 @@ UI.shop=(kind,tab)=>{const town=!!(S.L&&S.L.town);shopTab=tab||shopTab;const mmu
     if(a==='ident'){const i=fi();if(i>=0&&META.silver>=15){META.silver-=15;st[i].ident=true}}
     if(a==='up'){const u=UPGRADES[id],r=META.upg[id]||0;if(r<u.max&&META.silver>=u.cost[r]){META.silver-=u.cost[r];META.upg[id]=r+1}}
     if(a==='sup'){const p=kind==='rook'?Math.round(SUP[id].p*1.4):kind==='peddler'?Math.round(SUP[id].p*0.8):kind==='apoth'&&id==='draught'?15:SUP[id].p;buySupply(id,p,town)}
-    if(a==='mbuy'){const o=S.L.objs.find(o=>o.type==='merchant'&&o.who===kind);const i=o.stock.findIndex(x=>x.id===id),it=o.stock[i],p=Math.round(it.value*mmul);if(S.gold>=p){S.gold-=p;o.stock.splice(i,1);S.bag.push(it)}}
+    if(a==='mbuy'){const o=shopObj(kind);if(!o||!o.stock)return;const i=o.stock.findIndex(x=>x.id===id),it=o.stock[i],p=Math.round(it.value*mmul);if(S.gold>=p){S.gold-=p;o.stock.splice(i,1);S.bag.push(it)}}
     if(a==='msell'){const i=S.bag.findIndex(x=>x.id===id);if(i>=0){S.gold+=Math.round(S.bag[i].value*(kind==='rook'?0.6:0.35));S.bag.splice(i,1)}}
     saveMeta();UI.save();UI.shop(kind,shopTab)})};
 function stashCards(filter,btns,empty){const list=META.stash.filter(filter);return`<div class="cards">${list.map(it=>card(it,btns(it))).join('')||`<p class="purse">${empty||'Nothing in your cottage stash.'}</p>`}</div>`}
@@ -4540,7 +4556,7 @@ function tierBadge(t){return`<span class="tier t${t}">${['','Failure','Success',
 
 /* level-up perks */
 UI.perks=()=>{if(!S||!(S.perkQ>0))return;const ch=perkChoices();const P=S.P;
-  modal(`${head(ICON[S.cls],`Level ${P.lvl}`,'Choose one. It lasts the rest of this delve.',true)}<div class="perks">${ch.map((k,i)=>{const p=perkInfo(k);return`<button class="perk${p.sig?' sig':''}" data-p="${k}"><b>${esc(p.name)}</b><span>${esc(p.desc)}</span>${(S.perks||[]).includes(k)?'<i>Again</i>':''}</button>`}).join('')}</div>`);
+  modal(`${head(ICON[S.cls],`Level ${P.lvl}`,'Choose one. Your delver keeps it from now on.',true)}<div class="perks">${ch.map((k,i)=>{const p=perkInfo(k);return`<button class="perk${p.sig?' sig':''}" data-p="${k}"><b>${esc(p.name)}</b><span>${esc(p.desc)}</span>${(S.perks||[]).includes(k)?'<i>Again</i>':''}</button>`}).join('')}</div>`);
   sfx('levelup');ov.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{takePerk(b.dataset.p);if(S.perkQ>0)UI.perks();else closeModal()})};
 {let pend=false;const r0=UI.render;UI.render=()=>{r0();if(!S||S.over||!(S.perkQ>0)||S.busy||S.mode!=='explore'||pend||!$('overlay').hidden)return;pend=true;setTimeout(()=>{pend=false;if(S.perkQ>0&&$('overlay').hidden&&S.mode==='explore'&&!S.busy&&!S.over)UI.perks()},450)}}
 
@@ -4655,7 +4671,7 @@ function clickTile(x,y){if(!S||S.over||!$('overlay').hidden||!inb(x,y))return;
     if(x===P.x&&y===P.y)return;combatWalkTo(x,y);return}
   if(x===P.x&&y===P.y){exploreStep(0,0);return}
   if(cheb(x,y,P.x,P.y)===1){walkQ=null;exploreStep(x-P.x,y-P.y);return}
-  if(S.L.npcs&&npcAt(x,y)){const a=nearestAdj(x,y);if(a){startWalk(a.x,a.y);walkTalk=npcAt(x,y).key}return}
+  if(S.L.npcs&&npcAt(x,y)){const np=npcAt(x,y),a=nearestAdj(x,y);if(a){walkTalk=np.key;startWalk(a.x,a.y)}return}
   const m=monAt(x,y);if(m&&monVisible(m)){const id=defaultAttack(x,y);if(id&&AB[id].kind==='ranged'){useAbility(id,x,y);return}}
   if(!S.L.seen[I(x,y)])return;let tx=x,ty=y;if(blockObjAt(x,y)||(m&&monVisible(m))){const a=nearestAdj(x,y);if(!a)return;tx=a.x;ty=a.y}startWalk(tx,ty)}
 cv.addEventListener('click',ev=>{const{x,y}=tileFromEvent(ev);clickTile(x,y)});
@@ -5558,8 +5574,8 @@ body.full.bot .bar>*{flex-shrink:0}body.full.bot .sl{width:54px;height:50px;gap:
 `;document.head.appendChild(st)}
 /* ---------- learning screen, hotkeys and labels for learned moves ---------- */
 Object.assign(STYLE,{quake:'smash',caveblow:'smash',headbutt:'thrust',chainlash:'hook',garrote:'hook',venomdart:'throw',brand:'smash',judgement:'smash',flurry:'spin',maelstrom:'spin',rebuke:'spin'});
-Object.assign(SHORT,{quake:'Slam',headbutt:'Headbutt',chainlash:'Lash',bloodrage:'Rage',caveblow:'Cave-in',flurry:'Flurry',garrote:'Garrote',caltrops:'Caltrops',venomdart:'Venom',vanish:'Vanish',
-  hail:'Hail',forked:'Forked',maelstrom:'Maelstrom',seafog:'Fog',ballstorm:'Ball',brand:'Brand',pillar:'Pillar',offering:'Offering',rebuke:'Rebuke',judgement:'Judge',leech:'Leech',whispers:'Whispers',hex:'Hex',rift:'Rift'});
+Object.assign(SHORT,{quake:'Slam',headbutt:'Headbutt',chainlash:'Hurl',bloodrage:'Rage',caveblow:'Cave-in',flurry:'Flurry',garrote:'Garrote',caltrops:'Caltrops',venomdart:'Venom',vanish:'Hamstring',
+  hail:'Hail',forked:'Forked',maelstrom:'Maelstrom',seafog:'Fog',ballstorm:'Whirlpool',brand:'Brand',pillar:'Pillar',offering:'Offering',rebuke:'Rebuke',judgement:'Judge',leech:'Leech',whispers:'Whispers',hex:'Hex',rift:'Rift'});
 const ACTN={main:'Main action',maneuver:'Maneuver',move:'Move'};const CONDN={slowed:'slowed',dazed:'dazed',weakened:'weakened',bleeding:'bleeding'};
 function tierText(t){const a=[];if(t.d)a.push(t.d+' dmg');if(t.push)a.push('push '+t.push);if(t.pull)a.push('pull '+t.pull);if(t.out)a.push('fling '+t.out);if(t.cond)a.push(CONDN[t.cond]||t.cond);return a.join(', ')||'no damage'}
 function moveCard(id){const ab=AB[id],c=cls();const where=ab.kind==='burst'?`all within ${ab.radius}`:ab.kind==='area'?`3×3 area, range ${ab.range}`:ab.kind==='ranged'?`range ${ab.range}`:ab.kind==='melee'?(ab.range>1?`reach ${ab.range}`:'adjacent'):'yourself';
@@ -6079,7 +6095,7 @@ UI.gear=()=>{if(S.L&&S.L.town){UI.cottage();return}bagSettle();const inC=S.mode=
       <div class="pk-doll">
         ${slotHtml('cloak')}${slotHtml('head')}${slotHtml('relic')}
         ${slotHtml('weapon')}<div class="pk-hero"><img src="${heroURL}" alt="" draggable="false"></div>${slotHtml('body')}
-        ${slotHtml('hands')}<div class="pk-stats"><div><span>Armour</span><b>${armorTotal()}</b></div><div><span>Stamina</span><b>${P.stam}/${P.max}</b></div><div><span>Footsteps</span><b class="${nw[1]}">${nw[0]}</b></div></div>${slotHtml('feet')}
+        ${slotHtml('hands')}<div class="pk-stats"><div title="Every 2 points of armour take 1 off each hit, but never more than 30% of it"><span>Armour</span><b>${armorTotal()}</b></div><div><span>Stamina</span><b>${P.stam}/${P.max}</b></div><div><span>Footsteps</span><b class="${nw[1]}">${nw[0]}</b></div></div>${slotHtml('feet')}
         ${slotHtml('tome0')}<div class="pk-belt">${belt}</div>${slotHtml('tome1')}
       </div>
       <div class="pk-bag"><div class="pk-flap"><div class="pk-buckle"></div></div>
@@ -6178,6 +6194,112 @@ body.mob .pk-pouch{width:28px;height:28px}body.mob .pk-pouch img{width:20px;heig
 setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{ringBell:(...a)=>ringBell(...a),carriedItems:()=>carriedItems(),genArmor,equipItem,unequip,bagSettle,inSlot})}catch(e){}},400);
 // armour soaking a hit: a dull clink and a small grey number
 {const d0=damage;damage=function(e,amt,src){const r=d0(e,amt,src);try{if(e&&e.lastBlock&&isP(e)){const b=e.lastBlock;e.lastBlock=0;UI.fx('float',{e,text:'−'+b+' armour',color:'#b8c0c8'});if(AU.on&&AU.ctx){const d=spOut(null,null,1);if(d){clang(d,jit(700),0.025,0.25);nz(d,{f:jit(1800),q:2,peak:0.05,dur:0.04})}}}}catch(er){}return r}}
+/* ---------- every move gets its own look: hero pose + a drawn effect per ability ---------- */
+const ABANIM={
+  // Saltbreaker
+  undertow:'smash',gaff:'hook',breakwater:'spin',redtide:'uppercut',quake:'slam',headbutt:'butt',chainlash:'heave',caveblow:'cavein',
+  // Cutpurse
+  gutter:'slash',fishhook:'dart',knife:'thrust',flurry:'fan',garrote:'garrote',caltrops:'scatter',venomdart:'dart',vanish:'hamstring',
+  // Stormcaller
+  brinebolt:'cast',squall:'gust',grasp:'tendril',staticlash:'zap',waterspout:'geyser',hail:'hail',forked:'fork',maelstrom:'vortex',ballstorm:'whirl',
+  // Flagellant
+  scourge:'whip',smite:'throw',litany:'nova',rebuke:'rebuke',brand:'brand',pillar:'pillar',judgement:'judge',
+  // Occultist
+  mindspike:'spike',gaze:'gaze',unravel:'unravel',rend:'rend',leech:'leech',whispers:'whisper',hex:'hex',rift:'rift'};
+const ABCOL={knife:'#b48ae8',venomdart:'#8ad06a',fishhook:'#d8d0c0',chainlash:'#b8a890',caveblow:'#c8b090',quake:'#d8c090',headbutt:'#fff2b0',redtide:'#e8d8c0',vanish:'#e0485a',caltrops:'#b0b4b8',
+  squall:'#d8eef4',grasp:'#5ab0e0',waterspout:'#7ac8f0',ballstorm:'#4a90c8',maelstrom:'#bfe6f4',smite:'#ffb347',litany:'#ffd36b',rebuke:'#ffe9a0',brand:'#ff9a3a',pillar:'#ff7a2a',judgement:'#ffe9a0',
+  mindspike:'#c58af0',gaze:'#b48ae8',unravel:'#a87ae0',rend:'#9a5ae0',leech:'#e0485a',whispers:'#b48ae8',hex:'#8a6ab0',rift:'#7a4ac8'};
+// casting styles keep their feet planted (no lunge)
+const CASTK=new Set(['gust','tendril','zap','geyser','hail','fork','vortex','whirl','nova','rebuke','pillar','spike','gaze','unravel','rend','leech','whisper','hex','rift','cast','aura']);
+Object.assign(ASTYLE,{slam:[320,860,0.6],cavein:[320,980,0.62],uppercut:[220,660,0.6],heave:[300,860,0.64],butt:[170,560,0.6],fan:[200,660,0.55],garrote:[240,720,0.6],dart:[120,480,0.55],scatter:[160,700,0.5],
+  hamstring:[180,600,0.6],brand:[220,700,0.6],judge:[340,960,0.62],gust:[220,720,0.58],tendril:[240,820,0.55],zap:[320,900,0.62],geyser:[300,1000,0.58],hail:[300,1000,0.62],fork:[300,820,0.62],
+  vortex:[240,820,0.55],whirl:[300,1000,0.55],nova:[260,820,0.55],rebuke:[240,800,0.5],pillar:[320,1000,0.6],spike:[260,720,0.6],gaze:[200,900,0.4],unravel:[300,980,0.55],rend:[340,1000,0.55],
+  leech:[260,1000,0.45],whisper:[300,1000,0.5],hex:[200,800,0.45],rift:[320,1040,0.55],aura:[0,760,0.25]});
+// hero arm keyframes for each style ([hand x, hand y, weapon angle])
+Object.assign(SWING,{
+  slam:{wind:[17,3,-2.95],hit:[23,23,1.45],foll:[22,23,1.3],tailW:-3,back:true},uppercut:{wind:[18,24,1.9],hit:[25,10,-1.35],foll:[23,12,-1.6],tailW:1.6},
+  heave:{wind:[15,5,-2.6],hit:[26,11,-0.6],foll:[24,16,0.3],back:true,tailW:-2.6},butt:{wind:[18,21,-1.25],hit:[21,20,-1.1],foll:[20,20,-1.15],tailW:1.4},
+  garrote:{wind:[25,15,-0.2],hit:[17,14,-0.35],foll:[18,15,-0.4],back:true,tailW:1.4},dart:{wind:[17,13,-1.6],hit:[27,15,-0.1],foll:[24,17,0.2],tailW:1.4},
+  scatter:{wind:[17,18,0.4],hit:[26,16,-0.6],foll:[24,18,-0.2],tailW:1.4},hamstring:{wind:[17,13,-1.9],hit:[25,25,1.0],foll:[22,25,1.25],tailW:2.0},
+  brand:{wind:[16,17,-0.4],hit:[26,16,-0.1],foll:[25,16,0],tailW:2.4},gust:{wind:[17,17,-0.7],hit:[26,14,-0.25],foll:[25,15,0],tailW:-1.6},
+  tendril:{wind:[26,14,-0.3],hit:[18,15,-1.4],foll:[19,16,-1.3],tailW:-1.6},raise:{wind:[21,10,-1.8],hit:[22,5,-1.5],foll:[22,7,-1.5],back:true,tailW:-1.6},
+  palm:{wind:[18,15,-1.4],hit:[26,15,-0.45],foll:[25,15,-0.5],back:true,tailW:-1.6}});
+for(const[k,v]of[['cavein','slam'],['judge','slam'],['fan','spin'],['zap','raise'],['geyser','raise'],['hail','raise'],['pillar','raise'],['whirl','raise'],['rift','raise'],['unravel','raise'],['whisper','raise'],
+  ['fork','palm'],['vortex','palm'],['nova','palm'],['rebuke','palm'],['spike','palm'],['gaze','palm'],['hex','palm'],['leech','tendril'],['rend','slam'],['aura','raise']])SWING[k]=SWING[v];
+// windup sounds borrow the closest existing family
+const SND_K={slam:'smash',cavein:'smash',judge:'smash',uppercut:'smash',heave:'throw',butt:'thrust',fan:'spin',garrote:'whip',dart:'throw',scatter:'throw',hamstring:'slash',brand:'thrust'};
+{const s0=sfx;sfx=function(t,d){if(t==='windup'&&d&&SND_K[d.style])return s0(t,Object.assign({},d,{style:SND_K[d.style]}));if(t==='windup'&&d&&CASTK.has(d.style))return s0(t,Object.assign({},d,{style:'cast'}));return s0(t,d)}}
+// abilities with no target still show something on the hero
+const AURA={penance:'#e0485a',bloodrage:'#e8503a',seafog:'#c8d8e0',offering:'#e0485a',veil:'#9a6ae0',martyr:'#fff2b0',inkcloud:'#6a6a80',eelstep:'#d8d0c0',shadowstep:'#4a4a6a',defend:'#c0c8cc',hide:'#4a4a6a',dash:'#d8d0c0'};
+{const u0=useAbility;useAbility=async function(id,tx,ty){const P=S&&S.P;const r=await u0(id,tx,ty);try{if(P&&AURA[id]&&!REDUCE)FX.x.push({k:'aura',a:wpos(P),b:wpos(P),att:P,c:AURA[id],t0:NOW,dur:760*PF(),imp:0.25,hit:true,seed:Math.random()*6,id})}catch(e){}return r}}
+
+/* --- drawing the new effects --- */
+const cl01=v=>v<0?0:v>1?1:v;
+function jag(x0,y0,x1,y1,n,amp,seed){const pts=[[x0,y0]];for(let i=1;i<n;i++){const q=i/n,r=Math.sin(seed*13.7+i*7.3)*amp;const nx=-(y1-y0),ny=x1-x0,L=Math.hypot(nx,ny)||1;pts.push([x0+(x1-x0)*q+nx/L*r,y0+(y1-y0)*q+ny/L*r])}pts.push([x1,y1]);return pts}
+function strokePts(pts,c,w){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);for(const p of pts)ctx.lineTo(p[0],p[1]);ctx.stroke()}
+function drawFx2(){const A=FX.x;if(!A.length)return;ctx.save();
+  for(const a of A){const k=a.k;if(!ASTYLE[k]||['slash','smash','thrust','spin','whip','hook','cast','throw','claw','bite','mcast'].includes(k))continue;
+    const t=(NOW-a.t0)/a.dur;if(t<0||t>1.05)continue;const w=ASTYLE[k][0]/ASTYLE[k][1],imp=a.imp,s=cl01((t-w)/Math.max(0.01,imp-w)),af=cl01((t-imp)/(1-imp));const A0=a.a,B=a.b,c=a.c,sd=a.seed;
+    ctx.globalCompositeOperation='lighter';
+    switch(k){
+      case'slam':case'judge':case'cavein':{const pre=cl01(t/imp);
+        if(t<imp){const hx=A0.x,hy=A0.y-T*0.7;const g=ctx.createRadialGradient(hx,hy,1,hx,hy,T*(0.3+pre*0.6));g.addColorStop(0,glow('#ffffff',0.6*pre));g.addColorStop(1,glow(c,0));ctx.fillStyle=g;ctx.fillRect(hx-T,hy-T,T*2,T*2)}
+        if(k==='judge'&&t>imp-0.12&&af<0.6){const q=1-af/0.6;const g=ctx.createLinearGradient(B.x,B.y-T*6,B.x,B.y);g.addColorStop(0,glow(c,0));g.addColorStop(1,glow('#ffffff',0.8*q));ctx.fillStyle=g;ctx.fillRect(B.x-T*0.35*q-2,B.y-T*6,T*0.7*q+4,T*6)}
+        if(k==='cavein'&&t<imp+0.1){for(let i=0;i<9;i++){const fx=B.x+((i%3)-1)*T+Math.sin(sd+i)*T*0.3,dl=(i*0.07)%0.35,q=cl01((t-w*0.6-dl)/(imp-w*0.6));if(q<=0||q>=1)continue;const y=B.y-T*3+q*T*3;ctx.globalCompositeOperation='source-over';ctx.fillStyle='#6a5a48';ctx.fillRect(fx-4,y-4,8,7);ctx.fillStyle='#8a7a64';ctx.fillRect(fx-4,y-4,8,2);ctx.globalCompositeOperation='lighter'}}
+        if(af>0){const R=k==='cavein'?1.9:1.6;for(let j=0;j<3;j++){const q=cl01(af*1.3-j*0.18);if(q<=0)continue;ctx.strokeStyle=glow(j?'#ffffff':c,(1-q)*0.8);ctx.lineWidth=5-j*1.5;ctx.beginPath();ctx.ellipse(B.x,B.y+T*0.3,T*(0.3+q*R),T*(0.1+q*R*0.38),0,0,7);ctx.stroke()}
+          ctx.globalCompositeOperation='source-over';for(let i=0;i<7;i++){const an=sd+i*0.9,L=T*(0.4+af*1.3);strokePts(jag(B.x,B.y+T*0.3,B.x+Math.cos(an)*L,B.y+T*0.3+Math.sin(an)*L*0.4,4,4,sd+i),`rgba(20,14,10,${0.7*(1-af)})`,2)}
+          if(k==='cavein'){ctx.fillStyle=`rgba(150,130,100,${0.35*(1-af)})`;ctx.beginPath();ctx.ellipse(B.x,B.y,T*(1+af*0.8),T*(0.7+af*0.5),0,0,7);ctx.fill()}}break}
+      case'uppercut':{if(af>0){const st=Math.PI*0.75,en=st-Math.PI*1.3*cl01(af*1.6);arcTrail(B.x-T*0.2,B.y,T*0.6,st,en,c,8,1-af);for(let i=0;i<5;i++){ctx.fillStyle=glow('#ffffff',1-af);ctx.fillRect(B.x+Math.sin(sd+i)*10,B.y-af*T*1.2-i*5,2,4)}}break}
+      case'heave':{if(t>w&&t<imp){const q=s,x=A0.x+(B.x-A0.x)*q,y=A0.y-T*0.5+(B.y-A0.y+T*0.5)*q-Math.sin(q*Math.PI)*T*1.3;ctx.globalCompositeOperation='source-over';ctx.save();ctx.translate(x,y);ctx.rotate(q*8);
+          ctx.fillStyle='#1a1410';ctx.fillRect(-8,-7,16,14);ctx.fillStyle='#6a5a48';ctx.fillRect(-7,-6,14,12);ctx.fillStyle='#8a7a64';ctx.fillRect(-7,-6,14,3);ctx.fillStyle='#4a3e32';ctx.fillRect(1,0,5,5);ctx.restore();
+          for(let i=1;i<5;i++){const qq=Math.max(0,q-i*0.05);ctx.fillStyle=`rgba(160,140,110,${0.3-i*0.06})`;ctx.fillRect(A0.x+(B.x-A0.x)*qq-3,A0.y-T*0.5+(B.y-A0.y+T*0.5)*qq-Math.sin(qq*Math.PI)*T*1.3-3,6,6)}}
+        if(af>0&&!a.dusted){a.dusted=1;burst(B.x,B.y,22,['#8a7a64','#6a5a48','#c8b090'],160,0.6,300,3)}break}
+      case'butt':{if(af>0){for(let i=0;i<4;i++){const an=NOW/140+i*Math.PI/2,x=B.x+Math.cos(an)*T*0.35,y=B.y-T*0.55+Math.sin(an)*T*0.12;ctx.fillStyle=glow('#fff2b0',1-af);ctx.fillRect(x-1,y-3,2,6);ctx.fillRect(x-3,y-1,6,2)}}break}
+      case'fan':{if(t>w){for(let i=0;i<8;i++){const an=i*Math.PI/4+sd*0.1,r0=T*(0.25+s*1.2),r1=r0+T*0.3;ctx.strokeStyle=glow('#ffffff',(1-af)*0.95);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(A0.x+Math.cos(an)*r0,A0.y+Math.sin(an)*r0);ctx.lineTo(A0.x+Math.cos(an)*r1,A0.y+Math.sin(an)*r1);ctx.stroke()}}break}
+      case'garrote':{const pinch=t<imp?s:1;const y=B.y-T*0.2;ctx.strokeStyle=glow('#e8eef0',0.9*(1-af));ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(B.x-T*0.6,y-T*0.1);ctx.quadraticCurveTo(B.x,y+T*0.25*(1-pinch),B.x+T*0.6,y-T*0.1);ctx.stroke();
+        if(af>0)for(let i=0;i<5;i++){ctx.fillStyle=glow('#e0485a',1-af);ctx.fillRect(B.x-8+i*4,y+af*14+i%2*3,2,3)}break}
+      case'dart':{if(t>w&&t<imp+0.05){const q=cl01(s),x=A0.x+(B.x-A0.x)*q,y=A0.y+(B.y-A0.y)*q;const bx=A0.x+(B.x-A0.x)*Math.max(0,q-0.25),by=A0.y+(B.y-A0.y)*Math.max(0,q-0.25);ctx.strokeStyle=glow(c,0.9);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#ffffff';ctx.fillRect(x-1.5,y-1.5,3,3)}
+        if(af>0&&af<0.6){ctx.strokeStyle=glow(c,1-af/0.6);ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(B.x,B.y,4+af*16,0,7);ctx.stroke()}break}
+      case'scatter':{ctx.globalCompositeOperation='source-over';for(let i=0;i<14;i++){const cx=B.x+(((i*37)%9)/9-0.5)*T*2.6,cy=B.y+(((i*53)%9)/9-0.5)*T*2.6;const q=cl01(t/imp+(i%4)*0.05-0.15);if(q<=0)continue;const x=A0.x+(cx-A0.x)*q,y=A0.y+(cy-A0.y)*q-Math.sin(q*Math.PI)*T*0.6;
+          ctx.fillStyle=`rgba(190,195,200,${1-af*0.7})`;ctx.beginPath();ctx.moveTo(x,y-3);ctx.lineTo(x+3,y+2);ctx.lineTo(x-3,y+2);ctx.closePath();ctx.fill()}break}
+      case'hamstring':{if(af>0){const y=B.y+T*0.3;ctx.strokeStyle=glow(c,(1-af)*0.9);ctx.lineWidth=5*(1-af)+1;ctx.beginPath();ctx.moveTo(B.x-T*0.55,y-4);ctx.quadraticCurveTo(B.x,y+6,B.x+T*0.55*cl01(af*3),y-2);ctx.stroke();ctx.strokeStyle=glow('#ffffff',1-af);ctx.lineWidth=1.5;ctx.stroke()}break}
+      case'brand':{if(t>w){const q=t<imp?s:1;const ex=A0.x+(B.x-A0.x)*q*0.9,ey=A0.y+(B.y-A0.y)*q*0.9;ctx.strokeStyle=glow(c,0.8*(1-af));ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(A0.x,A0.y);ctx.lineTo(ex,ey);ctx.stroke()}
+        if(af>0){ctx.save();ctx.translate(B.x,B.y);ctx.rotate(af*2);ctx.strokeStyle=glow(c,1-af);ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,T*0.42,0,7);ctx.stroke();ctx.beginPath();ctx.moveTo(-T*0.3,0);ctx.lineTo(T*0.3,0);ctx.moveTo(0,-T*0.3);ctx.lineTo(0,T*0.3);ctx.stroke();ctx.restore()}break}
+      case'gust':{for(let i=0;i<5;i++){const q=cl01(s*1.2-i*0.08);if(q<=0)continue;const off=(i-2)*7;const nx=-(B.y-A0.y),ny=B.x-A0.x,L=Math.hypot(nx,ny)||1;const ox=nx/L*off,oy=ny/L*off;const x0=A0.x+ox+(B.x-A0.x)*Math.max(0,q-0.4),y0=A0.y+oy+(B.y-A0.y)*Math.max(0,q-0.4),x1=A0.x+ox+(B.x-A0.x)*q*1.1,y1=A0.y+oy+(B.y-A0.y)*q*1.1;
+          ctx.strokeStyle=glow(c,0.7*(1-af));ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x0,y0);ctx.quadraticCurveTo((x0+x1)/2+Math.sin(t*20+i)*6,(y0+y1)/2+Math.cos(t*20+i)*6,x1,y1);ctx.stroke()}break}
+      case'tendril':case'leech':{const reach=k==='leech'?1:t<imp?s:1-af;if(k==='tendril'){const pts=[];for(let i=0;i<=16;i++){const q=i/16*reach;pts.push([A0.x+(B.x-A0.x)*q+Math.sin(q*12+t*18)*5,A0.y+(B.y-A0.y)*q+Math.cos(q*12+t*18)*5])}strokePts(pts,glow(c,0.85),5);strokePts(pts,glow('#ffffff',0.6),1.5)}
+        else if(t>w){for(let i=0;i<14;i++){const q=cl01(((t-w)*2.2+i*0.07)%1);const x=B.x+(A0.x-B.x)*q+Math.sin(q*9+i)*8,y=B.y+(A0.y-B.y)*q-Math.sin(q*Math.PI)*T*0.6;ctx.fillStyle=glow(c,0.9*(1-af*0.8));ctx.fillRect(x-2,y-2,4,4)}}break}
+      case'zap':case'fork':{if(t>imp-0.06&&af<0.55&&Math.floor(NOW/45)%3!==0){const n=k==='zap'?5:1;for(let i=0;i<n;i++){const tx=k==='zap'?B.x+(((i*29+Math.floor(sd*7))%3)-1)*T:B.x,ty=k==='zap'?B.y+(((i*17+Math.floor(sd*5))%3)-1)*T:B.y;const sx=k==='zap'?tx+Math.sin(i+sd)*T:A0.x,sy=k==='zap'?ty-T*5:A0.y-T*0.3;
+          const pts=jag(sx,sy,tx,ty,9,9,sd+i+Math.floor(NOW/45));strokePts(pts,glow(c,0.85),5);strokePts(pts,glow('#ffffff',1),1.8);if(k==='fork'){const m=pts[4];strokePts(jag(m[0],m[1],m[0]+(tx-sx)*0.3+18,m[1]+(ty-sy)*0.3-14,4,6,sd+3),glow(c,0.7),2);const m2=pts[6];strokePts(jag(m2[0],m2[1],m2[0]+12,m2[1]+20,3,5,sd+5),glow(c,0.6),1.5)}}}
+        else if(t<imp){const g=ctx.createRadialGradient(A0.x,A0.y-T*0.6,1,A0.x,A0.y-T*0.6,T*0.7);g.addColorStop(0,glow('#ffffff',0.5*s));g.addColorStop(1,glow(c,0));ctx.fillStyle=g;ctx.fillRect(A0.x-T,A0.y-T*1.5,T*2,T*2)}break}
+      case'geyser':{if(af>0){const h=T*(0.6+Math.sin(cl01(af*1.4)*Math.PI)*2.6),wd=T*0.55;const g=ctx.createLinearGradient(B.x,B.y-h,B.x,B.y+T*0.4);g.addColorStop(0,glow('#ffffff',0.6*(1-af)));g.addColorStop(0.4,glow(c,0.6*(1-af)));g.addColorStop(1,glow(c,0.1));ctx.fillStyle=g;ctx.fillRect(B.x-wd/2,B.y-h,wd,h+T*0.4);
+          for(let i=0;i<12;i++){const an=-Math.PI/2+Math.sin(sd+i)*1.1,d=af*T*1.6*(0.5+(i%5)/5);ctx.fillStyle=glow('#e8f6ff',1-af);ctx.fillRect(B.x+Math.cos(an)*d,B.y-h*0.8+Math.sin(an)*d+af*af*T*2,3,3)}}break}
+      case'hail':{for(let i=0;i<18;i++){const dl=(i%6)*0.06,q=cl01((t-w*0.5-dl)/(imp-w*0.5));if(q<=0||q>=1.15)continue;const tx=B.x+((((i*41)%11)/11)-0.5)*T*2.8,ty=B.y+((((i*67)%11)/11)-0.5)*T*2.8;const x=tx-T*1.2*(1-q),y=ty-T*3*(1-q);
+          ctx.strokeStyle=glow('#e8f6ff',0.9);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-5,y-10);ctx.stroke()}
+        if(af>0){ctx.strokeStyle=glow(c,0.6*(1-af));ctx.lineWidth=3;ctx.strokeRect(B.x-T*1.5+af*4,B.y-T*1.5+af*4,T*3-af*8,T*3-af*8)}break}
+      case'pillar':{if(t>w*0.8){const q=cl01((t-w*0.8)/(imp-w*0.8));const top=B.y-T*6,bot=top+(T*6.4)*q;const wd=T*(0.6+af*2.2);const g=ctx.createLinearGradient(0,top,0,bot);g.addColorStop(0,glow(c,0));g.addColorStop(0.7,glow(c,0.7*(1-af)));g.addColorStop(1,glow('#fff2b0',0.9*(1-af)));ctx.fillStyle=g;ctx.fillRect(B.x-wd/2,top,wd,bot-top);
+          if(af>0&&!a.dusted){a.dusted=1;burst(B.x,B.y,30,['#ffb347','#ff7a2a','#fff2b0'],200,0.7,-60,3)}}break}
+      case'vortex':case'whirl':{const C0=k==='vortex'?A0:B,inw=k==='whirl';for(let j=0;j<3;j++){const ph=t*(inw?-9:11)+j*2.1;const r=T*(inw?(1.7-cl01(s)*1.1-af*0.3):(0.4+cl01(s)*1.3))*(1-j*0.12);if(t<w&&!inw)continue;arcTrail(C0.x,C0.y,Math.max(4,r),ph,ph+2.2,c,6-j*1.5,(1-af)*0.9)}
+        if(inw&&t>w){ctx.fillStyle=`rgba(10,20,40,${0.35*(1-af)})`;ctx.beginPath();ctx.ellipse(B.x,B.y+T*0.2,T*1.4,T*0.55,0,0,7);ctx.fill()}break}
+      case'nova':case'rebuke':{if(t>w){const R=k==='rebuke'?2.6:1.6;const q=cl01((t-w)/(1-w));for(let j=0;j<2;j++){const qq=cl01(q*1.2-j*0.15);ctx.strokeStyle=glow(j?'#ffffff':c,(1-qq)*0.85);ctx.lineWidth=(k==='rebuke'?7:5)-j*3;ctx.beginPath();ctx.arc(A0.x,A0.y,T*(0.3+qq*R),0,7);ctx.stroke()}
+          if(k==='nova')for(let i=0;i<14;i++){const an=i/14*Math.PI*2+sd,r=T*(0.3+q*1.6);ctx.fillStyle=glow(i%2?'#ffb347':c,1-q);ctx.fillRect(A0.x+Math.cos(an)*r-2,A0.y+Math.sin(an)*r-4-q*8,3,5)}}break}
+      case'spike':{if(t>w){const q=t<imp?s:1;const ex=A0.x+(B.x-A0.x)*q,ey=A0.y-T*0.3+(B.y-T*0.35-(A0.y-T*0.3))*q;ctx.strokeStyle=glow(c,0.9*(1-af));ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(A0.x,A0.y-T*0.3);ctx.lineTo(ex,ey);ctx.stroke();ctx.strokeStyle=glow('#ffffff',1-af);ctx.lineWidth=1;ctx.stroke()}
+        if(af>0)for(let j=0;j<3;j++){const q=cl01(af*1.4-j*0.2);ctx.strokeStyle=glow(c,(1-q)*0.8);ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(B.x,B.y-T*0.35,4+q*T*0.8,2+q*T*0.3,0,0,7);ctx.stroke()}break}
+      case'gaze':case'hex':{const q=cl01(t/Math.max(0.01,imp)),fade=1-af;const y=B.y-T*(k==='gaze'?0.9:0.1);ctx.strokeStyle=glow(c,0.9*fade);ctx.lineWidth=2;
+        if(k==='gaze'){const ww=T*0.6*q,hh=T*0.28*q;ctx.beginPath();ctx.moveTo(B.x-ww,y);ctx.quadraticCurveTo(B.x,y-hh*2,B.x+ww,y);ctx.quadraticCurveTo(B.x,y+hh*2,B.x-ww,y);ctx.stroke();ctx.fillStyle=glow('#ffffff',fade);ctx.beginPath();ctx.arc(B.x,y,hh*0.8,0,7);ctx.fill();ctx.fillStyle=`rgba(10,0,20,${fade})`;ctx.beginPath();ctx.arc(B.x,y,hh*0.4,0,7);ctx.fill()}
+        else{ctx.save();ctx.translate(B.x,y);ctx.rotate(t*3);ctx.beginPath();ctx.arc(0,0,T*0.55*q,0,7);ctx.stroke();ctx.beginPath();ctx.arc(0,0,T*0.38*q,0,7);ctx.stroke();ctx.beginPath();for(let i=0;i<3;i++){const an=i/3*Math.PI*2-Math.PI/2;ctx[i?'lineTo':'moveTo'](Math.cos(an)*T*0.38*q,Math.sin(an)*T*0.38*q)}ctx.closePath();ctx.stroke();ctx.restore()}break}
+      case'unravel':case'whisper':{const q=cl01((t-w*0.5)/(1-w*0.5));for(let i=0;i<(k==='unravel'?7:9);i++){if(k==='unravel'){const y0=B.y+(i-3)*T*0.38;const pts=[];for(let j=0;j<=12;j++){const xx=B.x-T*1.5+j*T*0.25;pts.push([xx+Math.sin(j+i)*q*10,y0+Math.sin(j*1.3+t*10+i)*q*12])}strokePts(pts,glow(c,0.7*(1-af)),1.6)}
+          else{const an=t*4+i/9*Math.PI*2,r=T*(1.3-q*0.6);const x=B.x+Math.cos(an)*r,y=B.y+Math.sin(an)*r*0.6;ctx.strokeStyle=glow(c,0.9*(1-af));ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*1.4);ctx.moveTo(x-4,y+5);ctx.lineTo(x+4,y+5);ctx.stroke()}}break}
+      case'rend':{if(t>w){const q=t<imp?s:1;const ww=T*0.35*q*(1-af*0.7),hh=T*1.2*q;ctx.globalCompositeOperation='source-over';ctx.fillStyle=`rgba(6,0,14,${0.9*(1-af)})`;ctx.beginPath();ctx.ellipse(B.x,B.y-T*0.2,ww,hh,0,0,7);ctx.fill();ctx.globalCompositeOperation='lighter';
+          ctx.strokeStyle=glow(c,0.95*(1-af));ctx.lineWidth=3;ctx.stroke();for(let i=0;i<6;i++){ctx.fillStyle=glow('#e0c8ff',1-af);ctx.fillRect(B.x+Math.sin(sd+i*2)*ww*1.6,B.y-T*0.2+Math.cos(sd+i)*hh*0.9-af*10,2,2)}}break}
+      case'rift':{if(t>w){const q=cl01((t-w)/(imp-w)),open=t<imp?q:1-af;const r=T*1.3*open;ctx.globalCompositeOperation='source-over';ctx.fillStyle=`rgba(6,0,14,${0.85*open})`;ctx.beginPath();ctx.ellipse(B.x,B.y,r,r*0.55,0,0,7);ctx.fill();ctx.globalCompositeOperation='lighter';arcTrail(B.x,B.y,Math.max(2,r),t*6,t*6+4.5,c,4,open)
+          if(af>0&&!a.dusted){a.dusted=1;burst(B.x,B.y,26,[c,'#e0c8ff','#3a1a5a'],220,0.6,0,2)}}break}
+      case'aura':{const q=cl01(t);for(let j=0;j<2;j++){const qq=cl01(q*1.3-j*0.25);ctx.strokeStyle=glow(c,(1-qq)*0.8);ctx.lineWidth=3-j;ctx.beginPath();ctx.ellipse(A0.x,A0.y+T*0.35,T*(0.25+qq*0.7),T*(0.1+qq*0.28),0,0,7);ctx.stroke()}
+        for(let i=0;i<8;i++){const x=A0.x+Math.sin(sd+i*1.7)*T*0.4,y=A0.y+T*0.3-q*T*(0.6+(i%3)*0.25);ctx.fillStyle=glow(c,(1-q)*0.9);ctx.fillRect(x-1,y-1,2,3)}break}}}
+  ctx.restore()}
+{const d0=drawAnims;drawAnims=function(){d0();try{drawFx2()}catch(e){}}}
+// quick look-up so a tester can see which animation every move uses
+setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{ABANIM,flashAttack:(...a)=>flashAttack(...a),AB})}catch(e){}},450);
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
