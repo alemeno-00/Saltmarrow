@@ -4405,13 +4405,13 @@ UI.journal=()=>{const q=Object.entries(QUESTS).filter(([k])=>META.story.q[k]);
   <div class="qst"><b>Trust</b>${Object.keys(META.story.trust).filter(k=>META.story.seen[k]).map(k=>`<span class="td">${NPCS[k].name}: ${tr(k)>=3?'trusts you':tr(k)>=1?'warming to you':tr(k)<=-2?'wary of you':'uncertain'}</span>`).join('')||'<span class="td">You have met no one yet.</span>'}</div>`)};
 /* ---- the lift ---- */
 let liftSel=null;
-UI.lift=()=>{if(!(S.L&&S.L.town)){return}const ds=startDepths();if(!liftSel)liftSel={cls:classOpen(S.cls)?S.cls:'riptide',d:ds[ds.length-1],items:[]};
+UI.lift=()=>{if(!(S.L&&S.L.town)){return}const ds=startDepths();if(!liftSel)liftSel={cls:(META.hero&&CLASSES[META.hero])?META.hero:(classOpen(S.cls)?S.cls:'riptide'),d:ds[ds.length-1],items:[]};
   liftSel.items=liftSel.items.filter(id=>META.stash.some(i=>i.id===id));
   const cl=Object.entries(CLASSES).map(([k,c])=>{const open=classOpen(k);return`<button class="itm${liftSel.cls===k?' eq':''}${open?'':' lock'}" data-cls="${k}" ${open?'':'disabled'} style="text-align:left;cursor:${open?'pointer':'default'}"><div class="t"><img src="${ICON[c.spr]}" alt=""><div><b>${c.name}</b><div class="r" style="color:var(--dim)">${c.role} · ${c.res}</div></div></div><ul><li>${esc(open?c.blurb:CLASS_UNLOCK[k].txt)}</li>${open?`<li>${esc(c.passive)}</li>`:''}</ul></button>`}).join('');
   const gear=META.stash.filter(i=>i.kind!=='x');const rSel=liftSel.items.filter(id=>{const i=META.stash.find(x=>x.id===id);return i&&i.kind==='relic'}).length;liftSel.omens=liftSel.omens||[];
   const kits=Object.keys(META.kits||{});if(liftSel.kit&&!kits.includes(liftSel.kit))liftSel.kit=null;const wSel=liftSel.items.filter(id=>{const i=META.stash.find(x=>x.id===id);return i&&i.kind==='weapon'}).length,tSel=liftSel.items.filter(id=>{const i=META.stash.find(x=>x.id===id);return i&&i.kind==='tome'}).length;
   const el=modal(`${head(ICON_N('n_mara'),'The Lift Head','Choose who goes down, how deep, and what they carry')}
-    <p class="sect">Delver</p><div class="cards" style="max-height:none">${cl}</div>
+    <p class="purse">Going down: <b>${CLASSES[liftSel.cls].name}</b>, ${CLASSES[liftSel.cls].role.toLowerCase()}.</p>
     <p class="sect">Depth</p><div class="tabs">${ds.map(d=>`<button class="btn${liftSel.d===d?' on':''}" data-d="${d}">Depth ${d} · ${BIOMES[biomeOf(d)].name}${d>1?` (start at level ${1+Math.floor((d-1)/2)})`:''}</button>`).join('')}</div>
     ${kits.length?`<p class="sect">Kit</p><div class="tabs"><button class="btn${!liftSel.kit?' on':''}" data-kit="">None</button>${kits.map(k=>`<button class="btn${liftSel.kit===k?' on':''}" data-kit="${k}" title="${esc(KITS[k].desc)}">${KITS[k].name}</button>`).join('')}</div>`:''}
     ${omensOpen()?`<p class="sect">Omens (harder delves, more silver)</p><div class="tabs">${Object.entries(OMENS).map(([k,O])=>`<button class="btn${liftSel.omens.includes(k)?' on':''}" data-omen="${k}" title="${esc(O.desc)}">${O.name} ×${O.mul}</button>`).join('')}</div>`:''}
