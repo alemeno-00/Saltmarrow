@@ -399,13 +399,26 @@ body.mob .routeL span:nth-child(2){display:none}
 .chip.expo{display:flex;align-items:center;gap:6px}
 .chip.expo .eye{width:12px;height:7px;border-radius:50%;border:1.5px solid currentColor;position:relative;display:inline-block}
 .chip.expo .eye::after{content:"";position:absolute;left:3px;top:1px;width:3px;height:3px;border-radius:50%;background:currentColor}
+
+/* desktop: header buttons live in a pause menu (Esc / M) */
+body:not(.mob) header{position:fixed;top:10px;right:14px;z-index:55;display:block;padding:0}
+body:not(.mob) header h1{display:none}
+body:not(.mob) #menuBtn{opacity:.78;background:rgba(14,18,20,.82);backdrop-filter:blur(3px)}
+body:not(.mob) #menuBtn:hover{opacity:1}
+body:not(.mob) #menuBtn .kb{color:var(--muted,#8a978f);font-size:11px}
+body:not(.mob) .hbtns{display:none;position:fixed;z-index:60;left:50%;top:50%;transform:translate(-50%,-50%);grid-template-columns:1fr 1fr;gap:8px;width:min(440px,92vw);background:var(--hull);border:1px solid var(--lantern);border-radius:10px;padding:18px;box-shadow:0 0 0 100vmax rgba(0,0,0,.62),0 20px 60px rgba(0,0,0,.8)}
+body:not(.mob) .hbtns.open{display:grid}
+body:not(.mob) .hbtns .btn{padding:11px 12px;font-size:13px;text-align:left}
+body:not(.mob) .hbtns .zoomgrp{display:flex;gap:8px}body:not(.mob) .hbtns .zoomgrp .btn{flex:1;text-align:center}
+.mhead{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;font-family:var(--mono)}.mhead b{font-size:15px;color:var(--lantern);letter-spacing:.12em;text-transform:uppercase}.mhead span{font-size:11px;opacity:.7}
+body.mob .mhead{display:none}
 </style>
 </head><body>
 
 <div class="wrap">
   <header>
-    <h1>Saltmarrow <span>Deep</span></h1><button class="btn mobonly" id="menuBtn" aria-label="Menu">Menu</button>
-    <div class="hbtns"><button class="btn" id="paceBtn">Pace: normal</button><button class="btn" id="soundBtn">Sound: off</button><button class="btn" id="saveBtn">Save</button><button class="btn" id="journalBtn">Journal (J)</button><button class="btn" id="helpBtn">How to play (?)</button><button class="btn" id="feedBtn">Log on map: on</button><button class="btn" id="rtBtn">Explore: real time</button><button class="btn mobonly" id="gearBtnM">Gear</button><button class="btn mobonly" id="padBtn">Arrows: off</button><button class="btn mobonly" id="zoomOut">Zoom out −</button><button class="btn mobonly" id="zoomIn">Zoom in +</button><span class="zoomgrp deskonly"><button class="btn" id="zoomOutD" aria-label="Zoom out" title="Zoom out (−)">−</button><button class="btn" id="zoomInD" aria-label="Zoom in" title="Zoom in (+)">+</button></span><button class="btn deskonly" id="layBtn">Layout: bottom</button><button class="btn deskonly" id="fsBtn">Fullscreen</button></div>
+    <h1>Saltmarrow <span>Deep</span></h1><button class="btn" id="menuBtn" aria-label="Menu" title="Menu (Esc)">Menu<span class="deskonly kb"> · Esc</span></button>
+    <div class="hbtns"><div class="mhead deskonly"><b>Paused</b><span>Esc or M to return</span></div><button class="btn" id="paceBtn">Pace: normal</button><button class="btn" id="soundBtn" hidden>Sound: on</button><button class="btn" id="saveBtn">Save</button><button class="btn" id="journalBtn">Journal (J)</button><button class="btn" id="helpBtn">How to play (?)</button><button class="btn" id="feedBtn">Log on map: on</button><button class="btn" id="rtBtn">Explore: real time</button><button class="btn mobonly" id="gearBtnM">Gear</button><button class="btn mobonly" id="padBtn">Arrows: off</button><button class="btn mobonly" id="zoomOut">Zoom out −</button><button class="btn mobonly" id="zoomIn">Zoom in +</button><span class="zoomgrp deskonly"><button class="btn" id="zoomOutD" aria-label="Zoom out" title="Zoom out (−)">−</button><button class="btn" id="zoomInD" aria-label="Zoom in" title="Zoom in (+)">+</button></span><button class="btn deskonly" id="layBtn">Layout: bottom</button><button class="btn deskonly" id="fsBtn">Fullscreen</button></div>
   </header>
   <div class="game">
     <div class="left">
@@ -3995,9 +4008,11 @@ function doMove(dx,dy){closeInspect();if(S.mode==='combat')combatStep(dx,dy);els
 document.addEventListener('keydown',ev=>{if(AUTO.on&&ev.key!=='o'){AUTO.on=false}if(ev.metaKey||ev.ctrlKey||ev.altKey||!S||!S.L)return;
   const k=ev.key.length===1?ev.key.toLowerCase():ev.key;
   if(!$('overlay').hidden){if(k==='Escape'){if($('helpBack'))$('helpBack').click();else if(ov.querySelector('[data-close]'))closeModal()}return}
+  if(menuOpen()){if(k==='Escape'||k==='m'){ev.preventDefault();toggleMenu(false)}return}
+  if(k==='m'){toggleMenu(true);return}
   if(k==='j'){UI.journal();return}if(k==='g'){UI.gear();return}
   if(k==='?'){showHelp();return}
-  if(k==='Escape'){if(!insp.hidden){closeInspect();return}if(SEL.id){cancelSel();return}}
+  if(k==='Escape'){if(!insp.hidden){closeInspect();return}if(SEL.id){cancelSel();return}toggleMenu(true);return}
   if(SEL.id){
     if(k==='Enter'||k===' '){ev.preventDefault();confirmSel();return}
     if(k==='Tab'){ev.preventDefault();const v=SEL.valid.filter(t=>monAt(t.x,t.y)||blockObjAt(t.x,t.y));const list=v.length?v:SEL.valid;const i=list.findIndex(t=>t.x===SEL.cursor.x&&t.y===SEL.cursor.y);SEL.cursor=list[(i+1)%list.length];UI.render();return}
@@ -4036,9 +4051,11 @@ const TOUCHY=()=>document.body.classList.contains('mob');
 
 /* menu */
 const hb=document.querySelector('.hbtns');
-$('menuBtn').onclick=ev=>{ev.stopPropagation();hb.classList.toggle('open')};
-hb.addEventListener('click',ev=>{if(ev.target.closest('#zoomIn,#zoomOut,#padBtn,#paceBtn,#soundBtn'))return;hb.classList.remove('open')});
-document.addEventListener('pointerdown',ev=>{if(hb.classList.contains('open')&&!hb.contains(ev.target)&&ev.target!==$('menuBtn'))hb.classList.remove('open')});
+function menuOpen(){return hb.classList.contains('open')}
+function toggleMenu(on){if(on==null)on=!menuOpen();hb.classList.toggle('open',on);document.body.classList.toggle('menuon',on);if(on){try{UI.stopWalk()}catch(e){}AUTO.on=false;const f=hb.querySelector('.btn');if(f&&!isMob())f.focus({preventScroll:true})}}
+$('menuBtn').onclick=ev=>{ev.stopPropagation();toggleMenu()};
+hb.addEventListener('click',ev=>{if(ev.target.closest('#zoomIn,#zoomOut,#zoomInD,#zoomOutD,#padBtn,#paceBtn,#feedBtn,#rtBtn,#layBtn,.mhead'))return;if(ev.target.closest('.btn'))toggleMenu(false)});
+document.addEventListener('pointerdown',ev=>{if(menuOpen()&&!hb.contains(ev.target)&&ev.target!==$('menuBtn'))toggleMenu(false)});
 $('gearBtnM').onclick=()=>{if(S&&S.L&&!S.L.town)UI.gear();else if(S)UI.cottage()};
 $('padBtn').onclick=()=>{UIP.pad=!UIP.pad;saveUIP();applyMob();setTimeout(resize,0)};
 function setZoom(z){const mob=document.body.classList.contains('mob');ZOOM=Math.round(Math.max(mob?0.6:0.75,Math.min(mob?2.2:3,z))*4)/4;if(mob)UIP.zoom=ZOOM;else UIP.zoomD=ZOOM;saveUIP();resize()}
@@ -4323,9 +4340,10 @@ let lastStep=0;
 {const s0=startCombat;startCombat=async function(c,m){if(S.mode!=='combat'&&c==='spotted')try{sfx('alert')}catch(e){}return s0(c,m)}}
 {const d0=descend;descend=async function(f){const r=await d0(f);try{sfx('descend')}catch(e){}return r}}
 const _fx=UI.fx;UI.fx=(t,d)=>{_fx(t,d);try{sfx(t,d)}catch(e){}};
-const SOUND_PREF=()=>{try{return localStorage.getItem('saltmarrow-sound')!=='off'}catch(e){return true}};
+const SOUND_PREF=()=>true;
 function soundOn(on){if(!auInit())return;AU.on=on;if(on){AU.ctx.resume();AU.m.gain.setTargetAtTime(0.55,AU.ctx.currentTime,0.3)}else AU.m.gain.setTargetAtTime(0.0001,AU.ctx.currentTime,0.2);$('soundBtn').textContent='Sound: '+(on?'on':'off');try{localStorage.setItem('saltmarrow-sound',on?'on':'off')}catch(e){}}
-{const first=()=>{document.removeEventListener('pointerdown',first,true);document.removeEventListener('keydown',first,true);if(SOUND_PREF()&&!AU.on)soundOn(true)};document.addEventListener('pointerdown',first,true);document.addEventListener('keydown',first,true)}
+{const first=()=>{document.removeEventListener('pointerdown',first,true);document.removeEventListener('keydown',first,true);if(!AU.on)soundOn(true)};document.addEventListener('pointerdown',first,true);document.addEventListener('keydown',first,true)}
+document.addEventListener('visibilitychange',()=>{if(AU.ctx&&!document.hidden&&AU.on)AU.ctx.resume()});
 $('soundBtn').onclick=()=>soundOn(!AU.on);
 $('soundBtn').onclick0=()=>{if(!auInit())return;AU.on=!AU.on;if(AU.on){AU.ctx.resume();AU.m.gain.setTargetAtTime(0.55,AU.ctx.currentTime,0.3)}else AU.m.gain.setTargetAtTime(0.0001,AU.ctx.currentTime,0.2);$('soundBtn').textContent='Sound: '+(AU.on?'on':'off')};
 
@@ -4363,6 +4381,250 @@ const PACES=['normal','fast','instant'];const paintPace=()=>{$('paceBtn').textCo
 $('paceBtn').onclick=()=>{META.pace=PACES[(PACES.indexOf(META.pace||'normal')+1)%3];saveMeta();paintPace()};
 setTimeout(()=>{paintPace();cloudInit()},50);
 window.__sm=()=>S;window.__mkHero=makeHero;window.__dbg={fov:()=>{computeLight();computeFov();UI.render()},reveal:()=>{S.L.seen.fill(1);vis.fill(1)},UI,newRun,enterTown,descend,enterInterior,meta:()=>META,genWeapon,genTome,addDread,registerTome};window.__insp=(x,y)=>{openInspect(x,y,200,200);const h=insp.innerHTML;closeInspect();return h};window.__tip=(x,y)=>tileSummary(x,y);window.__cam=()=>({camX,camY});
+/* ---------- voices & foley: spatial monster noises, footsteps, doors, varied attacks, hero chatter ---------- */
+// spatial output: volume falls off with distance, panned left/right of the hero
+function spOut(x,y,base,range){if(!AU.on||!AU.ctx)return null;const C=AU.ctx;let v=1,p=0;
+  if(x!=null&&S&&S.P){const dx=x-S.P.x,dy=y-S.P.y,d=Math.hypot(dx,dy),R=range||14;v=Math.max(0,1-d/R);v=v*v;p=Math.max(-0.85,Math.min(0.85,dx/9))}
+  v*=(base==null?1:base);if(v<0.012)return null;const g=C.createGain();g.gain.value=v;
+  if(C.createStereoPanner){const pn=C.createStereoPanner();pn.pan.value=p;g.connect(pn);pn.connect(AU.m);setTimeout(()=>{try{g.disconnect();pn.disconnect()}catch(e){}},5000)}else{g.connect(AU.m);setTimeout(()=>{try{g.disconnect()}catch(e){}},5000)}
+  return g}
+// a vocal-ish voice: oscillator → formant filters → envelope
+function vox(dest,o){if(!dest)return;const C=AU.ctx,t=C.currentTime+(o.when||0),dur=o.dur||0.4;const os=C.createOscillator();os.type=o.type||'sawtooth';
+  os.frequency.setValueAtTime(o.f0,t);if(o.fm)os.frequency.exponentialRampToValueAtTime(o.fm,t+dur*0.45);os.frequency.exponentialRampToValueAtTime(o.f1||o.f0,t+dur);
+  if(o.vib){const l=C.createOscillator(),lg=C.createGain();l.frequency.value=o.vibR||6;lg.gain.value=o.vib*o.f0;l.connect(lg);lg.connect(os.frequency);l.start(t);l.stop(t+dur+0.1)}
+  let src=os;if(o.trem){const tg=C.createGain();tg.gain.value=1-o.trem;const l=C.createOscillator(),lg=C.createGain();l.type='square';l.frequency.value=o.tremR||30;lg.gain.value=o.trem;l.connect(lg);lg.connect(tg.gain);os.connect(tg);src=tg;l.start(t);l.stop(t+dur+0.1)}
+  const eg=C.createGain();eg.connect(dest);const fs=o.form||[700,1150];for(const f of fs){const b=C.createBiquadFilter();b.type='bandpass';b.frequency.value=f;b.Q.value=o.q||5;src.connect(b);b.connect(eg)}
+  const pk=o.peak||0.1,a=o.a||0.03;eg.gain.setValueAtTime(0.0001,t);eg.gain.exponentialRampToValueAtTime(pk,t+a);eg.gain.setValueAtTime(pk,t+Math.max(a,dur*0.6));eg.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  os.start(t);os.stop(t+dur+0.1)}
+function nz(dest,o){if(!dest)return;const C=AU.ctx,t=C.currentTime+(o.when||0),dur=o.dur||0.1;const s=C.createBufferSource();s.buffer=AU.noise;const b=C.createBiquadFilter();b.type=o.hp?'highpass':o.lp?'lowpass':'bandpass';
+  b.frequency.setValueAtTime(o.f,t);if(o.f1)b.frequency.exponentialRampToValueAtTime(o.f1,t+dur);b.Q.value=o.q||1;const g=C.createGain();s.connect(b);b.connect(g);g.connect(dest);
+  const pk=o.peak||0.1,a=o.a||0.004;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(pk,t+a);g.gain.exponentialRampToValueAtTime(0.0001,t+a+dur);s.start(t,Math.random()*1.5);s.stop(t+a+dur+0.1)}
+function tn(dest,f,type,pk,dur,when,f1){if(!dest)return;const C=AU.ctx,t=C.currentTime+(when||0);const o=C.createOscillator(),g=C.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(f1)o.frequency.exponentialRampToValueAtTime(f1,t+dur);o.connect(g);g.connect(dest);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(pk,t+0.006);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);o.start(t);o.stop(t+dur+0.1)}
+const jit=(v,k)=>v*(1+(Math.random()*2-1)*(k||0.12));
+
+/* --- monster voice families --- */
+const MFAM={rat:'squeak',bat:'squeak',wolf:'growl',direwolf:'growl',husk:'groan',ghoul:'ghoul',shambler:'groan',host:'groan',sailor:'groan',skeleton:'rattle',gaunt:'wail',
+  knight:'clank',cultist:'mutter',choir:'chant',saint:'chant',abbot:'chant',spider:'hiss',eel:'hiss',deepone:'gurgle',wraith:'wail',harp:'gurgle',horror:'horror',
+  sapper:'cackle',shift:'groan',stalker:'horror',rival:'man'};
+const MPITCH={rat:1.3,bat:1.6,direwolf:0.75,wolf:1,husk:1,ghoul:1.15,shambler:0.8,host:0.7,sailor:0.95,shift:0.85,saint:0.8,abbot:0.65,choir:1.1,deepone:0.9,harp:1.1,horror:1,stalker:0.7,sapper:1.2,gaunt:1.2,wraith:1};
+const MV={
+  squeak(d,ev,p){const n=ev==='death'?1:ev==='idle'?2:3;for(let k=0;k<n;k++)vox(d,{type:'sine',f0:jit(2400*p),f1:jit(ev==='death'?900:3100*p),dur:ev==='death'?0.35:0.07,form:[2600*p,3400*p],q:2,peak:0.09,when:k*0.09});if(ev==='attack')nz(d,{f:3800,q:3,peak:0.05,dur:0.05,when:0.2})},
+  growl(d,ev,p){if(ev==='death'){vox(d,{type:'sawtooth',f0:700*p,f1:260*p,dur:0.7,form:[900,1600],q:4,peak:0.12,vib:0.03,vibR:9});return}
+    if(ev==='alert'&&p<0.9){vox(d,{type:'sawtooth',f0:300*p,fm:520*p,f1:380*p,dur:1.6,form:[700,1100],q:5,peak:0.09,vib:0.02,vibR:5});return}
+    if(ev==='attack'){vox(d,{type:'sawtooth',f0:jit(190*p),f1:110*p,dur:0.32,form:[500,1300],q:3,peak:0.14,trem:0.5,tremR:38});nz(d,{f:1400,q:1,peak:0.05,dur:0.18});return}
+    if(ev==='hurt'){vox(d,{type:'sawtooth',f0:jit(620*p),f1:420*p,dur:0.16,form:[900,1700],q:4,peak:0.11});return}
+    vox(d,{type:'sawtooth',f0:jit(95*p),f1:80*p,dur:ev==='idle'?0.9:0.7,form:[350,800],q:3,peak:0.12,trem:0.6,tremR:jit(32)})},
+  groan(d,ev,p){const f=jit(ev==='hurt'?150:ev==='death'?120:105)*p;vox(d,{type:'sawtooth',f0:f,fm:ev==='alert'?f*1.3:f*1.05,f1:f*(ev==='death'?0.55:0.75),dur:ev==='hurt'?0.3:ev==='death'?1.3:1.0,form:[520,820],q:6,peak:0.11,vib:0.025,vibR:4});
+    if(ev==='attack')nz(d,{f:500,q:0.8,peak:0.07,dur:0.3})},
+  ghoul(d,ev,p){MV.groan(d,ev,p*1.3);nz(d,{f:2200,q:1.2,peak:ev==='idle'?0.03:0.06,dur:ev==='death'?0.8:0.35,f1:900});if(ev==='attack'||ev==='alert')vox(d,{type:'square',f0:jit(260),f1:180,dur:0.25,form:[1100,2000],q:4,peak:0.05,trem:0.7,tremR:45,when:0.05})},
+  rattle(d,ev,p){const n=ev==='death'?14:ev==='idle'?4:7;for(let k=0;k<n;k++)nz(d,{f:jit(ev==='death'?2000:3200),q:7,peak:0.09,dur:0.025,when:k*(ev==='death'?0.045:0.06)+Math.random()*0.02});
+    if(ev==='alert')vox(d,{type:'square',f0:180,f1:120,dur:0.4,form:[800,1300],q:6,peak:0.04,trem:0.8,tremR:20})},
+  clank(d,ev,p){const b=jit(320);for(const[r,a]of[[1,0.06],[2.4,0.04],[3.9,0.025]])tn(d,b*r,'triangle',a,ev==='death'?1.2:0.45);nz(d,{f:900,q:0.7,peak:0.06,dur:0.2});
+    if(ev!=='idle')vox(d,{type:'sawtooth',f0:jit(ev==='hurt'?150:110),f1:ev==='death'?60:90,dur:ev==='death'?1.1:0.35,form:[400,700],q:5,peak:0.08,when:0.02,trem:0.3,tremR:12})},
+  mutter(d,ev,p){if(ev==='death'){vox(d,{type:'sawtooth',f0:220,f1:90,dur:0.9,form:[700,1100],q:5,peak:0.1});return}const n=ev==='hurt'?1:ev==='idle'?3:5;
+    for(let k=0;k<n;k++){const f=jit(ev==='hurt'?230:150,0.15);vox(d,{type:'sawtooth',f0:f,f1:f*0.92,dur:0.13,form:[pick([450,650,800]),pick([1100,1500,2200])],q:6,peak:0.08,when:k*0.15})}
+    if(ev==='attack')vox(d,{type:'sine',f0:330,f1:660,dur:0.5,form:[660,1320],q:3,peak:0.03,when:0.3})},
+  chant(d,ev,p){const root=jit(ev==='death'?110:130)*p;for(const r of[1,1.26,1.5,2.01]){vox(d,{type:'sawtooth',f0:root*r,f1:root*r*(ev==='death'?0.7:ev==='hurt'?1.12:1),dur:ev==='idle'?1.8:ev==='hurt'?0.4:1.3,form:[650,1050],q:7,peak:0.035,vib:0.012,vibR:5})}},
+  hiss(d,ev,p){nz(d,{f:5200,q:0.8,hp:true,peak:ev==='idle'?0.03:0.07,dur:ev==='death'?0.8:0.45,a:0.05});if(ev==='attack')for(let k=0;k<3;k++)nz(d,{f:2600,q:5,peak:0.06,dur:0.03,when:0.1+k*0.05});
+    if(ev==='death')vox(d,{type:'square',f0:900,f1:200,dur:0.6,form:[1200,2400],q:3,peak:0.03})},
+  gurgle(d,ev,p){vox(d,{type:'sawtooth',f0:jit(80*p),f1:60*p,dur:ev==='hurt'?0.35:0.9,form:[300,600],q:4,peak:0.11,trem:0.7,tremR:jit(11)});for(let k=0;k<5;k++)tn(d,jit(500),'sine',0.03,0.06,Math.random()*0.7,jit(900))},
+  wail(d,ev,p){const f=jit(ev==='hurt'?700:480)*p;vox(d,{type:'sine',f0:f,fm:f*(ev==='death'?2.1:1.6),f1:f*(ev==='death'?0.4:0.9),dur:ev==='idle'?2:ev==='hurt'?0.5:1.4,form:[f*1.2,f*2.4],q:2,peak:0.07,vib:0.04,vibR:5.5,a:0.15});
+    vox(d,{type:'triangle',f0:f*1.5,f1:f*1.3,dur:ev==='idle'?1.6:1,form:[f*1.5],q:2,peak:0.025,vib:0.05,vibR:4,when:0.12,a:0.2})},
+  horror(d,ev,p){vox(d,{type:'sawtooth',f0:jit(48*p),f1:38*p,dur:ev==='hurt'?0.6:1.6,form:[200,420],q:3,peak:0.18,trem:0.6,tremR:7});MV.wail(d,ev,0.6);nz(d,{f:180,q:0.6,peak:0.06,dur:1})},
+  cackle(d,ev,p){if(ev==='death'){vox(d,{type:'square',f0:700,f1:180,dur:0.6,form:[900,1800],q:4,peak:0.06});return}const n=ev==='alert'||ev==='idle'?6:3;for(let k=0;k<n;k++)vox(d,{type:'square',f0:jit(420*p),f1:jit(360*p),dur:0.08,form:[900,1900],q:5,peak:0.06,when:k*0.1})},
+  man(d,ev,p){vox(d,{type:'sawtooth',f0:jit(ev==='hurt'?190:140),f1:ev==='death'?80:110,dur:ev==='death'?0.8:0.25,form:[600,1050],q:6,peak:0.09})}};
+const MLAST={};
+function monVoice(m,ev,base){if(!m||!AU.on||!AU.ctx)return;const key=m.id+ev,now=performance.now();if(MLAST[key]&&now-MLAST[key]<(ev==='idle'?3000:350))return;MLAST[key]=now;
+  const f=MV[MFAM[m.type]||'groan'];const d=spOut(m.x,m.y,base==null?1:base,ev==='alert'||ev==='death'?18:14);if(d)try{f(d,ev,MPITCH[m.type]||1)}catch(e){}}
+
+/* --- hero voice: grunts and efforts per class --- */
+const HVOX={riptide:{f:105,form:[600,950]},shadow:{f:150,form:[700,1300]},storm:{f:92,form:[550,900]},flag:{f:125,form:[650,1000]},occult:{f:170,form:[750,1400]}};
+function heroVox(ev){if(!AU.on||!AU.ctx||!S)return;const h=HVOX[S.cls]||HVOX.riptide,d=spOut(null,null,1);if(!d)return;
+  if(ev==='hurt')vox(d,{type:'sawtooth',f0:jit(h.f*1.5),f1:h.f*1.05,dur:0.22,form:h.form,q:6,peak:0.1});
+  else if(ev==='heavy')vox(d,{type:'sawtooth',f0:jit(h.f*1.7),f1:h.f*1.2,dur:0.42,form:h.form,q:5,peak:0.11,vib:0.02});
+  else if(ev==='effort')vox(d,{type:'sawtooth',f0:jit(h.f*1.25),f1:h.f*1.4,dur:0.14,form:h.form,q:6,peak:0.08});
+  else if(ev==='death')vox(d,{type:'sawtooth',f0:h.f*1.6,f1:h.f*0.6,dur:1.4,form:h.form,q:5,peak:0.12,vib:0.03,vibR:5})}
+
+/* --- footsteps by surface, alternating feet --- */
+let footL=false;
+function footstep(x,y,who){const t=tileAt(x,y),d=spOut(x,y,who?0.5:1,9);if(!d)return;footL=!footL;const lr=footL?1:1.08,L=S.L;
+  if(t===WATER){nz(d,{f:jit(1100),q:1,peak:0.08,dur:0.16});tn(d,jit(380),'sine',0.02,0.1,0.03,jit(700));return}
+  if(L.water&&L.water[I(x,y)]){nz(d,{f:jit(1300),q:1.1,peak:0.06,dur:0.12});return}
+  if(t===BONES){for(let k=0;k<3;k++)nz(d,{f:jit(2800),q:5,peak:0.06,dur:0.03,when:k*0.03});return}
+  if(t===RUBBLE){for(let k=0;k<4;k++)nz(d,{f:jit(1800),q:2,peak:0.05,dur:0.03,when:k*0.025});return}
+  if(t===GRASS){nz(d,{f:jit(4400),q:0.7,peak:0.03,dur:0.12});return}
+  if(t===WEB){nz(d,{f:jit(3000),q:1,peak:0.03,dur:0.2,a:0.05});return}
+  if(L.town){nz(d,{f:jit(380*lr),q:1.5,peak:0.06,dur:0.06});nz(d,{f:5000,hp:true,q:0.6,peak:0.012,dur:0.15});return}
+  const b=L.bio==='fungal'?200:L.bio==='drowned'?300:L.bio==='crypt'?520:420;nz(d,{f:jit(b*lr,0.08),q:1.8,peak:L.bio==='fungal'?0.05:0.07,dur:0.05});nz(d,{f:jit(2400),q:3,peak:0.012,dur:0.03,when:0.015});
+  if(L.decal&&L.decal[I(x,y)]>=1&&L.decal[I(x,y)]<=4)nz(d,{f:900,q:2,peak:0.02,dur:0.08,when:0.02})}
+// monster movement: skitter, clank, shuffle
+function monStep(m){const fam=MFAM[m.type]||'groan',d=spOut(m.x,m.y,0.55,9);if(!d)return;
+  if(fam==='squeak'||fam==='hiss'&&m.type==='spider'){for(let k=0;k<3;k++)nz(d,{f:jit(3400),q:4,peak:0.035,dur:0.02,when:k*0.04});return}
+  if(fam==='clank'||fam==='rattle'){tn(d,jit(fam==='clank'?500:1400),'triangle',0.025,0.12);nz(d,{f:600,q:1,peak:0.04,dur:0.05});return}
+  if(fam==='growl'){nz(d,{f:jit(700),q:1.5,peak:0.035,dur:0.04});return}
+  if(fam==='gurgle'||m.type==='eel'){nz(d,{f:jit(900),q:1,peak:0.05,dur:0.18});return}
+  if(fam==='wail')return;
+  nz(d,{f:jit(300),q:0.8,peak:0.05,dur:0.22,a:0.04})}
+
+/* --- doors, gates, containers --- */
+function doorSnd(x,y,open){const d=spOut(x,y,1,16);if(!d)return;const f=jit(open?150:110);
+  if(open){vox(d,{type:'sawtooth',f0:f,fm:f*1.6,f1:f*1.15,dur:0.6,form:[800,1500],q:9,peak:0.035,trem:0.5,tremR:jit(18)});nz(d,{f:350,q:1,peak:0.05,dur:0.15})}
+  else{vox(d,{type:'sawtooth',f0:f*1.3,f1:f,dur:0.3,form:[800,1400],q:9,peak:0.025,trem:0.5,tremR:20});nz(d,{f:160,q:0.8,peak:0.2,dur:0.25,when:0.28});tn(d,70,'sine',0.12,0.3,0.28)}}
+function gateSnd(x,y){const d=spOut(x,y,1,20);if(!d)return;for(let k=0;k<12;k++){nz(d,{f:jit(2600),q:6,peak:0.05,dur:0.04,when:k*0.07});tn(d,jit(900),'triangle',0.012,0.08,k*0.07)}nz(d,{f:120,q:0.6,peak:0.2,dur:0.4,when:0.9});tn(d,55,'sine',0.15,0.5,0.9)}
+
+/* --- varied attack sounds --- */
+const MATS={skeleton:'bone',gaunt:'bone',knight:'metal',wraith:'ghost',choir:'flesh',saint:'spore',shambler:'spore',host:'spore',deepone:'wet',eel:'wet',horror:'wet',harp:'wet',sailor:'wet',bat:'flesh',rat:'flesh'};
+function impactSnd(e,amt){const d=spOut(e.x,e.y,1,16);if(!d)return;const big=amt>=8,mat=isP(e)?'flesh':(MATS[e.type]||'flesh');
+  if(mat==='bone'){for(let k=0;k<(big?6:3);k++)nz(d,{f:jit(2200),q:5,peak:0.12,dur:0.04,when:k*0.03});nz(d,{f:600,q:1,peak:0.08,dur:0.1})}
+  else if(mat==='metal'){const b=jit(600);for(const[r,a]of[[1,0.08],[2.76,0.05],[5.4,0.03]])tn(d,b*r,'sine',a,big?0.9:0.5);nz(d,{f:3000,q:1,peak:0.1,dur:0.05})}
+  else if(mat==='ghost'){vox(d,{type:'sine',f0:900,f1:300,dur:0.4,form:[900,1800],q:2,peak:0.05});nz(d,{f:4000,hp:true,q:0.5,peak:0.05,dur:0.3})}
+  else if(mat==='spore'){nz(d,{f:700,q:0.7,peak:0.12,dur:0.18});nz(d,{f:5000,hp:true,q:0.5,peak:0.03,dur:0.5,a:0.05,when:0.05})}
+  else if(mat==='wet'){nz(d,{f:jit(500),q:1.2,peak:0.15,dur:0.14});tn(d,jit(260),'sine',0.04,0.12,0.02,jit(120))}
+  else{nz(d,{f:jit(big?220:340),q:1.1,peak:big?0.22:0.14,dur:big?0.16:0.1});nz(d,{f:jit(1400),q:2,peak:0.05,dur:0.05,when:0.01});if(big)tn(d,70,'sine',0.18,0.22)}}
+function swingSnd(style,att){const d=spOut(att?att.x:null,att?att.y:null,1);if(!d)return;const r=Math.random();
+  switch(style){
+    case'smash':nz(d,{f:220,f1:jit(700),q:1.4,peak:0.08,dur:0.32,a:0.08});break;
+    case'thrust':nz(d,{f:jit(1800),f1:3200,q:2.5,peak:0.07,dur:0.1});break;
+    case'spin':for(let k=0;k<3;k++)nz(d,{f:jit(900),f1:jit(2400),q:1.6,peak:0.06,dur:0.12,when:k*0.1});break;
+    case'whip':nz(d,{f:600,f1:4000,q:1.2,peak:0.05,dur:0.18,a:0.05});nz(d,{f:5200,q:1.5,peak:0.16,dur:0.03,when:0.2});break;
+    case'hook':for(let k=0;k<6;k++)nz(d,{f:jit(3000),q:7,peak:0.05,dur:0.03,when:k*0.045});nz(d,{f:900,f1:2200,q:1.4,peak:0.05,dur:0.2});break;
+    case'cast':{const c=S&&S.cls;if(c==='storm'){for(let k=0;k<5;k++)nz(d,{f:jit(5000),q:3,peak:0.04,dur:0.02,when:k*0.05+Math.random()*0.03});tn(d,60,'sawtooth',0.03,0.5)}
+      else if(c==='occult'){for(let k=0;k<4;k++)vox(d,{type:'sawtooth',f0:jit(160),f1:jit(140),dur:0.25,form:[pick([500,700,900]),2400],q:9,peak:0.025,when:k*0.07})}
+      else{tn(d,jit(500),'sine',0.03,0.4,0,jit(900))}break}
+    case'throw':nz(d,{f:500,f1:1500,q:1.5,peak:0.05,dur:0.16});break;
+    case'claw':case'bite':case'mcast':break;
+    default:nz(d,{f:jit(r<0.5?900:1200),f1:jit(r<0.5?2800:3600),q:1.6,peak:0.08,dur:jit(0.15)})}}
+{const f0=flashAttack;flashAttack=function(att,tgt,style,col){const w=f0(att,tgt,style,col);try{if(isP(att)){if(Math.random()<(style==='smash'?0.85:0.5))heroVox(style==='smash'?'heavy':'effort')}else monVoice(att,'attack')}catch(e){}return w}}
+
+/* route the old sfx names through the new foley */
+{const s0=sfx;sfx=function(t,d){if(!AU.on||!AU.ctx)return;try{switch(t){
+  case'step':case'door':return;                          // footsteps & doors are now handled per move
+  case'windup':swingSnd(d&&d.style,FX.lastSwing||null);return;
+  case'hit':if(d&&d.e){impactSnd(d.e,d.amt||0);if(isP(d.e))heroVox('hurt');else if(!d.e.dead)setTimeout(()=>monVoice(d.e,'hurt'),70)}return;
+  case'death':if(d&&d.e){if(isP(d.e))heroVox('death');else monVoice(d.e,'death');s0('death',d)}return;
+  case'alert':s0(t,d);return}}catch(e){}return s0(t,d)}}
+
+/* hook every move: footsteps, doors creaking open, monsters shuffling nearby */
+let lastMonStep=0;
+{const m0=moveEnt;moveEnt=function(e,x,y){const wasDoor=tileAt(x,y)===DOOR;m0(e,x,y);try{if(wasDoor)doorSnd(x,y,true);
+  if(isP(e))footstep(x,y);else if(performance.now()-lastMonStep>180){lastMonStep=performance.now();monStep(e)}}catch(er){}}}
+{const c0=closeDoor;closeDoor=function(x,y){const r=c0(x,y);if(r)try{doorSnd(x,y,false)}catch(e){}return r}}
+// gates, chests, searching, levers
+{const f0=featAct;featAct=async function(o,id){const L=S.L,gates=()=>{let n=0;for(let i=0;i<L.map.length;i++)if(L.map[i]===GATE)n++;return n};const g0=gates();
+  try{const d=spOut(o.x,o.y,1);if(d){if(id==='open'&&o.type==='chest'){vox(d,{type:'sawtooth',f0:130,fm:220,f1:170,dur:0.7,form:[700,1400],q:8,peak:0.03,trem:0.5,tremR:16});nz(d,{f:300,q:1,peak:0.06,dur:0.2,when:0.6})}
+    else if(id==='search'){const n=o.type==='corpse'?3:6;for(let k=0;k<n;k++)nz(d,{f:jit(o.type==='corpse'?600:1600),q:o.type==='corpse'?1:3,peak:0.05,dur:0.06,when:k*0.12+Math.random()*0.05})}
+    else if(id==='pull'||id==='puzzle'&&o.type==='plever'){nz(d,{f:900,q:3,peak:0.08,dur:0.05});tn(d,180,'triangle',0.05,0.2,0.04,120)}}}catch(e){}
+  const r=await f0(o,id);try{if(gates()!==g0){const gi=L.map.findIndex((t,i)=>(t===GATE||t===GATEOPEN)&&cheb(i%W,(i/W)|0,o.x,o.y)<14);gateSnd(gi>=0?gi%W:o.x,gi>=0?(gi/W)|0:o.y)}}catch(e){}return r}}
+{const s0=startCombat;startCombat=async function(c,m){try{if(S.mode!=='combat'){if(m)monVoice(m,'alert');else{const n=S.L.mons.filter(q=>vis[I(q.x,q.y)]).slice(0,2);n.forEach((q,k)=>setTimeout(()=>monVoice(q,'alert'),k*250))}}}catch(e){}return s0(c,m)}}
+
+/* ambient: unseen monsters nearby give themselves away */
+setInterval(()=>{try{if(!AU.on||!S||!S.L||S.L.town||S.over)return;const P=S.P;const near=S.L.mons.filter(m=>!m.dead&&cheb(m.x,m.y,P.x,P.y)<=11&&(!vis[I(m.x,m.y)]||S.mode==='combat'));
+  if(!near.length||Math.random()>(S.mode==='combat'?0.35:0.28))return;const m=pick(near);monVoice(m,'idle',vis[I(m.x,m.y)]?0.7:0.55)}catch(e){}},1600);
+// phones suspend audio when the screen sleeps: wake it on touch
+document.addEventListener('pointerdown',()=>{try{if(AU.ctx&&AU.ctx.state!=='running')AU.ctx.resume()}catch(e){}},true);
+
+/* ---------- hero chatter: more lines per state, plus remarks on what each level holds ---------- */
+const BARKS_MORE={
+  riptide:{dying:['Tell the shift boss... I was owed wages.'],badly:['Ribs are cracked. Felt that one go.','I\'ve lost a lot of blood. Can smell it.'],breaking:['Them voices. They\'re singing the old pit songs.','I can hear my old crew digging. They\'re all dead.'],
+    terrified:['My knees want to run. I won\'t let them.','That noise again. Like a cave-in that never ends.'],exhausted:['I\'ve done double shifts that were easier than this.','One more swing and I\'m on the floor.'],winded:['Hold on. Lungs are full of grit.','Bit winded. Don\'t tell anyone.'],
+    weary:['Bones are grumbling. They\'ll grumble louder tomorrow.','My hands have gone numb on the haft.'],uneasy:['Stone\'s groaning. That\'s never good.','Air\'s stale. Something\'s been breathing it.'],bruised:['Bruised, not broken.','That\'ll colour up nicely.'],
+    fresh:['Feel good. Feel strong.','Point me at it.','Nothing down here I can\'t knock flat.'],town:['The Gull\'s Rest owes me a tab.','Smell that? Fish and coal. Home.'],combat:['Have some of this!','Swing low, swing hard.'],hungry:['I\'d eat a raw rat right now. Close to it.'],dark:['Black as a sealed shaft.']},
+  shadow:{dying:['Funny. I always pictured a nicer end.'],badly:['That\'s more holes than I came in with.','I need to stop the bleeding. Now.'],breaking:['My shadow moved before I did. I saw it.','Someone keeps saying my real name.'],
+    terrified:['Every nerve says run. For once I agree.','I hear breathing that isn\'t mine.'],exhausted:['My fingers are clumsy. Thieves can\'t be clumsy.','I need to sleep before I trip a wire.'],winded:['Nicked. Just nicked.','Bit of a scratch. Bit of a big scratch.'],
+    weary:['Running on fumes and stolen bread.','My feet are getting loud. I hate loud feet.'],uneasy:['Too many places to be ambushed. I should know.','Feels like I\'m the mark for once.'],bruised:['Barely felt it.','Sloppy of me.'],
+    fresh:['Quiet, quick, rich. That\'s the plan.','Let\'s see what the dead left lying about.','Nobody\'s noticed me yet. Good.'],town:['Lovely crowd. Lovely pockets.','The watch is asleep. As usual.'],combat:['Eyes on me? Bad idea.','Quick and quiet. Mostly quick.'],hungry:['Haven\'t eaten since that pie I lifted.'],dark:['Can\'t see. Neither can they.']},
+  storm:{dying:['The rain... I hear it, even down here.'],badly:['I am wounded, and the sky is far away.','Blood on the stones. My own.'],breaking:['The sea is in my head. It is rising.','Lightning without thunder. That is wrong. All wrong.'],
+    terrified:['The barometer of my soul says: flee.','Something older than storms is awake.'],exhausted:['I cannot call even a breeze like this.','My spark is guttering. Rest, or I am useless.'],winded:['Breath comes short. Like before a gale.','I bend. Like reeds. I do not break.'],
+    weary:['My hands tremble. Not from power.','Even thunder must rest between strikes.'],uneasy:['The air hangs heavy. Expect the worst.','A cold front moves through this place.'],bruised:['A gust, nothing more.','Mere drizzle.'],
+    fresh:['Clear skies in my head. For now.','I feel the charge in the stone.','The air hums. Good.'],town:['Wind\'s backing south. Fishermen will grumble.','The gulls fly low. A storm, perhaps mine.'],combat:['Down comes the sky!','Thunder answers me.'],hungry:['Hunger clouds the mind.'],dark:['Darkness. I will fetch some lightning.']},
+  flag:{dying:['Forgive me. I was not strong enough.'],badly:['My blood runs as penance. Let it run.','The flesh is torn. The faith holds.'],breaking:['The bells ring inside me. Every one.','Saints in the walls. They have no eyes.'],
+    terrified:['I fear. That too is a sin.','The unholy is near. My skin crawls with it.'],exhausted:['The lash grows heavy. I grow weak.','I must rest, or fall before the altar.'],winded:['A welcome sting.','Pain. Good. Again.'],
+    weary:['The body tires. Discipline does not.','My knees have worn through. Fitting.'],uneasy:['There is wickedness in these walls.','Sin festers here. I can smell it.'],bruised:['Not enough to cleanse me.','A token wound.'],
+    fresh:['I am ready to suffer for this.','Purge and descend.','The faithful do not falter.'],town:['The chapel needs sweeping. And its priest.','So many confessions untold.'],combat:['Feel the lash!','Be cleansed!'],hungry:['Hunger is the gentlest penance.'],dark:['The dark tests faith. I am tested.']},
+  occult:{dying:['Ah. I saw this. I hoped I was wrong.'],badly:['Too much blood leaves through too many doors.','The cards foretold injury. They were modest.'],breaking:['I hear the thoughts of the stones. They are hungry.','The mask is laughing. I am not.'],
+    terrified:['Some knowledge should not be had. I have it.','It is close. It is curious about me.'],exhausted:['My third eye is closing, and the other two with it.','I must sleep, though it means dreaming.'],winded:['A sting. A lesson.','My blood whispers as it leaves.'],
+    weary:['The signs blur. I need rest.','I have seen too much today.'],uneasy:['The veil thins here.','Old bones, old grudges, old gods.'],bruised:['Insignificant.','The omens said worse.'],
+    fresh:['Everything is as foretold.','The patterns are clear tonight.','I sense secrets here. Many.'],town:['The townsfolk dream of the sea. All of them.','Fate frays at the edges of this town.'],combat:['Your thread is short.','Look into the mask.'],hungry:['Even prophets must eat.'],dark:['Shadows have so much to say.']},
+};
+for(const c in BARKS_MORE)for(const k in BARKS_MORE[c]){const P=BARKS_P[c]||(BARKS_P[c]={});P[k]=(P[k]||[]).concat(BARKS_MORE[c][k])}
+
+// remarks on level events: one per thing per level
+const EVB={
+  riptide:{arr_weak:['Floor\'s rotten here. Feel it flex. Tread light.','Cracked ground. I\'ve seen men drop through less.'],arr_gas:['Smell that? Firedamp. One spark and we\'re ash.','Gas in the air. Keep flames away from it.'],
+    arr_ritual:['Chanting. Somewhere close. I hate chanting.','They\'re working some rite down here. Best stop it.'],arr_hunt:['There\'s a mark on this level. Something worth killing.','Someone wants a head brought back. Fine.'],
+    arr_vault:['A vault down here? With keys on the guards? Lovely.','Locked vault. I\'ve got a maul. Close enough to a key.'],arr_flood:['Hear that water? Pressure\'s building. Move fast.','Seawater in the seams. This level\'s going under.'],
+    arr_collapse:['The roof\'s talking. It says get out.','Timber\'s screaming. This place is coming down.'],arr_chand:['A chandelier. Wonder what it\'d do to someone underneath.'],arr_oil:['Lamp oil all over. Don\'t want to be standing in that when it lights.'],
+    arr:['Another level. Another shift.','Right. Keep moving.','Stone\'s different down here. Older.'],arr_mine:['Old workings. I know these tunnels.'],arr_crypt:['Bones and more bones. Never liked crypts.'],arr_fungal:['Spores. Breathe through your sleeve.'],arr_drowned:['Everything down here\'s wet and wrong.'],
+    trap:['Tripwire. Someone wanted us dead.','Trap. Nasty bit of work.'],sprung:['Gah! Blasted trap!','Should\'ve looked where I stepped.'],draught:['Feel that? Air coming through solid rock.','Hollow wall. Bet there\'s something behind it.'],
+    secret:['Ha! Hidden room. Who\'s clever now?','Knew it. Nobody walls up an empty room.'],brawl:['They\'re fighting each other. I\'ll watch, then finish it.'],enc:['Someone there. Easy now.'],plaque:['Writing. Can\'t read half of it.'],
+    sitwin:['Done. Now let\'s get out of here.'],sitfail:['Too late. Damn it.'],low:['I\'m going down if this keeps up!','Need to back off. Now.'],boss:['That\'s the big one. Down it goes.'],levelup:['Getting stronger. I can feel it.'],rich:['Now that\'s a haul.']},
+  shadow:{arr_weak:['Floor\'s weak here. Light steps. Lighter than usual.','This floor won\'t take much weight. Neither will I.'],arr_gas:['Gas. One stray spark and nobody gets paid.','Smells like a sewer and a bonfire waiting to happen.'],
+    arr_ritual:['Robes and candles. Somebody\'s summoning trouble.','A ritual. If I interrupt it, do I get the candlesticks?'],arr_hunt:['There\'s a bounty walking this level.','Got a mark. I love having a mark.'],
+    arr_vault:['A vault. Finally, something speaking my language.','Three keys on three guards. Pickable, if they\'re careless.'],arr_flood:['Water\'s rising. My boots are not waterproof.','Flooding. Grab what you can and leave.'],
+    arr_collapse:['Ceiling\'s coming down. Shop quickly.','Dust falling. That\'s a clock ticking.'],arr_chand:['Chandelier. Very dramatic. Very droppable.'],arr_oil:['Oil on the floor. Somebody\'s careless, or clever.'],
+    arr:['New floor. New pockets.','Quiet. Let\'s keep it that way.','Let\'s see what they hid down here.'],arr_mine:['Miners always leave something behind.'],arr_crypt:['The dead never mind a little borrowing.'],arr_fungal:['It smells like rotting bread down here.'],arr_drowned:['Wet. Everything\'s wet. My lockpicks will rust.'],
+    trap:['A trap. Amateur work, but still.','Spotted a trigger plate. Mine now.'],sprung:['Ow. Professional embarrassment.','That was a trap. I knew that.'],draught:['A draught where there shouldn\'t be one. Hidden door.','This wall\'s lying to me.'],
+    secret:['A secret stash. My favourite kind.','Hidden room. Somebody\'s savings.'],brawl:['Let them fight. I\'ll pick the winner\'s pockets.'],enc:['Someone\'s there. Smile, hand near the knife.'],plaque:['An inscription. Clue, or a fancy tombstone.'],
+    sitwin:['Job done. Let\'s not linger.'],sitfail:['Well. That went badly.'],low:['Time to disappear.','I\'m leaking badly. Get me out.'],boss:['Big one down. I\'ll take the boots.'],levelup:['Sharper. Quicker. Good.'],rich:['Oh, lovely. Very lovely.']},
+  storm:{arr_weak:['The ground here is brittle. It will not bear much.','I feel hollows beneath us. Careful.'],arr_gas:['The air is foul and flammable. My lightning must be careful.','Marsh gas. Even I would not strike here lightly.'],
+    arr_ritual:['A rite is underway. I can feel the pressure drop.','Something is being called. It must not answer.'],arr_hunt:['There is prey here worth the hunting.','A marked creature. I sense its passage.'],
+    arr_vault:['A sealed vault. Its keys walk about on legs.','Locked away, deep down. Something valuable, then.'],arr_flood:['The water rises. The tide does not care who drowns.','A flood is coming. I know the sound.'],
+    arr_collapse:['The stone shudders like a ship in a squall.','This ceiling will not hold. We must be swift.'],arr_chand:['A chandelier hangs there, like a cloud waiting to burst.'],arr_oil:['Oil underfoot. A single spark would make a tempest.'],
+    arr:['Deeper still. The air grows heavier.','Onward.','I sense weather even here.'],arr_mine:['The mines. Tunnels like dry riverbeds.'],arr_crypt:['The dead lie quiet. Let us keep them so.'],arr_fungal:['The air is thick and sweet. Unhealthy.'],arr_drowned:['The sea came here once, and stayed.'],
+    trap:['A trap. Crude but cruel.','The stone is disturbed here. A mechanism.'],sprung:['Hah! I deserved that.','A trap. My mind was in the clouds.'],draught:['Wind where no wind should be. A hidden chamber.','The air moves behind this wall.'],
+    secret:['A hidden room. The draught did not lie.','Concealed, but not from me.'],brawl:['They war among themselves. Let them weather it.'],enc:['A figure ahead. Approach gently.'],plaque:['Old words. The order of things matters here.'],
+    sitwin:['It is done. The pressure eases.'],sitfail:['The storm broke against us that time.'],low:['I must withdraw before I am spent!','The lightning in me is fading.'],boss:['The great one falls, like an old oak in a gale.'],levelup:['The storm in me grows.'],rich:['A treasure worth the descent.']},
+  flag:{arr_weak:['The ground is rotten, like this world. Step carefully.','Cracks underfoot. The pit hungers.'],arr_gas:['Foul vapours. Hell breathes here.','The air is sulphur and sin. No flames.'],
+    arr_ritual:['Heretics at their rites. They will be stopped.','I hear blasphemy sung. I will end it.'],arr_hunt:['A wicked thing walks here. It is marked for judgment.','There is one here I am meant to punish.'],
+    arr_vault:['A vault of hoarded sin. Its keepers carry the keys.','Greed locked behind iron. I will open it.'],arr_flood:['The waters rise, as in the old judgments.','A flood to drown the wicked. Let it not drown me.'],
+    arr_collapse:['The heavens fall even here. Make haste.','The ceiling cracks like old sin. Move.'],arr_chand:['A chandelier, ornate and proud. It would fall well.'],arr_oil:['Oil spilled like wasted sacrament.'],
+    arr:['Deeper into sin.','Another trial.','I descend willingly.'],arr_mine:['Men laboured here. Now monsters do.'],arr_crypt:['Hallowed ground, gone sour.'],arr_fungal:['Rot and spores. Corruption made flesh.'],arr_drowned:['The drowned church. I mourn it.'],
+    trap:['A trap. Cowards\' work.','Wicked craft, laid in the stone.'],sprung:['Pain. A reminder to be watchful.','I welcome that. Barely.'],draught:['Breath from behind stone. Something hidden.','The wall exhales. A secret within.'],
+    secret:['Revealed! Nothing stays hidden from the faithful.','A hidden chamber, brought into light.'],brawl:['Let the wicked destroy the wicked.'],enc:['A soul ahead. Lost, perhaps.'],plaque:['Words in stone. Perhaps a prayer.'],
+    sitwin:['Judgment is served.'],sitfail:['I have failed this trial.'],low:['I must not fall yet! Not yet!','The flesh fails!'],boss:['The great sinner falls.'],levelup:['My devotion is rewarded.'],rich:['Riches. Temptation. I will bear it.']},
+  occult:{arr_weak:['The floor here is thin. I see the drop beneath, in my mind.','Weak stone. I have seen someone fall here. In a dream.'],arr_gas:['A poisonous breath hangs in the air. One flame, and it awakens.','The air is volatile. Like a temper.'],
+    arr_ritual:['A ritual. I know the words they chant. They are wrong.','They are calling something. I can feel it listening.'],arr_hunt:['One here is marked by fate. Its thread ends soon.','I sense the prey. It senses me.'],
+    arr_vault:['A vault, sealed with three keys and a curse, probably.','What is locked away down here wishes to be found.'],arr_flood:['The waters rise. I have dreamed this drowning.','The sea remembers this place. It returns.'],
+    arr_collapse:['The stone is weary. It wishes to lie down. On us.','I hear the ceiling\'s death rattle.'],arr_chand:['A chandelier. I see it falling. Soon.'],arr_oil:['Oil, waiting patiently for fire.'],
+    arr:['I have seen this level before.','Deeper. The whispers grow louder.','The veil thins as we descend.'],arr_mine:['The miners\' ghosts linger. Restless.'],arr_crypt:['The dead are listening. Speak softly.'],arr_fungal:['The fungus dreams. Its dreams are hungry.'],arr_drowned:['Everything here remembers drowning.'],
+    trap:['A trap. The omens warned of it.','Here. A device waiting for a careless foot.'],sprung:['I foresaw that. Too late.','Pain. The cards were right.'],draught:['A breath from beyond the wall. Something is hidden.','There is a space behind this stone. I feel its emptiness.'],
+    secret:['A hidden room. It has been waiting for me.','Concealed things always surface eventually.'],brawl:['They turn on each other. As foretold.'],enc:['Someone waits ahead. Their fate is unclear.'],plaque:['An inscription. A riddle, or a warning.'],
+    sitwin:['It is done, as it was always going to be.'],sitfail:['The threads tangled. We failed.'],low:['My thread is fraying! Retreat!','I see my own death. Not yet!'],boss:['Its fate is sealed.'],levelup:['The visions sharpen.'],rich:['The fates are generous today.']}};
+const SAY={t:0,once:{}};
+function heroSay(line,prio){if(!S||!S.P||!S.L||!line)return false;const now=performance.now();if(!prio&&now-SAY.t<7000)return false;if(!$('overlay').hidden&&!prio)return false;SAY.t=now;
+  let b=document.getElementById('pbubble');if(!b){b=document.createElement('div');b.id='pbubble';b.className='pbubble';document.body.appendChild(b)}
+  b.textContent=`“${line}”`;b.hidden=false;b.classList.remove('go');void b.offsetWidth;b.classList.add('go');
+  let an=PORT.cv;let r=an.getBoundingClientRect();if(!r.width){an=document.querySelector('#hudTl .chip.vit')||$('cv');r=an.getBoundingClientRect()}
+  const bw=Math.min(280,innerWidth-24);b.style.maxWidth=bw+'px';const bh=b.offsetHeight;let x=r.left+r.width/2-bw/2,y=r.top-bh-10;if(y<8)y=r.bottom+10;x=Math.max(12,Math.min(innerWidth-bw-12,x));b.style.left=x+'px';b.style.top=y+'px';
+  clearTimeout(PORT.bt);PORT.bt=setTimeout(()=>{b.hidden=true},Math.max(3600,line.length*65));try{sfx('voice',{cls:S.cls})}catch(e){}log(`${cls().name}: “${line}”`,'whisper');return true}
+function evSay(key,prio,once){const L=S&&S.L;if(!L)return false;const tag=(L.uid||S.depth)+':'+(once||key);if(SAY.once[tag])return false;const lines=(EVB[S.cls]||EVB.riptide)[key];if(!lines)return false;
+  if(heroSay(pick(lines),prio)){SAY.once[tag]=1;return true}return false}
+// on arrival: remark on the most notable thing about this level
+function arrivalRemark(){const L=S.L;if(!L||L.town)return;const k=L.sit&&L.sit.k;const has=a=>a&&a.some&&a.some(v=>v);let key;
+  if(k)key='arr_'+k;else if(has(L.weak))key='arr_weak';else if(has(L.gas))key='arr_gas';else if(L.objs.some(o=>o.type==='chandelier'))key='arr_chand';else if(has(L.oil))key='arr_oil';
+  else key=Math.random()<0.5?'arr_'+L.bio:'arr';if(!evSay(key,true,'arrive'))evSay('arr',true,'arrive');
+  // a second remark a bit later if there's more worth noting
+  setTimeout(()=>{try{if(S.L!==L)return;if(key!=='arr_weak'&&has(L.weak))evSay('arr_weak');else if(key!=='arr_gas'&&has(L.gas))evSay('arr_gas')}catch(e){}},14000)}
+function whenFree(fn,tries){if(tries==null)tries=40;if(!$('overlay').hidden||S.mode==='combat'&&tries>30){if(tries>0)setTimeout(()=>whenFree(fn,tries-1),500);return}setTimeout(fn,900)}
+{const d0=descend;descend=async function(f){const r=await d0(f);try{S.L.uid=S.L.uid||(Date.now()+'');whenFree(arrivalRemark)}catch(e){}return r}}
+// watch for things worth a word
+const SEEN={L:null,hint:0,sit:'',lowT:0,brawl:0};
+setInterval(()=>{try{if(!S||!S.L||S.L.town||S.over)return;const L=S.L,P=S.P;if(SEEN.L!==L){SEEN.L=L;SEEN.hint=(L.secrets||[]).filter(s=>s.hinted).length;SEEN.found=(L.secrets||[]).filter(s=>s.found).length;SEEN.sit='';SEEN.traps=L.objs.filter(o=>o.type==='trap').length;SEEN.brawl=0;return}
+  const hint=(L.secrets||[]).filter(s=>s.hinted).length;if(hint>SEEN.hint){SEEN.hint=hint;evSay('draught',true,'draught'+hint)}
+  const found=(L.secrets||[]).filter(s=>s.found).length;if(found>SEEN.found){SEEN.found=found;setTimeout(()=>evSay('secret',true,'secret'+found),700)}
+  const tr=L.objs.filter(o=>o.type==='trap').length;if(tr>SEEN.traps){SEEN.traps=tr;evSay('trap',false,'trap'+tr)}
+  const st=L.sit&&L.sit.done?(L.sit.failed?'fail':'win'):'';if(st&&st!==SEEN.sit){SEEN.sit=st;evSay(st==='win'?'sitwin':'sitfail',true,'sit')}
+  if(S.mode==='combat'&&P.stam/P.max<0.3&&performance.now()-SEEN.lowT>40000){SEEN.lowT=performance.now();evSay('low',true,'low'+((SEEN.lowT/1000)|0))}
+  const br=L.mons.some(m=>m.brawl||m.state==='brawl');if(br&&!SEEN.brawl){SEEN.brawl=1;evSay('brawl')}
+  for(const o of L.objs){if(!vis[I(o.x,o.y)])continue;if(o.type==='encounter'&&evSay('enc',false,'enc'))break;if(o.type==='plaque'&&evSay('plaque',false,'plaque'))break}}catch(e){}},900);
+{const s0=springTrap;springTrap=async function(t,e){const r=await s0(t,e);try{if(isP(e))evSay('sprung',true,'sprung'+t.x+','+t.y)}catch(er){}return r}}
+{const f0=UI.fx;UI.fx=(t,d)=>{f0(t,d);try{if(t==='levelup')setTimeout(()=>evSay('levelup',true,'lv'+S.P.lvl),900);
+  else if(t==='death'&&d&&d.e&&!isP(d.e)&&MT(d.e).boss)setTimeout(()=>evSay('boss',true,'boss'+d.e.id),800)}catch(e){}}}
+{const f0=featAct;featAct=async function(o,id){const rich=o&&o.type==='chest'&&o.rich;const r=await f0(o,id);try{if(rich&&id==='open')setTimeout(()=>evSay('rich',false,'rich'+o.id),500)}catch(e){}return r}}
+// clicking the portrait still works, and now counts as speech for the cooldown
+{const hb0=heroBark;heroBark=function(a){SAY.t=performance.now();return hb0(a)}}
+setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{arrivalRemark,evSay,heroSay,monVoice,AU})}catch(e){}},300);
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
