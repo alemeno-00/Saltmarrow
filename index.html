@@ -415,6 +415,7 @@ body.mob .mhead{display:none}
 </style>
 </head><body>
 
+<div id="boot" style="position:fixed;inset:0;background:#000;z-index:10001"></div>
 <div class="wrap">
   <header>
     <h1>Saltmarrow <span>Deep</span></h1><button class="btn" id="menuBtn" aria-label="Menu" title="Menu (Esc)">Menu<span class="deskonly kb"> · Esc</span></button>
@@ -5610,6 +5611,29 @@ function showCharSelect(slot){const fm=freshMeta();let sel=null;const icon=k=>{t
 .cfoot{display:flex;justify-content:center;gap:10px}.gmb.small{padding:10px 22px;font-size:17px;min-width:140px}.gmb.primary:not(:disabled){border-color:#9a7638;color:var(--gilt)}.gmb:disabled{opacity:.45;cursor:default}
 body.mob .cgrid{grid-template-columns:1fr 1fr}body.mob .ccard img{width:84px;height:84px}body.mob .cp,body.mob .ca{display:none}`;document.head.appendChild(st)}
 {const st=document.createElement('style');st.textContent=`body.mob .cfoot{position:sticky;bottom:0;padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,rgba(10,9,8,0),#0a0908 35%)}`;document.head.appendChild(st)}
+/* ---- boot sequence: black from the first frame, Juju Games, then the game's logo, then the menu ---- */
+splash=function(done){const B=$('boot');if(!B){done&&done();return}if(HEADLESS){B.remove();return}
+  try{$('toastHost').innerHTML='';$('feed').innerHTML=''}catch(e){}
+  B.innerHTML=`<div class="bst b1"><div class="jjmark"></div><div class="jjname">JUJU<span>GAMES</span></div><div class="jjtag">presents</div></div>
+    <div class="bst b2"><div class="tt1">Saltmarrow</div><div class="tt2">Deep</div><div class="ttorn"><i></i><b>✠</b><i></i></div><div class="ttsub">A gothic delve beneath a drowned mining town</div></div><div class="brain"></div>`;
+  B.querySelector('.jjmark').appendChild(jujuMark());B.classList.add('on');let gone=false;const timers=[];
+  const stage=(n)=>{B.dataset.s=n};const end=()=>{if(gone)return;gone=true;timers.forEach(clearTimeout);try{$('toastHost').innerHTML=''}catch(e){}B.classList.add('out');setTimeout(()=>{B.remove();done&&done()},800)};
+  stage(1);timers.push(setTimeout(()=>stage(2),2500),setTimeout(end,5400));
+  B.addEventListener('pointerdown',end);addEventListener('keydown',end,{once:true})};
+{const st=document.createElement('style');st.textContent=`
+#boot.on{display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden}
+#boot.out{opacity:0;transition:opacity .8s ease}
+#boot .bst{position:absolute;display:flex;flex-direction:column;align-items:center;gap:14px;opacity:0;transition:opacity .7s ease,transform 2.6s ease;transform:scale(.97)}
+#boot[data-s="1"] .b1{opacity:1;transform:none}
+#boot[data-s="2"] .b2{opacity:1;transform:scale(1.03)}
+#boot .b2{gap:4px;text-align:center}#boot .b2 .ttsub{margin-top:10px;opacity:0;transition:opacity 1s ease 1s}#boot[data-s="2"] .b2 .ttsub{opacity:1}
+#boot .jjtag{opacity:0;transition:opacity .8s ease 1.1s;animation:none}#boot[data-s="1"] .jjtag{opacity:1}
+#boot .jjmark canvas{width:120px;height:120px;image-rendering:pixelated;filter:drop-shadow(0 0 22px rgba(217,164,65,.4))}
+#boot .brain{position:absolute;inset:0;opacity:0;transition:opacity 1.2s;background:repeating-linear-gradient(105deg,transparent 0 22px,rgba(170,185,200,.06) 22px 23px);animation:brain .6s linear infinite}
+#boot[data-s="2"] .brain{opacity:1}@keyframes brain{from{background-position:0 0}to{background-position:-40px 120px}}
+@media (prefers-reduced-motion:reduce){#boot .bst{transition:opacity .3s}#boot .brain{display:none}}`;document.head.appendChild(st)}
+{const s0=start;start=function(data){if(data&&data.S){const B=$('boot');if(B)B.remove()}return s0(data)}}
+{const t0=showTitle;showTitle=function(){const r=t0.apply(this,arguments);try{$('tipCard').hidden=true;$('toastHost').innerHTML=''}catch(e){}return r}}
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
