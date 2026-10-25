@@ -5597,7 +5597,7 @@ async function exportFile(n){slotFlush();const sl=slotRead(n);if(!sl)return fals
 function importFile(file,n,done){const fr=new FileReader();fr.onload=()=>{try{const o=JSON.parse(fr.result);let meta,run;if(o.game==='saltmarrow-deep'){meta=o.meta;run=o.run||''}else if(o.meta){meta=JSON.stringify(o.meta);run=o.run||''}else throw 0;JSON.parse(meta);
     slotFlush();lsSet(SLOT_K(n),JSON.stringify({meta,run,t:Date.now(),sum:summarise(meta,run)}));if(n===activeSlot())applySave(JSON.parse(meta),run,`Slot ${n}: from a save file`);done(true)}catch(e){done(false)}};fr.readAsText(file)}
 // ---- the save & load screen ----
-UI.saveMenu=()=>{slotFlush();const act=activeSlot();const android=isAndroidApp();
+UI.backupMenu=()=>{slotFlush();const act=activeSlot();const android=isAndroidApp();
   const card=n=>{const sl=slotRead(n),on=n===act;return`<div class="slot${on?' on':''}"><div class="sh"><span class="sn">Slot ${n}</span>${on?'<span class="tag">Playing</span>':''}</div>
     <div class="sb">${sl?slotLine(sl):'<b>Empty</b><span class="dim">Nothing saved here yet.</span>'}</div><div class="sa">
     ${on?`<button class="btn primary" data-a="save" data-n="${n}">Save now</button>`:sl?`<button class="btn primary" data-a="load" data-n="${n}">Load</button>`:`<button class="btn primary" data-a="new" data-n="${n}">New game here</button>`}
@@ -5605,7 +5605,7 @@ UI.saveMenu=()=>{slotFlush();const act=activeSlot();const android=isAndroidApp()
     ${sl&&!android?`<button class="btn" data-a="export" data-n="${n}">Save to file</button>`:''}<label class="btn">Load file<input type="file" accept=".json,application/json" data-a="import" data-n="${n}" hidden></label>
     ${sl?`<button class="btn" data-a="del" data-n="${n}">${on?'Restart slot':'Delete'}</button>`:''}</div></div>`};
   let run='';try{run=lsGet(SAVE_KEY)||''}catch(e){}const code=enc({v:1,meta:META,run});
-  const el=modal(`${head(null,'Save & load',CLOUD.ref?'Your playing slot also syncs to your claude.ai account':'The game also saves itself as you play')}
+  const el=modal(`${head(null,'Back up & move saves','Save files and codes for other devices')}
     <p class="purse">Three save slots, like any other game. The slot marked Playing saves automatically every time something changes, and again on every new level. ${android?'':'Save to file keeps a copy you can move to another computer or back up.'}</p>
     <div class="svslots">${[1,2,3].map(card).join('')}</div><p class="purse" id="slotMsg"></p>
     <details class="adv"><summary>Move a save with a code</summary><p class="purse">Copy this code into the Save & load screen on another device (phone, Mac, browser) to bring your playing slot across.</p>
@@ -5614,7 +5614,7 @@ UI.saveMenu=()=>{slotFlush();const act=activeSlot();const android=isAndroidApp()
     ${CLOUD.pending?`<div class="qst"><b>A newer save is on your account</b><span class="td">From another device. Loading it replaces your playing slot.</span><button class="btn primary" id="loadCloud">Load the account save</button></div>`:''}`,true);
   const msg=t=>{const m=$('slotMsg');if(m)m.textContent=t};const armed={};
   el.querySelectorAll('button[data-a]').forEach(b=>b.onclick=()=>{const a=b.dataset.a,n=+b.dataset.n,sl=slotRead(n);
-    if(a==='save'){if(slotFlush()){savedMark();msg(`Saved to slot ${n}.`);UI.saveMenu()}else msg('Could not save: this device refused the storage.')}
+    if(a==='save'){if(slotFlush()){savedMark();msg(`Saved to slot ${n}.`);UI.backupMenu()}else msg('Could not save: this device refused the storage.')}
     else if(a==='load'){closeModal();loadSlot(n);savedMark(`Slot ${n} loaded`)}
     else if(a==='new'){closeModal();newGameIn(n)}
     else if(a==='copy'){if(sl&&!armed[a+n]){armed[a+n]=1;b.textContent='Click again to overwrite';return}slotFlush();const cur=slotRead(act);if(cur){lsSet(SLOT_K(n),JSON.stringify(Object.assign({},cur,{t:Date.now()})));msg(`Your current game is copied to slot ${n}. You are still playing slot ${act}.`);UI.saveMenu()}}
@@ -5624,6 +5624,22 @@ UI.saveMenu=()=>{slotFlush();const act=activeSlot();const android=isAndroidApp()
   $('copyCode').onclick=async()=>{const t=$('codeOut');try{await navigator.clipboard.writeText(t.value);$('copyCode').textContent='Copied'}catch(e){t.focus();t.select();$('copyCode').textContent='Selected: copy it'}};
   $('loadCode').onclick=()=>{try{const o=dec($('codeIn').value);if(!o||!o.meta)throw 0;closeModal();applySave(o.meta,o.run||'','From a save code');slotWrite(activeSlot());try{stamp();cloudQueue()}catch(e){}}catch(e){$('codeMsg').textContent='That code could not be read. Check you copied all of it.'}};
   const lc=$('loadCloud');if(lc)lc.onclick=()=>{const d=CLOUD.pending;CLOUD.pending=null;closeModal();applySave(JSON.parse(d.meta),d.run||'','From your account');slotWrite(activeSlot());stamp()}};
+// the plain save screen: three slots, Save · Load · Delete
+UI.saveMenu=()=>{slotFlush();const act=activeSlot();
+  const row=n=>{const sl=slotRead(n),on=n===act,sm=sl?(sl.sum||summarise(sl.meta,sl.run)):{};
+    return`<div class="sv1${on?' on':''}"><div class="sv1i"><b>Slot ${n}${on?' <span class="tag">Playing</span>':''}</b><span>${sl?esc([sm.cls?sm.cls+', level '+sm.lvl:'',sm.where].filter(Boolean).join(' · ')||'Saved game')+(sl.t?' · saved '+ago(sl.t):''):'Empty'}</span></div>
+    <div class="sv1b"><button class="btn primary" data-a="save" data-n="${n}">Save</button><button class="btn" data-a="load" data-n="${n}" ${sl&&!on?'':'disabled'}>Load</button><button class="btn" data-a="del" data-n="${n}" ${sl?'':'disabled'}>Delete</button></div></div>`};
+  const el=modal(`${head(null,'Save game','The game also saves itself as you play')}<div class="sv1s">${[1,2,3].map(row).join('')}</div><p class="purse" id="slotMsg"></p>
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="svMore">Back up or move saves ›</button></div>`,true);
+  const msg=t=>{const m=$('slotMsg');if(m)m.textContent=t};const armed={};
+  el.querySelectorAll('button[data-a]').forEach(b=>b.onclick=()=>{const a=b.dataset.a,n=+b.dataset.n,sl=slotRead(n);
+    if(a==='save'){if(n===act){if(slotFlush()){savedMark();UI.saveMenu();msg(`Saved to slot ${n}.`)}else msg('Could not save on this device.');return}
+      if(sl&&!armed[a+n]){armed[a+n]=1;b.textContent='Overwrite?';return}slotFlush();const cur=slotRead(act);if(cur){lsSet(SLOT_K(n),JSON.stringify(Object.assign({},cur,{t:Date.now()})));UI.saveMenu();msg(`Saved a copy to slot ${n}. You are still playing slot ${act}.`)}}
+    else if(a==='load'){closeModal();loadSlot(n);savedMark(`Slot ${n} loaded`)}
+    else if(a==='del'){if(!armed[a+n]){armed[a+n]=1;b.textContent=n===act?'Delete and start over?':'Sure?';return}if(n===act){closeModal();newGameIn(n)}else{lsDel(SLOT_K(n));UI.saveMenu()}}});
+  $('svMore').onclick=()=>UI.backupMenu()};
+{const st=document.createElement('style');st.textContent=`.sv1s{display:flex;flex-direction:column;gap:8px;margin:6px 0 4px}.sv1{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 14px;border:1px solid var(--rule,#3a3022);border-radius:4px;background:rgba(0,0,0,.2)}
+.sv1.on{border-color:#7a6a3a}.sv1i{display:flex;flex-direction:column;gap:2px;min-width:0}.sv1i b{font-size:16px}.sv1i span{color:var(--dim,#8a7e6a);font-size:14px}.sv1i .tag{font-size:11px;margin-left:6px;vertical-align:middle}.sv1b{display:flex;gap:6px}.sv1b .btn[disabled]{opacity:.35}`;document.head.appendChild(st)}
 $('saveBtn').onclick=()=>UI.saveMenu();
 {const p0=paintSave;paintSave=function(){p0();const b=$('saveBtn');if(b)b.textContent='Save & load'+(CLOUD.ref?' · synced':'')}}
 // ---- title screen ----
@@ -5773,7 +5789,7 @@ function showSettings(from){GM.from=from||GM.from;const mob=isMob(),desk=!mob,ht
     <div class="gmf"><button data-go="back">‹ Back</button></div></div>`,true);
   ov.classList.add('gmov');
   ov.querySelectorAll('[data-click]').forEach(b=>b.onclick=()=>{const t=$(b.dataset.click);if(t)t.click();setTimeout(()=>{const top=ov.scrollTop;showSettings();ov.scrollTop=top},60)});
-  ov.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{const g=b.dataset.go;if(g==='back'){GM.from==='title'?showTitle():showGameMenu()}else if(g==='saves')UI.saveMenu();else if(g==='latest')hardReload()});
+  ov.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{const g=b.dataset.go;if(g==='back'){GM.from==='title'?showTitle():showGameMenu()}else if(g==='saves')UI.backupMenu();else if(g==='latest')hardReload()});
   const v=$('volR');if(v)v.oninput=()=>{lsSet(VOL_K,v.value);applyVol()};v&&(v.onchange=()=>{try{sfx('coin')}catch(e){}})}
 /* ---- title screen ---- */
 showTitle=function(){const act=activeSlot(),cur=slotRead(act),any=[1,2,3].some(n=>slotRead(n));try{closeInspect()}catch(e){}
