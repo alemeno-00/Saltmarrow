@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" role="img" aria-labelledby="t d">
+<title id="t">Saltmarrow Deep — The Sunken Ruin</title><desc id="d">A dark teal flooded temple, ruined arches, a colossal statue and kraken tentacles, with an adventurer's amber torch against bioluminescent cavern light.</desc>
+<defs>
+ <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#07171d"/><stop offset=".42" stop-color="#0b3038"/><stop offset="1" stop-color="#071114"/></linearGradient>
+ <radialGradient id="glow"><stop stop-color="#8cf8e8" stop-opacity=".72"/><stop offset=".35" stop-color="#37c5c8" stop-opacity=".26"/><stop offset="1" stop-color="#0c3c43" stop-opacity="0"/></radialGradient>
+ <linearGradient id="stone" x2=".8" y2="1"><stop stop-color="#557a78"/><stop offset=".42" stop-color="#243f42"/><stop offset="1" stop-color="#101f25"/></linearGradient>
+ <linearGradient id="water" x2="0" y2="1"><stop stop-color="#1b7377" stop-opacity=".62"/><stop offset="1" stop-color="#071316"/></linearGradient>
+ <linearGradient id="torch" x2="0" y2="1"><stop stop-color="#fff0a0"/><stop offset=".3" stop-color="#ffad42"/><stop offset="1" stop-color="#c64c20" stop-opacity="0"/></linearGradient>
+ <filter id="blur"><feGaussianBlur stdDeviation="30"/></filter>
+ <pattern id="grain" width="42" height="42" patternUnits="userSpaceOnUse"><path d="M3 12h2m16 19h3M34 4h2M8 36h1" stroke="#b2e8d6" stroke-opacity=".12"/></pattern>
+</defs>
+<rect width="1920" height="1080" fill="url(#sky)"/>
+<ellipse cx="1180" cy="350" rx="680" ry="560" fill="url(#glow)"/>
+<path d="M0 0H1920V190L1820 140 1710 220 1580 90 1440 170 1300 40 1180 155 1040 30 900 180 760 70 620 190 470 80 340 220 210 110 90 230 0 180Z" fill="#061116"/>
+<path d="M0 150 90 230 170 190 230 300 300 260 350 390 430 330 500 470 0 700Z" fill="#10252a"/>
+<path d="M1920 80 1830 170 1770 140 1690 280 1600 235 1540 380 1470 340 1410 500 1920 690Z" fill="#0b2026"/>
+<!-- light shafts -->
+<g fill="#73f3e4" opacity=".1"><path d="M930 0h48L1230 670h-200Z"/><path d="M1080 0h20l300 650h-90Z"/><path d="M1250 0h13l260 520h-45Z"/></g>
+<!-- distant drowned city -->
+<g fill="#142f33" stroke="#31575a" stroke-width="8">
+ <path d="M610 570V350h80v-72h55v72h70v220Z"/><path d="M835 570V300h95v-60h36v60h55v270Z"/><path d="M1050 570V390h80v-85h40v85h80v180Z"/>
+ <path d="M590 370q140-210 280 0M810 310q140-200 280 0" fill="none" stroke-width="24"/>
+</g>
+<!-- monumental arch -->
+<path d="M1000 720V470q0-250 240-250t240 250v250h-76V475q0-175-164-175t-164 175v245Z" fill="url(#stone)" stroke="#658b83" stroke-opacity=".5" stroke-width="7"/>
+<path d="M1040 710V480q0-200 200-200t200 200v230" fill="none" stroke="#132a2e" stroke-width="18"/>
+<path d="M1000 470h78m324 0h78M1000 525h80m320 0h80M1000 595h80m320 0h80" stroke="#7a9a8a" stroke-opacity=".22" stroke-width="8"/>
+<!-- colossal statue -->
+<g transform="translate(1530 240)">
+ <path d="M85 150 35 510 0 650h270l-40-145-30-355Z" fill="#243d40" stroke="#5b7973" stroke-width="8"/>
+ <path d="M75 90 45 15 125 0 185 48 175 130 145 175 85 165Z" fill="#3c5e5b" stroke="#75948a" stroke-width="7"/>
+ <path d="M70 73l28 12 35-15 22 12-20 23-55 3Z" fill="#101d21"/>
+ <path d="M96 75h12m23 0h12" stroke="#e5bd67" stroke-width="10"/>
+ <path d="M55 200 0 320l30 20 70-85m70-55 55 120-28 18-70-80" fill="#2e4b4b" stroke="#6a8b80" stroke-width="8"/>
+ <path d="M220 250 275 5l18 4-28 270" stroke="#92b5a6" stroke-width="10" fill="none"/>
+ <path d="M245 12l-10-48 20 18 12-30 10 49Z" fill="#b9d8bf"/>
+ <path d="M38 365h190M25 450h218M12 545h250" stroke="#73968b" stroke-opacity=".3" stroke-width="8"/>
+ <path d="M50 260q35 45 20 100m130-90q-25 45-12 95" fill="none" stroke="#142b2e" stroke-width="12"/>
+</g>
+<!-- kraken in mist -->
+<g fill="none" stroke-linecap="round">
+ <path d="M1330 620C1230 500 1380 390 1510 455S1660 590 1570 620 1450 565 1510 520" stroke="#07181e" stroke-width="72"/>
+ <path d="M1320 620C1220 500 1370 390 1500 455S1650 590 1560 620 1440 565 1500 520" stroke="#315d5d" stroke-width="43"/>
+ <path d="M1260 690C1110 620 1180 500 1300 515S1400 660 1310 675 1200 620 1260 575" stroke="#07171c" stroke-width="52"/>
+ <path d="M1260 690C1110 620 1180 500 1300 515S1400 660 1310 675 1200 620 1260 575" stroke="#254b50" stroke-width="30"/>
+</g>
+<g fill="#92b8a7" opacity=".7"><circle cx="1405" cy="443" r="7"/><circle cx="1440" cy="454" r="6"/><circle cx="1472" cy="478" r="6"/><circle cx="1500" cy="505" r="5"/><circle cx="1280" cy="528" r="5"/><circle cx="1300" cy="550" r="5"/></g>
+<!-- broken pillars / foreground -->
+<path d="M0 400h100l25 90-18 160 40 110H0ZM1850 380h70v700h-230l55-150-20-190Z" fill="#172d30" stroke="#3c5e5b" stroke-width="10"/>
+<path d="M0 405h112l-25 25H0m1810-30h110m-130 40h130" stroke="#7c9c8e" stroke-opacity=".35" stroke-width="10"/>
+<path d="M0 760 190 700 340 740 510 690 670 750 840 705 1030 750 1220 690 1410 740 1590 685 1760 735 1920 680V1080H0Z" fill="url(#water)"/>
+<path d="M0 785q100-28 200 0t200 0 200 0 200 0 200 0 200 0 200 0 200 0 200 0 200 0 200 0 200 0" fill="none" stroke="#66d9ca" stroke-opacity=".42" stroke-width="4"/>
+<g stroke="#55b8b1" stroke-opacity=".32" stroke-width="3"><path d="M180 850h270m60 28h190m180-34h330m90 50h210m70-34h230M50 940h230m190 30h290m250-20h190m170 30h270"/></g>
+<!-- ledge and fungi -->
+<path d="M0 910 140 855 280 890 360 960 470 1080H0Z" fill="#101f23"/>
+<g fill="#44d5cf"><path d="M130 887q-30-60 5-95 36 35 8 95Z"/><path d="M170 900q-10-44 25-65 25 36-8 65Z"/><path d="M235 930q-22-54 14-77 30 38 6 77Z"/></g>
+<g fill="#a6f8e9" opacity=".55"><circle cx="135" cy="792" r="16"/><circle cx="195" cy="834" r="12"/><circle cx="250" cy="852" r="10"/></g>
+<g fill="#bb76e8" opacity=".8"><path d="M315 990q-25-42 12-63 37 26 8 63Z"/><path d="M355 1015q-15-32 16-48 27 24 5 48Z"/></g>
+<!-- lone delver silhouette on right -->
+<g transform="translate(1640 660)">
+ <ellipse cx="85" cy="350" rx="115" ry="22" fill="#020709" opacity=".75"/>
+ <path d="M38 180 8 335 35 345 80 248 115 345 147 334 126 175Z" fill="#10191d" stroke="#405957" stroke-width="5"/>
+ <path d="M30 92 20 180 8 245 55 276 140 245 126 175 110 92Z" fill="#18272b" stroke="#668177" stroke-width="6"/>
+ <path d="M33 85Q10 20 74 0q70 8 65 85l-35 25H56Z" fill="#091317" stroke="#658176" stroke-width="6"/>
+ <path d="M43 76q32-20 68 0l-10 20H52Z" fill="#02080b"/>
+ <path d="M28 130 0 230l20 12 55-75m46-38 44 88-18 15-57-64" fill="#18272b" stroke="#4b6c65" stroke-width="6"/>
+ <path d="M12 240 0 300m153-66 10 70" stroke="#849b8b" stroke-width="10"/>
+ <!-- torch -->
+ <path d="M8 220 0 130" stroke="#5b4632" stroke-width="10"/>
+ <path d="M-4 130q-28-34 0-62 4 27 22 9 16 34-5 53Z" fill="url(#torch)"/>
+ <ellipse cx="2" cy="100" rx="70" ry="95" fill="#ffb548" opacity=".11" filter="url(#blur)"/>
+</g>
+<!-- atmospheric particles -->
+<g fill="#b7fff0"><circle cx="820" cy="225" r="3"/><circle cx="970" cy="390" r="2"/><circle cx="1160" cy="205" r="3"/><circle cx="1350" cy="315" r="2"/><circle cx="900" cy="580" r="2"/><circle cx="1520" cy="720" r="3"/><circle cx="620" cy="680" r="2"/></g>
+<rect width="1920" height="1080" fill="url(#grain)"/>
+<rect width="1920" height="1080" fill="none" stroke="#0b1b1e" stroke-width="70"/>
+<rect width="1920" height="1080" fill="none" stroke="#79b7a8" stroke-opacity=".12" stroke-width="3"/>
+</svg>
