@@ -4169,7 +4169,7 @@ function drawAtmos(ox,oy){const L=S.L,P=S.P,dread=P.dread||0;
     if(NOW>nextFlash){flashT=NOW;nextFlash=NOW+6000+Math.random()*14000}const ft=(NOW-flashT)/500;if(ft<1){ctx.fillStyle=`rgba(200,210,230,${(1-ft)*(ft<0.15||ft>0.3?0.22:0.05)})`;ctx.fillRect(0,0,VW,VH)}}
   // hallucinations
   if(dread>=5&&!L.town&&!relic('lamp')){if(!phantom&&Math.random()<0.004*(dread-3)){const ks=Object.keys(MON).filter(k=>!MON[k].boss);for(let t=0;t<20;t++){const x=P.x+rr(-7,7),y=P.y+rr(-6,6);if(inb(x,y)&&L.seen[I(x,y)]&&!vis[I(x,y)]&&!solid(L.map[I(x,y)])){phantom={k:pick(ks),x,y,t0:NOW};break}}}
-    if(phantom){const t=(NOW-phantom.t0)/1400;if(t>1)phantom=null;else{ctx.globalAlpha=Math.sin(t*Math.PI)*0.45;ctx.drawImage(SPR[phantom.k],phantom.x*T+ox,phantom.y*T+oy,T,T);ctx.globalAlpha=1}}}
+    if(phantom){const t=(NOW-phantom.t0)/1400;if(t>1)phantom=null;else{ctx.globalAlpha=Math.sin(t*Math.PI)*0.45;const q=typeof ISO!=='undefined'?ISO.screen((phantom.x+.5)*T,(phantom.y+1)*T):{x:phantom.x*T+ox+T/2,y:phantom.y*T+oy+T};ctx.drawImage(SPR[phantom.k],q.x-T/2,q.y-T,T,T);ctx.globalAlpha=1}}}
   // vignette, heartbeat at high dread
   const vg=ctx.createRadialGradient(VW/2,VH/2,Math.min(VW,VH)*0.3,VW/2,VH/2,Math.max(VW,VH)*0.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,`rgba(0,0,0,${0.55+dread*0.02})`);ctx.fillStyle=vg;ctx.fillRect(0,0,VW,VH);
   if(dread>=7){const hb=Math.max(0,Math.sin(NOW/(dread>=9?180:260)))**8;const rg=ctx.createRadialGradient(VW/2,VH/2,Math.min(VW,VH)*0.25,VW/2,VH/2,Math.max(VW,VH)*0.7);rg.addColorStop(0,'rgba(120,0,10,0)');rg.addColorStop(1,`rgba(120,0,10,${0.25*hb})`);ctx.fillStyle=rg;ctx.fillRect(0,0,VW,VH)}
@@ -6989,6 +6989,114 @@ function buildTutorial(){const L=S.L,P=S.P,N=W*H;
 {const r0=UI.render;UI.render=function(){r0.apply(this,arguments);try{const L=S&&S.L;if(!L||!L.tutorial||S.mode!=='explore'||!$('overlay').hidden)return;const P=S.P;META.tips=META.tips||{};
   for(const k in TUT.rooms){if(META.tips['tut_'+k])continue;if(inRect(P.x,P.y,TUT.rooms[k])){META.tips['tut_'+k]=1;if(k==='E')META.tips.tut_done=1;saveMeta();UI.tip(TUT.say[k]);log(TUT.say[k],'gold');break}}}catch(e){}}}
 setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{buildTutorial:()=>buildTutorial()})}catch(e){}},480);
+
+/* ---------- semi-isometric presentation (simulation remains in grid coordinates) ---------- */
+const ISO={
+  project(x,y){return{x:x-y,y:(x+y)/2}},
+  unproject(x,y){return{x:y+x/2,y:y-x/2}},
+  depth(e){return(e.rx??e.x)+(e.ry??e.y)},
+  camera:{x:0,y:0,ready:false},
+  screen(x,y){const p=this.project(x,y);return{x:p.x-this.camera.x,y:p.y-this.camera.y}},
+  pick(x,y){const p=this.unproject(x+this.camera.x,y+this.camera.y);return{x:Math.floor(p.x/T),y:Math.floor(p.y/T)}}
+};
+// The backing buffer is an integer logical pixel grid; the browser only enlarges it.
+renderScale=()=>1;
+cv.style.imageRendering='pixelated';
+const isoResize=resize;resize=function(){isoResize();ISO.camera.ready=false};
+const isoAnimate=animate;animate=function(dt){if(ISO.level!==S.L){ISO.level=S.L;ISO.camera.ready=false}isoAnimate(dt);const p=ISO.project((S.P.rx+.5)*T,(S.P.ry+.5)*T);
+  const target={x:p.x-VW/2+PAN.x,y:p.y-VH/2+PAN.y},c=ISO.camera;
+  if(!c.ready){Object.assign(c,target);c.ready=true}else{const k=Math.min(1,dt*8);c.x+=(target.x-c.x)*k;c.y+=(target.y-c.y)*k}
+  c.x=Math.round(c.x);c.y=Math.round(c.y)};
+tileFromEvent=function(ev){const r=cv.getBoundingClientRect();return ISO.pick((ev.clientX-r.left)*VW/r.width,(ev.clientY-r.top)*VH/r.height)};
+UI.inspectAt=(x,y)=>{const r=cv.getBoundingClientRect(),p=ISO.screen((x+.5)*T,(y+.5)*T);openInspect(x,y,r.left+p.x*r.width/VW,r.top+p.y*r.height/VH)};
+function isoGround(fn){ctx.save();ctx.transform(1,.5,-1,.5,0,0);fn();ctx.restore()}
+function isoUpright(e,fn){const p=wpos(e),q=ISO.project(p.x,p.y);ctx.save();ctx.translate(Math.round(q.x-p.x),Math.round(q.y-p.y-T/2));fn();ctx.restore()}
+function isoWall(TS,x,y,wf){const i=I(x,y),h=T*.65,im=tileImg(TS,S.L.map[i],x,y,wf);
+  // Two textured vertical faces and a diamond cap, all using the same tile art.
+  const a=ISO.project(x*T,y*T),b=ISO.project((x+1)*T,y*T),c=ISO.project(x*T,(y+1)*T);
+  ctx.save();ctx.transform(1,.5,0,1,c.x,c.y-h);ctx.drawImage(im,0,0,T,h);ctx.fillStyle='rgba(2,8,12,.24)';ctx.fillRect(0,0,T,h);ctx.restore();
+  ctx.save();ctx.transform(-1,.5,0,1,b.x,b.y-h);ctx.drawImage(im,0,0,T,h);ctx.fillStyle='rgba(2,8,12,.48)';ctx.fillRect(0,0,T,h);ctx.restore();
+  ctx.save();ctx.translate(0,-h);isoGround(()=>ctx.drawImage(TS.top?TS.top[h4(x,y)]:im,x*T,y*T,T,T));ctx.restore();
+  ctx.strokeStyle='#60716c';ctx.globalAlpha*=.35;ctx.beginPath();ctx.moveTo(b.x,b.y-h);ctx.lineTo(a.x,a.y-h);ctx.lineTo(c.x,c.y-h);ctx.stroke();
+}
+const ISO_ART=new WeakMap();
+function isoFloorArt(img,t,x,y){
+  // Cache four native-pixel variants; no per-frame texture allocation.
+  if(![FLOOR,RUBBLE,GRASS,WATER].includes(t))return img;
+  let variants=ISO_ART.get(img);if(!variants){variants=[];ISO_ART.set(img,variants)}
+  const v=h4(x,y);if(variants[v])return variants[v];
+  const c=document.createElement('canvas');c.width=c.height=T;const g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(img,0,0,T,T);
+  const R=srand(71+v*1337+t*19);
+  for(let k=0;k<22;k++){const px=2+(R()*28|0),py=2+(R()*28|0);g.fillStyle=k%3===0?'rgba(128,170,169,.16)':'rgba(3,12,16,.22)';g.fillRect(px,py,k%4===0?3:1,1)}
+  if(t===FLOOR||t===RUBBLE){
+    for(let row=0;row<2;row++)for(let col=0;col<2;col++){const px=col*16,py=row*16;g.fillStyle='rgba(4,12,15,.32)';g.fillRect(px,py,16,1);g.fillRect(px,py,1,16);g.fillStyle='rgba(130,151,141,.18)';g.fillRect(px+2,py+2,12,1);g.fillRect(px+2,py+3,1,10)}
+    if(v===1){g.fillStyle='rgba(53,100,111,.23)';g.fillRect(6,21,12,2);g.fillRect(9,23,14,2);g.fillStyle='rgba(141,194,194,.28)';g.fillRect(10,21,5,1)}
+  }
+  return variants[v]=c;
+}
+function isoBridgeEdge(x,y){
+  const poly=(points,col)=>{ctx.fillStyle=col;ctx.beginPath();points.forEach((p,k)=>k?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fill()};
+  const a=ISO.project((x+1)*T,(y+1)*T),b=ISO.project(x*T,(y+1)*T),c=ISO.project((x+1)*T,y*T),down=p=>({x:p.x,y:p.y+7});
+  if(inb(x,y+1)&&S.L.map[I(x,y+1)]===PIT)poly([b,a,down(a),down(b)],'#26373c');
+  if(inb(x+1,y)&&S.L.map[I(x+1,y)]===PIT)poly([c,a,down(a),down(c)],'#15262e');
+}
+function isoPixelLight(x,y,r,col,alpha){const p=ISO.project(x,y);ctx.save();ctx.globalCompositeOperation='screen';
+  // Discrete bands on a 4px lattice keep lantern pools pixelated rather than blurred.
+  for(let yy=-r;yy<=r;yy+=4)for(let xx=-r;xx<=r;xx+=4){const d=Math.hypot(xx,yy*1.35)/r;if(d>=1)continue;ctx.globalAlpha=alpha*Math.floor((1-d)*5)/5;ctx.fillStyle=col;ctx.fillRect(Math.round((p.x+xx)/4)*4,Math.round((p.y+yy)/4)*4,4,4)}ctx.restore()}
+draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Math.floor(NOW/380);
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.imageSmoothingEnabled=false;ctx.globalAlpha=1;ctx.fillStyle='#04090e';ctx.fillRect(0,0,VW,VH);
+  let shakeX=0,shakeY=0;if(FX.shake.m){const t=(NOW-FX.shake.t)/350;if(t<1&&!REDUCE){shakeX=Math.round((Math.random()-.5)*FX.shake.m*(1-t));shakeY=Math.round((Math.random()-.5)*FX.shake.m*(1-t))}else FX.shake.m=0}
+  ctx.save();ctx.translate(-c.x+shakeX,-c.y+shakeY);
+  const tiles=[],standing=[];
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=I(x,y);if(!L.seen[i])continue;const q=ISO.project((x+.5)*T,(y+.5)*T);if(q.x<c.x-T*3||q.x>c.x+VW+T*3||q.y<c.y-T*3||q.y>c.y+VH+T*3)continue;tiles.push({x,y,i});
+    if(L.map[i]===WALL||L.map[i]===CRACK)standing.push({x,y,depth:x+y+1,wall:true})}
+  isoGround(()=>{for(const{x,y,i}of tiles){ctx.globalAlpha=vis[i]?1:.45;ctx.drawImage(isoFloorArt(tileImg(TS,L.map[i],x,y,wf),L.map[i],x,y),x*T,y*T,T,T);
+      // Exposed walkway edges give bridges and chasms visible thickness.
+      if(OPENT(L.map[i])){ctx.fillStyle='#8d8064';ctx.globalAlpha*=.55;if(inb(x,y+1)&&L.map[I(x,y+1)]===PIT)ctx.fillRect(x*T,y*T+T-2,T,2);if(inb(x+1,y)&&L.map[I(x+1,y)]===PIT)ctx.fillRect(x*T+T-2,y*T,2,T)}
+    }ctx.globalAlpha=1;
+    if(TS.face&&!L.town)drawDressing(L,TS,0,W-1,0,H-1);
+    for(const s of FX.stains)if(inb(s.x,s.y)&&L.seen[I(s.x,s.y)]){ctx.globalAlpha=.65*Math.max(0,1-(NOW-s.t0)/s.life);ctx.fillStyle=s.c;ctx.fillRect((s.x+.25)*T,(s.y+.45)*T,T*.5,T*.22)}ctx.globalAlpha=1;
+    for(const it of L.items)if(L.seen[I(it.x,it.y)]){ctx.globalAlpha=vis[I(it.x,it.y)]?1:.4;ctx.drawImage(SPR[it.kind==='gear'?gearSpr(it.item):it.kind],it.x*T,it.y*T,T,T)}ctx.globalAlpha=1;
+    drawOverlays(0,W-1,0,H-1);
+  });
+  for(const{x,y,i}of tiles)if(OPENT(L.map[i])){ctx.save();ctx.globalAlpha=vis[i]?1:.45;isoBridgeEdge(x,y);ctx.restore()}
+  for(const o of L.objs)if(L.seen[I(o.x,o.y)]&&(o.type!=='charge'||vis[I(o.x,o.y)]))standing.push({e:o,depth:ISO.depth(o)+1,object:true});
+  for(const m of L.mons)if(monVisible(m))standing.push({e:m,depth:ISO.depth(m)+1});
+  for(const n of L.npcs||[])if(L.seen[I(n.x,n.y)])standing.push({e:n,depth:ISO.depth(n)+1,npc:true});
+  standing.push({e:P,depth:ISO.depth(P)+1,hero:true});
+  standing.sort((a,b)=>a.depth-b.depth||(a.wall?-1:1)-(b.wall?-1:1));
+  for(const entry of standing){ctx.save();if(entry.wall){ctx.globalAlpha=vis[I(entry.x,entry.y)]?1:.45;
+      // Cut away nearby foreground masonry so the hero and target remain readable.
+      if(entry.depth>P.x+P.y&&Math.abs(entry.x-P.x)<=2&&Math.abs(entry.y-P.y)<=2)ctx.globalAlpha*=.3;
+      isoWall(TS,entry.x,entry.y,wf);
+    }else{const e=entry.e;ctx.globalAlpha=vis[I(e.x,e.y)]||entry.hero?1:.45;isoUpright(e,()=>{
+      if(entry.object)drawObj(e);else if(entry.hero)drawSprite(SPR[S.cls],SPRW[S.cls],e,T,P.hidden?.5:S.over&&!S.won?.35:1);
+      else if(entry.npc)drawSprite(npcImg(e),null,e,T);
+      else{const M=MT(e);drawSprite(SPR[e.type],SPRW[e.type],e,M.boss?T*1.5:e.mut==='hulking'?T*1.2:T);
+        const p=wpos(e);if(e.inCombat||e.stam<e.max){ctx.fillStyle='#220d12';ctx.fillRect(p.x-13,p.y+T/2,26,3);ctx.fillStyle='#c2533e';ctx.fillRect(p.x-13,p.y+T/2,26*Math.max(0,e.stam)/e.max,3)}
+        if(e.conds?.length){e.conds.forEach((v,k)=>{ctx.fillStyle={slowed:'#7fb0e0',grabbed:'#e3a548',bleeding:'#c2533e',weakened:'#b9a0e8',dazed:'#fff2b0'}[v.id]||'#ccc';ctx.fillRect(p.x-12+k*5,p.y-T/2,4,4)})}
+      }
+    })}ctx.restore()}
+  isoGround(()=>{for(const{x,y,i}of tiles){if(L.fire[i]>0)flame(x*T+T/2,y*T+T,1.5,i);const v=Math.max(L.smoke[i],L.spore[i]);if(v){ctx.fillStyle=L.spore[i]>=L.smoke[i]?'rgba(150,170,70,.35)':'rgba(70,70,100,.45)';ctx.fillRect(x*T+3,y*T+3,T-6,T-6)}}
+    for(const a of FX.amb){ctx.globalAlpha=Math.sin(a.age/a.life*Math.PI)*.5;ctx.fillStyle=a.c;ctx.fillRect(Math.round(a.x),Math.round(a.y),a.s,a.s)}
+    for(const p of FX.parts){ctx.globalAlpha=Math.max(0,1-p.age/p.life);ctx.fillStyle=p.c;ctx.fillRect(Math.round(p.x),Math.round(p.y),p.s,p.s)}ctx.globalAlpha=1;
+    for(const r of FX.rings){const t=(NOW-r.t0)/r.dur;ctx.strokeStyle=r.c;ctx.globalAlpha=(1-t)*.6;ctx.beginPath();ctx.arc(r.x,r.y,Math.max(1,r.r*t),0,Math.PI*2);ctx.stroke()}ctx.globalAlpha=1;
+    for(const b of FX.bolts){const t=Math.min(1,(NOW-b.t0)/b.dur);ctx.strokeStyle=b.c;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(b.a.x,b.a.y);ctx.lineTo(b.a.x+(b.b.x-b.a.x)*t,b.a.y+(b.b.y-b.a.y)*t);ctx.stroke()}
+    drawAnims();
+  });
+  // Ambient darkness and local warm/cool illumination use projected positions.
+  ctx.fillStyle=L.town?'rgba(2,8,14,.12)':'rgba(2,8,14,.24)';ctx.fillRect(c.x,c.y,VW,VH);
+  if(P.lantern)isoPixelLight((P.rx+.5)*T,(P.ry+.5)*T,T*3,'#e3a548',.12);
+  for(const o of L.objs){if(!vis[I(o.x,o.y)])continue;const warm=['lamp','forge','hearth','altar','desk','chandelier'].includes(o.type)||(o.type==='brazier'&&o.lit)||(o.type==='shrine'&&!o.used);const cool=['crystal','shroom'].includes(o.type);if(warm||cool)isoPixelLight((o.x+.5)*T,(o.y+.5)*T,T*2.5,cool?'#63bfc7':'#efaa51',.16)}
+  for(const l of FX.lights)isoPixelLight(l.x,l.y,l.r,l.c,.22*Math.max(0,1-(NOW-l.t0)/l.dur));
+  for(const f of FX.floats){const t=(NOW-f.t0)/1000;if(t<0)continue;const p=ISO.project(f.x,f.y);ctx.globalAlpha=Math.max(0,1-t);ctx.textAlign='center';ctx.font=`700 ${f.huge?24:f.big?17:11}px monospace`;ctx.fillStyle='#04090e';ctx.fillText(f.text,p.x+1,p.y-t*26+1);ctx.fillStyle=f.c;ctx.fillText(f.text,p.x,p.y-t*26)}ctx.globalAlpha=1;ctx.textAlign='start';
+  if(L.town&&!L.interior)for(const b of BUILDINGS){const p=ISO.project((b.x+b.w/2)*T,b.y*T);tag(ctx,p.x,p.y-24,b.name,'#e3c890')}
+  ctx.restore();ctx.setTransform(dpr,0,0,dpr,0,0);drawAtmos(0,0);
+  if(FX.flash){const t=(NOW-FX.flash.t0)/FX.flash.dur;if(t<1){ctx.fillStyle=`rgba(255,250,235,${.35*(1-t)})`;ctx.fillRect(0,0,VW,VH)}else FX.flash=null}
+};
+window.__iso={project:ISO.project,unproject:ISO.unproject,pick:(x,y)=>ISO.pick(x,y),screen:(x,y)=>ISO.screen(x,y),depth:ISO.depth,
+  tileCenter:(x,y)=>ISO.screen((x+.5)*T,(y+.5)*T)};
+
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
