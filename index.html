@@ -3895,6 +3895,56 @@ function drawSprite(img,imgW,e,size,alpha,flipOk){const p=wpos(e);let ox=0,oy=0;
     if(e.lunge&&NOW-e.lunge.t0<200){ctx.globalAlpha*=.9;rect(e.fx<0?1:13,6,2,4,'#f1e4c9')}
     ctx.restore();
   }
+  // High-contrast silhouette pass: deliberately larger shapes so creature types read at game scale.
+  if(e.id!=='P'&&sz>=20){
+    const mt=e.type||'',u=sz/16,px=(v)=>Math.round(v*u),r=(a,b,c,d,col)=>{ctx.fillStyle=col;ctx.fillRect(px(a),px(b),Math.max(1,px(c)),Math.max(1,px(d)))};
+    const tt=NOW/150+(typeof e.id==='number'?e.id:0),wave=REDUCE?0:Math.sin(tt);
+    ctx.save();ctx.globalAlpha*=alpha==null?1:1;
+    if(mt==='rat'||mt==='saltleecher'||mt==='marrowmite'){
+      // Low, fast scavengers: long back, pointed snout, and animated tail.
+      r(2,7,9,5,mt==='marrowmite'?'#b9c6bd':'#403d36');r(9,8,5,3,'#77705b');r(12,9,2,1,'#d7c6a0');
+      r(3,5,2,2,'#8f8270');r(5,4,2,3,'#5b5147');r(1,9,2,1,'#a58a70');
+      if(!REDUCE)r(0,7+Math.round(wave),3,1,'#827565');
+    }else if(mt==='wolf'||mt==='direwolf'){
+      // Broad chest and ears give wolves a different profile from rats.
+      r(2,6,8,7,'#554c47');r(8,5,5,6,'#75665a');r(11,7,4,3,'#9a8870');
+      r(3,3,2,4,'#382f2d');r(7,3,2,3,'#382f2d');r(12,8,2,1,'#e7c56f');
+      r(3,12,2,3,'#302c2a');r(9,12,2,3,'#302c2a');
+    }else if(mt==='spider'){
+      // Six long angular legs are animated around a compact body.
+      const leg='#8b9a91',swing=REDUCE?0:Math.round(wave);
+      r(5,5,6,7,'#3a4541');r(6,4,4,3,'#65766d');r(6,8,1,2,'#e4c49c');r(9,8,1,2,'#e4c49c');
+      for(let k=0;k<3;k++){r(1,4+k*3+swing,5,1,leg);r(10,4+k*3-swing,5,1,leg);r(1,3+k*3+swing,1,2,leg);r(14,3+k*3-swing,1,2,leg)}
+    }else if(mt==='bat'){
+      const flap=REDUCE?0:Math.round(Math.sin(NOW/90)*2);
+      r(6,5,4,7,'#393d51');r(1,4+flap,5,5-flap,'#555b77');r(10,4-flap,5,5+flap,'#555b77');
+      r(6,4,1,3,'#a9a2a8');r(9,4,1,3,'#a9a2a8');r(7,8,2,3,'#d8c4bc');
+    }else if(mt==='skeleton'||mt==='gaunt'){
+      r(5,3,6,4,'#d8d0b8');r(4,7,8,2,'#b9b09a');r(5,9,6,1,'#e8dfc8');r(5,11,2,3,'#c7bea8');r(9,11,2,3,'#c7bea8');
+      r(5,4,2,2,'#28282b');r(9,4,2,2,'#28282b');r(6,7,1,1,'#51473e');r(9,7,1,1,'#51473e');
+      if(mt==='gaunt'){r(2,7,3,1,'#e2d8bd');r(11,9,3,1,'#e2d8bd')}
+    }else if(mt==='shambler'||mt==='host'){
+      r(3,4,10,9,'#354b32');r(4,3,8,3,'#5d763b');r(2,7,3,4,'#536b35');r(11,8,3,4,'#536b35');
+      r(5,6,2,2,'#d7f56b');r(9,6,2,2,'#d7f56b');r(6,10,4,2,'#9bc447');
+      if(!REDUCE){ctx.globalAlpha*=.85;r(2+Math.round((tt%5)),2,2,2,'#c8ef67');r(11-Math.round((tt%4)),1,2,2,'#e9ff9a')}
+    }else if(mt==='cultist'||mt==='bellbound'){
+      r(4,3,8,4,'#28252b');r(3,6,10,7,'#49404a');r(5,4,6,2,'#a89570');r(6,7,1,1,'#ffcf75');r(9,7,1,1,'#ffcf75');r(7,9,2,3,'#9e3943');
+      if(mt==='bellbound'){r(11,2,3,4,'#c4b28a');r(12,3,1,2,'#514b42')}
+    }else if(/eel|harp|horror|deepone|drowned|salt|brine|water|leecher/i.test(mt)){
+      r(3,4,10,8,'#28535a');r(2,7,3,4,'#367c83');r(10,8,4,3,'#367c83');r(4,5,2,2,'#7eeaf0');r(10,5,2,2,'#7eeaf0');r(6,10,4,1,'#b4e3d7');
+      if(mt==='eel'||mt==='horror'){r(1,5,3,2,'#4f9ba0');r(0,4,2,3,'#4f9ba0')}
+    }else if(/boss|shift|choir|abbot|stalker|rival|saint|oracle|glass/i.test(mt)){
+      // Bosses get a dark mantle, bright face, and a pulsing crown edge.
+      r(2,4,12,10,'#25232d');r(4,2,8,5,'#514052');r(5,4,2,2,'#ffcf73');r(9,4,2,2,'#ffcf73');r(6,8,4,2,'#b84c65');
+      r(1,5,2,6,'#6f405a');r(13,5,2,6,'#6f405a');
+      if(!REDUCE&&wave>.35){ctx.globalAlpha*=.9;r(0,3,2,2,'#f3b7d1');r(14,3,2,2,'#f3b7d1')}
+    }else if(/knight|chain|husk|wraith|ghoul|sailor|sapper|knight/i.test(mt)){
+      r(3,4,10,9,'#41454a');r(4,2,8,4,'#6c7475');r(5,5,2,2,'#f0c36e');r(9,5,2,2,'#f0c36e');r(6,9,4,3,'#292d31');
+      if(mt==='chainwretch'){for(let k=0;k<4;k++)r(1+k*3,11+(k%2),2,1,'#b7a58a')}
+      if(mt==='wraith'){ctx.globalAlpha*=.8;r(5,1,6,2,'#a4dbe0');r(6,12,4,3,'#a4dbe0')}
+    }
+    ctx.restore();
+  }
   if(imgW&&e.flashT&&NOW-e.flashT<140)ctx.drawImage(imgW,0,0,sz,sz);ctx.restore()}
 function flame(x,y,s,seed){const t=NOW/90+seed;for(let k=0;k<3;k++){const h=(5+Math.sin(t+k*2.1)*2)*s,w=(3-k*0.6)*s;const fx=x+(k-1)*3*s+Math.sin(t*1.7+k)*s;ctx.fillStyle=['#c2533e','#ff8a3a','#fff2b0'][k];ctx.fillRect(Math.round(fx-w/2),Math.round(y-h),Math.ceil(w),Math.ceil(h))}}
 function drawObj(o){const x=Math.round((o.rx!=null?o.rx:o.x)*T),y=Math.round((o.ry!=null?o.ry:o.y)*T);let img;
