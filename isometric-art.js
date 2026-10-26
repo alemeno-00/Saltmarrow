@@ -77,5 +77,23 @@
   api.white=asset=>{if(asset.white)return asset.white;const c=canvas(asset.image.width,asset.image.height),g=c.getContext('2d');g.drawImage(asset.image,0,0);g.globalCompositeOperation='source-in';g.fillStyle='#fff5d3';g.fillRect(0,0,c.width,c.height);return asset.white=c};
   api.square=key=>{const a=api.actor(key);if(!a)return null;if(a.square)return a.square;const c=canvas(64,64),g=c.getContext('2d');g.imageSmoothingEnabled=false;const im=a.image;g.drawImage(im,Math.round((64-im.width)/2),64-im.height);return a.square=c};
   api.portrait=key=>{const a=api.actor(key);if(!a)return null;if(a.portrait)return a.portrait;const c=canvas(48,48),g=c.getContext('2d'),s=a.source;g.imageSmoothingEnabled=false;g.fillStyle='#101e25';g.fillRect(0,0,48,48);const w=Math.min(s.width,s.height*.48),h=s.height*.4;g.drawImage(s,(s.width-w)/2,0,w,h,1,1,46,46);return a.portrait=c};
-  api.tile=(key,variant=0)=>{const a=api.get('terrain',key);if(!a)return null;if(!a.tiles)a.tiles=[];variant=variant%4;if(a.tiles[variant])return a.tiles[variant];const s=a.source,w=s.width/2,h=s.height/2,c=canvas(32,32),g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(s,variant%2*w,Math.floor(variant/2)*h,w,h,0,0,32,32);return a.tiles[variant]=c};
+  const townTiles=new Map();
+  api.townTile=(variant=0,surface='stone')=>{
+    variant%=4;const key=surface+variant;if(townTiles.has(key))return townTiles.get(key);
+    const c=canvas(32,32),g=c.getContext('2d');
+    const grass=surface==='grass',yard=surface==='yard';
+    g.fillStyle=grass?'#1a2928':yard?'#1c2529':'#19252c';g.fillRect(0,0,32,32);
+    if(grass){g.fillStyle='#20312d';g.fillRect(3+variant,5,13,9);g.fillRect(15,18-variant,12,8);g.fillStyle='#263630';g.fillRect(8,11,5,2)}
+    else{
+      const colors=yard?['#222d30','#242e31','#212b2f','#263033']:['#253238','#263339','#243137','#28353a'];
+      for(let row=0;row<2;row++)for(let col=-1;col<3;col++){
+        const x=col*16+(row%2?8:0),y=row*16;g.fillStyle=colors[(variant+row+col+4)%4];g.fillRect(x+1,y+1,15,15);
+        g.fillStyle=yard?'#2a3536':'#2e3b40';g.fillRect(x+3,y+2,10,1);
+      }
+      // A few broad, quiet chips; no salt speckles, shimmer or noisy texture overlay.
+      if(variant===2){g.fillStyle=yard?'#1c2529':'#19252c';g.fillRect(13,2,2,2);g.fillRect(25,18,2,1)}
+    }
+    townTiles.set(key,c);return c;
+  };
+  api.tile=(key,variant=0)=>{if(key==='town')return api.townTile(variant);const a=api.get('terrain',key);if(!a)return null;if(!a.tiles)a.tiles=[];variant=variant%4;if(a.tiles[variant])return a.tiles[variant];const s=a.source,w=s.width/2,h=s.height/2,c=canvas(32,32),g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(s,variant%2*w,Math.floor(variant/2)*h,w,h,0,0,32,32);return a.tiles[variant]=c};
 })(typeof globalThis!=='undefined'?globalThis:this);

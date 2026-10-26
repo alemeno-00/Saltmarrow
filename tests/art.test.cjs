@@ -21,3 +21,5 @@ test('native app offline bundles include runtime scripts and the art folder',()=
     const src=fs.readFileSync(file,'utf8');for(const name of ['../death-effects.js','../isometric-art.js','cp -R ../assets www/assets'])assert.ok(src.includes(name),`${file}: ${name}`);
   }
 });
+
+test('home artwork is included in the offline cache',()=>{assert.ok(fs.statSync('assets/art/home.webp').size>1024);assert.ok(fs.readFileSync('sw.js','utf8').includes("'assets/art/home.webp'"))});

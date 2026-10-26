@@ -268,20 +268,9 @@ body:has(#overlay:not([hidden])) #dock{visibility:hidden!important}
 #overlay:not([hidden]) .cls{background:rgba(8,19,22,.9);border-color:rgba(111,181,160,.3)}
 #overlay:not([hidden]) .cls:hover,#overlay:not([hidden]) .cls:focus-visible{border-color:#6fe5dc;box-shadow:0 0 18px rgba(66,220,213,.14)}
 #overlay:not([hidden]) .cls h3{color:#f0d49b}
-/* Use the actual cinematic title-art asset, not a generic gradient-only placeholder. */
-#overlay:not([hidden]){background-image:linear-gradient(90deg,rgba(2,8,11,.97) 0%,rgba(3,12,16,.86) 34%,rgba(3,12,16,.34) 66%,rgba(2,8,11,.16) 100%),url("assets/title-screen.svg")!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}
-#overlay:not([hidden]) .picker{margin-right:auto;max-width:900px;background:linear-gradient(120deg,rgba(2,8,11,.82),rgba(4,20,24,.68));border-color:rgba(125,222,205,.38);box-shadow:0 20px 80px rgba(0,0,0,.42),inset 0 0 50px rgba(57,190,180,.06)}
-#overlay:not([hidden]) .picker h2{color:#e8e4ce;text-align:left;font-size:clamp(42px,5.8vw,72px);letter-spacing:.06em;text-shadow:0 3px 0 #142326,0 0 26px rgba(93,221,206,.24)}
-#overlay:not([hidden]) .picker:before{content:"SALTMARROW";display:block;align-self:flex-start;font-family:var(--display);font-size:clamp(46px,7vw,88px);font-weight:700;letter-spacing:.07em;line-height:.88;color:#e8e4ce;text-shadow:0 3px 0 #142326,0 0 26px rgba(93,221,206,.24)}
-#overlay:not([hidden]) .picker h2:before{content:"—  D E E P  —";display:block;margin:0 0 10px;color:#d5b978;font-family:var(--display);letter-spacing:.28em;font-size:clamp(15px,2vw,22px)}
-#overlay:not([hidden]) .picker h2{font-size:clamp(25px,3vw,36px);color:#d5b978;letter-spacing:.03em}
+/* Modal backdrops remain quiet; only the home screen receives the title scene. */
+#overlay:not([hidden]){background:rgba(3,9,13,.94)!important}
 
-#overlay:not([hidden]) .picker>p{text-align:left;max-width:66ch}
-#overlay:not([hidden]) .classes{grid-template-columns:repeat(auto-fit,minmax(205px,1fr))}
-#overlay:not([hidden]) .cls{min-height:150px}
-@media(max-width:860px){#overlay:not([hidden]){background-image:linear-gradient(180deg,rgba(2,8,11,.8),rgba(2,8,11,.94)),url("assets/title-screen.svg")!important;background-position:center!important}#overlay:not([hidden]) .picker{margin:auto;background:rgba(2,10,13,.82)}}
-
-@media(max-width:860px){#overlay:not([hidden]){align-items:flex-start;background:linear-gradient(145deg,rgba(2,7,10,.98),rgba(3,22,27,.96),rgba(2,8,12,.99))!important}#overlay:not([hidden]) .picker{margin:auto 0}}
 
 /* overlays */
 .card{max-width:440px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
@@ -6934,7 +6923,7 @@ const DYING=[];
 {const k0=killMon;killMon=function(m,how,src){if(m.dead)return;const p=m.rx!=null?{x:m.rx*T+T/2,y:m.ry*T+T/2}:{x:m.x*T+T/2,y:m.y*T+T/2};const r=k0(m,how,src);
   try{if(!REDUCE&&SPR[m.type]){const M=MT(m);DYING.push({img:DROWNED_ART.frame(m,NOW,REDUCE)||SPR[m.type],x:p.x,y:p.y,k:({ice:'crumble',occult:'fade',slash:'sever',piercing:'sever',fire:'burn',water:'sink',spores:'spore',lightning:'shock'})[m.lastHit&&m.lastHit.kind]||DEATHK[m.type]||'topple',t0:NOW,sz:DROWNED_TYPES.has(m.type)?(m.type==='admiral'?72:48):M.boss?T*1.5:T,dir:src&&src.x!=null&&src.x>m.x?-1:1,seed:Math.random()*6});if(DYING.length>24)DYING.splice(0,DYING.length-24)}}catch(e){}return r}}
 {const a0=drawAnims;drawAnims=function(){a0();if(!DYING.length)return;try{for(let i=DYING.length-1;i>=0;i--){const d=DYING[i],dur=d.k==='fade'?900:d.k==='crumble'?700:620,t=(NOW-d.t0)/dur;if(t>1){DYING.splice(i,1);continue}if(t<0)continue;
-  const sz=d.sz;let x=d.x,y=d.y;ctx.save();if(typeof ISO!=='undefined'){ctx.transform(.5,-.5,1,1,0,0);const p=ISO.project(x,y);x=p.x;y=p.y-T/2}ctx.globalCompositeOperation='source-over';
+  const sz=d.sz;let x=d.x,y=d.y;ctx.save();if(typeof ISO!=='undefined'){ctx.transform(.5,-.5,1/(2*ISO.rise),1/(2*ISO.rise),0,0);const p=ISO.project(x,y);x=p.x;y=p.y-T/2}ctx.globalCompositeOperation='source-over';
   switch(d.k){
     case'burn':{ctx.globalAlpha=1-t;ctx.filter='brightness('+Math.max(.08,1-t*2)+')';ctx.translate(x,y+sz*.3);ctx.scale(1-t*.35,1-t*.75);ctx.drawImage(d.img,-sz/2,-sz*.8,sz,sz);break}
     case'shock':{ctx.globalAlpha=1-t;ctx.filter='brightness('+(.3+Math.max(0,1-t*5)*1.7)+')';ctx.translate(x,y);ctx.rotate(d.dir*Math.min(1,t*2)*1.3);ctx.drawImage(d.img,-sz/2,-sz/2,sz,sz);break}
@@ -7029,8 +7018,9 @@ setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{buildTutorial:()
 
 /* ---------- semi-isometric presentation (simulation remains in grid coordinates) ---------- */
 const ISO={
-  project(x,y){return{x:x-y,y:(x+y)/2}},
-  unproject(x,y){return{x:y+x/2,y:y-x/2}},
+  rise:.65,
+  project(x,y){return{x:x-y,y:(x+y)*ISO.rise}},
+  unproject(x,y){const row=y/(2*ISO.rise);return{x:row+x/2,y:row-x/2}},
   depth(e){return(e.rx??e.x)+(e.ry??e.y)},
   camera:{x:0,y:0,ready:false},
   screen(x,y){const p=this.project(x,y);return{x:p.x-this.camera.x,y:p.y-this.camera.y}},
@@ -7046,18 +7036,19 @@ const isoAnimate=animate;animate=function(dt){if(ISO.level!==S.L){ISO.level=S.L;
   c.x=Math.round(c.x);c.y=Math.round(c.y)};
 tileFromEvent=function(ev){const r=cv.getBoundingClientRect();return ISO.pick((ev.clientX-r.left)*VW/r.width,(ev.clientY-r.top)*VH/r.height)};
 UI.inspectAt=(x,y)=>{const r=cv.getBoundingClientRect(),p=ISO.screen((x+.5)*T,(y+.5)*T);openInspect(x,y,r.left+p.x*r.width/VW,r.top+p.y*r.height/VH)};
-function isoGround(fn){ctx.save();ctx.transform(1,.5,-1,.5,0,0);fn();ctx.restore()}
+function isoGround(fn){ctx.save();ctx.transform(1,ISO.rise,-1,ISO.rise,0,0);fn();ctx.restore()}
 function isoUpright(e,fn){const p=wpos(e),q=ISO.project(p.x,p.y);ctx.save();ctx.translate(Math.round(q.x-p.x),Math.round(q.y-p.y-T/2));fn();ctx.restore()}
 function isoWall(TS,x,y,wf){const i=I(x,y),h=T*(S.L.town ? .85 : 1.1),im=tileImg(TS,S.L.map[i],x,y,wf);
   // Two textured vertical faces and a diamond cap, all using the same tile art.
   const a=ISO.project(x*T,y*T),b=ISO.project((x+1)*T,y*T),c=ISO.project(x*T,(y+1)*T);
-  ctx.save();ctx.transform(1,.5,0,1,c.x,c.y-h);ctx.drawImage(im,0,0,T,h);ctx.fillStyle='rgba(2,8,12,.24)';ctx.fillRect(0,0,T,h);ctx.restore();
-  ctx.save();ctx.transform(-1,.5,0,1,b.x,b.y-h);ctx.drawImage(im,0,0,T,h);ctx.fillStyle='rgba(2,8,12,.48)';ctx.fillRect(0,0,T,h);ctx.restore();
+  ctx.save();ctx.transform(1,ISO.rise,0,1,c.x,c.y-h);ctx.drawImage(im,0,0,T,h);ctx.fillStyle='rgba(2,8,12,.24)';ctx.fillRect(0,0,T,h);ctx.restore();
+  ctx.save();ctx.transform(-1,ISO.rise,0,1,b.x,b.y-h);ctx.drawImage(im,0,0,T,h);ctx.fillStyle='rgba(2,8,12,.48)';ctx.fillRect(0,0,T,h);ctx.restore();
   ctx.save();ctx.translate(0,-h);isoGround(()=>ctx.drawImage(ART?.tile('masonry',h4(x,y))||(TS.top?TS.top[h4(x,y)]:im),x*T,y*T,T,T));ctx.restore();
   ctx.strokeStyle='#60716c';ctx.globalAlpha*=.35;ctx.beginPath();ctx.moveTo(b.x,b.y-h);ctx.lineTo(a.x,a.y-h);ctx.lineTo(c.x,c.y-h);ctx.stroke();
 }
 const ISO_ART=new WeakMap();
 function isoFloorArt(img,t,x,y){
+  if(S.L.town&&!S.L.interior)return img;
   // Cache four native-pixel variants; no per-frame texture allocation.
   if(![FLOOR,RUBBLE,GRASS,WATER].includes(t))return img;
   let variants=ISO_ART.get(img);if(!variants){variants=[];ISO_ART.set(img,variants)}
@@ -7169,9 +7160,9 @@ function townArtPlan(L){
 }
 function artBuildingPlacement(b){
   const center=ISO.project((b.x+b.w/2)*T,(b.y+b.h/2)*T);
-  const width=Math.round((b.w+b.h)*T*(b.key==='lift'?.65:.94)),asset=ART.get(b.key==='lift'?'structures':'buildings',b.key);
-  const height=asset?Math.round(width*asset.image.height/asset.image.width):width;
-  return {x:Math.round(center.x-width/2),y:Math.round(center.y+(b.key==='lift'?T:(b.w+b.h)*T*.22)-height),w:width,h:height};
+  const width=Math.round((b.w+b.h)*T*(b.key==='lift'?.65:.88)),asset=ART.get(b.key==='lift'?'structures':'buildings',b.key);
+  const height=asset?Math.round(width*asset.image.height/asset.image.width*(b.key==='lift'?.84:.78)):width;
+  return {x:Math.round(center.x-width/2),y:Math.round(center.y+(b.key==='lift'?T:(b.w+b.h)*T*ISO.rise*.44)-height),w:width,h:height};
 }
 function drawArtBuilding(b){
   const a=ART.get(b.key==='lift'?'structures':'buildings',b.key);if(!a){if(b.key==='lift')drawArtLift(b);return}
@@ -7194,11 +7185,23 @@ function drawArtLift(b){
   const lamp=ART.get('props','lamp');if(lamp)ctx.drawImage(lamp.image,w/2-18,-h*.35,18,44);
   ctx.restore();
 }
+const QUIET_TOWN_FALLBACK=new Map();
+function calmTownTile(v,surface='stone'){
+  if(ART?.townTile)return ART.townTile(v,surface);
+  // A previously cached art module can coexist briefly with a newer HTML page.
+  const key=surface+v;if(QUIET_TOWN_FALLBACK.has(key))return QUIET_TOWN_FALLBACK.get(key);
+  const c=document.createElement('canvas');c.width=c.height=32;const g=c.getContext('2d');
+  g.fillStyle=surface==='grass'?'#1a2928':'#19252c';g.fillRect(0,0,32,32);
+  g.fillStyle=surface==='grass'?'#20312d':'#253238';
+  for(let y=0;y<2;y++)for(let x=-1;x<3;x++)g.fillRect(x*16+(y%2?8:0)+1,y*16+1,15,15);
+  QUIET_TOWN_FALLBACK.set(key,c);return c;
+}
 const artTileBase=tileImg;
 tileImg=function(TS,t,x,y,wf){
   const L=S.L,plan=townArtPlan(L),v=h4(x,y);
   if(L.town&&!L.interior&&L.bart?.[I(x,y)]&&!plan)return artTileBase(TS,t,x,y,wf);
-  if(plan?.covered.has(I(x,y)))return ART.tile('town',v)||artTileBase(TS,FLOOR,x,y,wf);
+  if(plan?.covered.has(I(x,y)))return calmTownTile(v);
+  if(L.town&&!L.interior&&[FLOOR,RUBBLE,GRASS].includes(t))return calmTownTile(v,t===GRASS?'grass':t===RUBBLE?'yard':'stone');
   if(t===FLOOR){const key=L.interior?'planks':L.town?'town':L.bio==='fungal'?'fungal':L.bio==='drowned'||L.bio==='abbey'?'drowned':L.bio==='crypt'?'crypt':'mine';return ART?.tile(key,v)||artTileBase(TS,t,x,y,wf)}
   if(t===WALL||t===CRACK)return ART?.tile('masonry',v)||artTileBase(TS,t,x,y,wf);
   return artTileBase(TS,t,x,y,wf);
@@ -7267,6 +7270,31 @@ tileFromEvent=function(ev){
   candidates.sort((a,b)=>b.depth-a.depth);return candidates[0]?{x:candidates[0].x,y:candidates[0].y}:artPickBase(ev);
 };
 window.__art={ready:ART?.ready,plan:()=>townArtPlan(S.L),placement:artBuildingPlacement,errors:ART?.errors};
+
+
+/* Home screen: one clear wordmark and a pixel-art scene, scoped away from dialogs. */
+{const st=document.createElement('style');st.textContent=`
+#overlay.ttov:not([hidden]):has(>.ttl){
+  background-image:linear-gradient(90deg,rgba(3,9,13,.30),rgba(3,9,13,.04) 72%),url('assets/art/home.webp')!important;
+  background-color:#061016!important;background-position:center!important;background-size:cover!important;background-repeat:no-repeat!important;
+  image-rendering:pixelated;justify-content:flex-start;align-items:center;isolation:isolate;
+}
+#boot[data-s="2"],#boot[data-s="2o"]{background:linear-gradient(90deg,rgba(3,9,13,.65),rgba(3,9,13,.3)),url('assets/art/home.webp') center/cover no-repeat!important;image-rendering:pixelated}
+#overlay.ttov:has(>.ttl)::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:-1;background:linear-gradient(0deg,rgba(2,7,10,.75),transparent 28%)}
+#overlay.ttov:has(>.ttl)>.ttl{width:min(430px,90vw);margin:0 0 0 clamp(28px,6vw,110px);padding:30px 16px;gap:28px;position:relative;z-index:1;image-rendering:auto}
+.ttl .tt1,#boot .b2 .tt1{font-size:clamp(44px,6vw,82px);line-height:1.04;letter-spacing:.025em;color:#e2e5d9;text-shadow:0 2px 0 #19272a,0 4px 12px #03090d}
+.ttl .tt2,#boot .b2 .tt2{margin:10px 0 0;font-family:var(--display);font-size:clamp(19px,2.1vw,26px);line-height:1.2;letter-spacing:.48em;padding-left:.48em;color:#b9c8c4;background:none;filter:none;-webkit-text-fill-color:currentColor;text-shadow:0 2px 0 #071117}
+.ttl .ttorn{margin-top:13px;color:#9b8f6d}.ttl .ttorn i{width:68px}
+.ttl .ttsub{max-width:28ch;margin:16px auto 0;font-size:16px;line-height:1.5;color:#aebfbd;text-wrap:balance}
+.ttl .gml{max-width:290px;gap:5px}.ttl .gmb{min-height:44px;padding:8px 12px;font-size:24px;text-shadow:0 2px 8px #02080b}
+.ttl .gmb small{color:#a9b9b5}.ttl .ttfoot{color:#879b98}.ttl .gmmsg:empty{display:none}
+@media(max-width:700px){
+  #overlay.ttov:not([hidden]):has(>.ttl){background-image:linear-gradient(0deg,rgba(3,9,13,.98) 0%,rgba(3,9,13,.87) 46%,rgba(3,9,13,.15) 100%),url('assets/art/home.webp')!important;background-position:68% center!important;justify-content:center;align-items:flex-end}
+  #overlay.ttov:has(>.ttl)>.ttl{margin:0 auto;padding:26px 14px max(24px,env(safe-area-inset-bottom));width:min(390px,94vw);gap:18px}
+  .ttl .tt1{font-size:clamp(38px,11.8vw,56px)}.ttl .tt2{font-size:19px;margin-top:7px}.ttl .ttsub{font-size:14px;margin-top:12px}.ttl .gml{gap:2px}.ttl .gmb{font-size:22px;min-height:44px}
+}
+@media(max-height:620px){#overlay.ttov:has(>.ttl)>.ttl{gap:12px;padding-top:12px;padding-bottom:12px}.ttl .ttsub{margin-top:9px}.ttl .ttorn{margin-top:8px}.ttl .tt1{font-size:44px}.ttl .tt2{font-size:18px}.ttl .gmb{padding:5px 10px}}
+`;document.head.appendChild(st)}
 
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});

@@ -8,7 +8,7 @@ The browser game is one inline application in `index.html`, with accumulated dra
 
 The new final drawing hook keeps the simulation, save format, keyboard/grid directions, monster AI, collision, damage, and turn economy intact. Existing sprites, object renderers, biome tile palettes, generated town art, title artwork, and animation hooks remain the source assets.
 
-- Floor projection: `(x − y, (x + y) / 2)` in world pixels; inverse: `(y + x / 2, y − x / 2)`.
+- Floor projection: `(x − y, (x + y) × 0.65)` in world pixels; inverse: `(y / 1.3 + x / 2, y / 1.3 − x / 2)`.
 - `ISO.camera` stores projected logical pixels, independently of the old world camera. Camera follows the interpolated hero; touch pan operates in screen directions.
 - Picking converts the canvas's CSS rectangle to logical viewport pixels and applies the exact inverse projection. Zoom and device DPR are accounted for once.
 - Floors, item footprints, paths, range/area indicators, rings, bolts, stains, and existing animation hooks use `isoGround`. Upright sprites and objects use `isoUpright`, anchored at their ground contact. Boss/hulking size distinctions remain intentional; NPCs share the hero tile scale.
