@@ -17,3 +17,5 @@ Reduced motion immediately settles three fragments, suppresses killing-hit shake
 ## Validation
 
 `node --test tests/deaths.test.cjs` covers syntax, classification, all anatomy/type combinations, caps, physics, collisions, execution, expiry, level cleanup, and headless gameplay rewards/corpse preservation. `node tests/deaths-browser.cjs` uses Playwright to exercise all 48 requested anatomy/element combinations in the real game, actual ability combat, runtime errors, level transitions and reduced motion. Set `CHROME_PATH` for a local Chrome and `SCREENSHOT_DIR` for visual captures. The test server injects private fixture hooks; production exposes none.
+
+The final semi-isometric renderer draws floor residue once inside `isoGround` and projects airborne tile positions explicitly, subtracting height in screen pixels. The legacy dying-sprite layer cancels the ground transform and projects the sprite anchor once, retaining upright silhouettes. Reduced-motion labels stay fixed in both render paths. Renderer gameplay fixtures serve the external death module.
