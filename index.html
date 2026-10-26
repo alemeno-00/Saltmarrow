@@ -484,23 +484,23 @@ const CLASSES={
   riptide:{name:'Saltbreaker',role:'Brawler',res:'Ferocity',stam:28,per:9,speed:5,stab:2,recov:10,chars:{M:2,A:1,R:-1,I:0,P:1},prime:'M',spr:'riptide',
     blurb:'A mine-wrecker with a chain and a maul. Gets stronger as he bleeds and smashes foes into walls, carts and shafts.',
     passive:'Blood Up: while winded your power rolls gain an edge. You can smash cracked walls and timber props with a blow.',
-    abilities:['undertow','gaff','breakwater','redtide']},
+    abilities:['undertow','gaff','breakwater','redtide','ironwake']},
   shadow:{name:'Cutpurse',role:'Skulker',res:'Insight',stam:22,per:7,speed:6,stab:0,recov:8,chars:{M:0,A:2,R:0,I:1,P:0},prime:'A',spr:'shadow',
     blurb:'A thief who moves without a sound. Strikes from hiding, then vanishes into smoke.',
     passive:'Light Feet: sneaking is silent, tall growth does not rustle, enemies spot you a square later, and abilities cost 1 less while hidden.',
-    abilities:['gutter','fishhook','knife','inkcloud','eelstep']},
+    abilities:['gutter','fishhook','knife','inkcloud','eelstep','brandofsalt']},
   storm:{name:'Stormcaller',role:'Caster',res:'Essence',stam:21,per:7,speed:5,stab:0,recov:8,chars:{M:-1,A:0,R:2,I:1,P:0},prime:'R',spr:'storm',
     blurb:'A hedge-witch of the squall. Floods the floor, then electrifies it.',
     passive:'Conductor: lightning deals double damage to anything standing in water. Your lantern reaches 1 square farther.',
-    abilities:['brinebolt','squall','grasp','staticlash','waterspout']},
+    abilities:['brinebolt','squall','grasp','staticlash','waterspout','stormglass']},
   flag:{name:'Flagellant',role:'Zealot',res:'Fervor',stam:26,per:8,speed:5,stab:1,recov:9,chars:{M:1,A:0,R:0,I:0,P:2},prime:'P',spr:'flag',
     blurb:'A penitent of the chapel who turns pain into holy fire. Feared by the dead.',
     passive:'Mortification: taking damage in combat gives 1 Fervor (once a round). Dread rises half as fast while you stand in light.',
-    abilities:['scourge','smite','penance','litany','martyr']},
+    abilities:['scourge','smite','penance','litany','martyr','lastlight']},
   occult:{name:'Occultist',role:'Seer',res:'Clarity',stam:20,per:7,speed:5,stab:0,recov:8,chars:{M:-1,A:1,R:1,I:2,P:0},prime:'I',spr:'occult',
     blurb:"A scholar who read too far into the Brotherhood's books. Uses the void, and their own fear, as a weapon.",
     passive:'Communion: void damage gains +1 for every 3 Dread. Reads spell tomes without strain.',
-    abilities:['mindspike','gaze','veil','unravel','rend']},
+    abilities:['mindspike','gaze','veil','unravel','rend','memoryleech']},
 };
 const AB={
   undertow:{name:'Maul Swing',icon:'maul',cost:0,act:'main',kind:'melee',range:1,stat:'M',t:[{d:3,push:1},{d:6,push:2},{d:8,push:3}],desc:'A heavy swing that drives the target back. Push them into walls, carts or shafts.'},
@@ -527,6 +527,11 @@ const AB={
   veil:{name:'Veil of the Other',icon:'eye',cost:1,act:'maneuver',kind:'none',desc:'Fold yourself out of sight even while watched, unless an enemy is adjacent.'},
   unravel:{name:'Unravel',icon:'swirl',cost:3,act:'main',kind:'area',range:8,radius:1,stat:'I',el:'void',strip:true,t:[{d:3},{d:5,cond:'weakened'},{d:8,cond:'weakened'}],desc:'Unpick a 3×3 area thread by thread. Tears away wards and borrowed stamina first, and leaves what remains weakened.'},
   rend:{name:'Rend the Veil',icon:'eye2',cost:5,act:'main',kind:'area',range:8,radius:1,stat:'I',el:'void',dreadSelf:2,t:[{d:6},{d:9},{d:13,cond:'dazed'}],desc:'Open a door that should stay shut. Raises your Dread by 2.'},
+  ironwake:{name:'Ironwake',icon:'maul',cost:3,act:'main',kind:'melee',range:1,stat:'M',t:[{d:4,push:1},{d:7,push:2},{d:10,push:3}],desc:'A salt-heavy blow that drives a foe backward. Best near walls, carts and shafts.'},
+  lastlight:{name:'Last Light',icon:'sun',cost:4,act:'main',kind:'burst',radius:2,stat:'P',el:'holy',t:[{d:2},{d:4,cond:'weakened'},{d:6,cond:'weakened'}],desc:'A flare of consecrated light strikes nearby enemies and leaves the survivors weakened.'},
+  stormglass:{name:'Stormglass',icon:'bolt',cost:4,act:'main',kind:'area',range:8,radius:1,stat:'R',el:'lightning',lightning:true,t:[{d:2},{d:5},{d:8,cond:'dazed'}],desc:'Crack a storm into a small area. Lightning bites harder through water.'},
+  brandofsalt:{name:'Salt Brand',icon:'dart',cost:2,act:'main',kind:'ranged',range:6,stat:'A',el:'frost',t:[{d:2},{d:4,cond:'slowed'},{d:6,cond:'slowed'}],desc:'A quick thrown sigil of salt that numbs the target.'},
+  memoryleech:{name:'Memory Leech',icon:'eye2',cost:4,act:'main',kind:'ranged',range:8,stat:'I',el:'void',t:[{d:2},{d:4,cond:'weakened'},{d:7,cond:'dazed'}],desc:'A thought with teeth: pierces at range and can leave the target weakened or dazed.'},
   shift:{name:'Shift',icon:'shift',act:'move',kind:'step',range:1,univ:true,desc:'Step 1 square without provoking free strikes. Uses your move.'},
   shove:{name:'Shove',icon:'shove',cost:0,act:'maneuver',kind:'melee',range:1,stat:'M',univ:true,shove:true,t:[{d:0,push:1},{d:0,push:1},{d:0,push:2}],desc:'Push an adjacent creature, keg or cart.'},
   hide:{name:'Hide',icon:'eye',act:'maneuver',kind:'none',univ:true,desc:'Vanish from sight. Needs smoke, tall growth, deep water, or no enemy able to see you.'},
@@ -589,6 +594,16 @@ const MON={
     desc:'It was a person once, and part of it still is. It bursts in spores when it dies.'},
   deepone:{name:'drowned thing',ai:'brute',swim:true,stam:20,speed:5,bonus:3,free:3,xp:9,pts:6,ab:[{name:'Barbed Fingers',kind:'melee',range:1,t:[{d:4},{d:6},{d:8,pull:1}]}],mal:{cost:3,name:'The Water Rises',type:'tide'},
     desc:'It walks out of the water on legs that bend the wrong way, and drags its prey back in.'},
+  saltleecher:{name:'salt leecher',ai:'swarm',coward:true,stam:11,speed:6,bonus:2,free:2,xp:6,pts:4,ab:[{name:'Salt Gnaw',kind:'melee',range:1,t:[{d:2},{d:4,cond:'bleeding'},{d:6,cond:'bleeding'}]}],mal:{cost:2,name:'Ravenous Surge',type:'extra'},
+    desc:'A pale scavenger that worries wounds open. It rushes in, then scatters when badly hurt.'},
+  bellbound:{name:'bellbound penitent',ai:'support',coward:true,stam:13,speed:4,bonus:2,free:2,xp:8,pts:5,ab:[{name:'Tolling Hex',kind:'ranged',range:6,t:[{d:2},{d:4,cond:'weakened'},{d:5,cond:'dazed'}]}],mal:{cost:3,name:'Funeral Toll',type:'daze'},
+    desc:'A penitent fused to a cracked handbell. It hangs behind its allies and makes every strike feel heavier.'},
+  marrowmite:{name:'marrow mite swarm',ai:'skirmish',coward:true,stam:9,speed:8,bonus:2,free:1,xp:5,pts:4,ab:[{name:'Needle Bite',kind:'melee',range:1,t:[{d:2},{d:4},{d:5,cond:'slowed'}]}],mal:{cost:2,name:'Splinter Rush',type:'extra'},
+    desc:'A knot of pale, jointed mites that darts in to bite before skittering away.'},
+  glassoracle:{name:'glass oracle',ai:'caster',stam:16,speed:5,bonus:3,free:2,xp:10,pts:7,ab:[{name:'Shiver Ray',kind:'ranged',range:7,t:[{d:3},{d:5,cond:'weakened'},{d:7,cond:'dazed'}]}],mal:{cost:3,name:'Prism Flare',type:'flare'},
+    desc:'A figure wrapped in translucent shards. It blinks away from danger and cuts through the dark with a refracted ray.'},
+  chainwretch:{name:'chain wretch',ai:'brute',stam:22,speed:4,bonus:3,free:3,xp:10,pts:7,ab:[{name:'Chain Drag',kind:'melee',range:2,t:[{d:3,pull:1},{d:5,pull:2},{d:8,pull:3}]}],mal:{cost:3,name:'Reel In',type:'reel'},
+    desc:'A miner knotted into its own hauling chain. It reaches from a distance and drags prey out of position.'},
   shift:{name:'the Lost Shift',title:'The Lost Shift',boss:true,ai:'boss',stam:70,speed:3,stab:2,bonus:3,free:4,xp:30,pts:0,ab:[{name:'Many Hands',kind:'melee',range:2,t:[{d:5,pull:1},{d:7,pull:2},{d:9,cond:'grabbed'}]},{name:'Pick Rain',kind:'area',range:7,radius:1,t:[{d:3},{d:5},{d:7}]}],
     mal:{cost:3,name:'Call the Shift',type:'summon',sum:'husk'},mal2:{cost:4,name:'Wearing Your Face',type:'dreadhit'},desc:'Eleven miners went into the breach. They came back as one, and it still swings its picks.'},
   choir:{name:'the Sewn Choir',title:'The Sewn Choir',boss:true,ai:'boss',stam:85,speed:2,stab:3,bonus:3,free:4,xp:40,pts:0,twoTurns:true,ab:[{name:'Lash of Sinew',kind:'melee',range:2,t:[{d:5},{d:7},{d:9,cond:'bleeding'}]},{name:'Hymn of Unmaking',kind:'area',range:8,radius:1,t:[{d:4},{d:6,cond:'dazed'},{d:8,cond:'dazed'}]}],
@@ -602,7 +617,7 @@ const MON={
     mal:{cost:3,name:'Rising Tide',type:'tide'},mal2:{cost:5,name:'Toll the Bell',type:'summon',sum:'sailor'},
     desc:'Acts twice a round. Floods the floor around you and calls up acolytes. The kegs in the corners were left by the miners who sealed him in.'},
 };
-const POOL=[null,['rat','rat','wolf','husk'],['rat','wolf','sapper','husk'],['skeleton','ghoul','cultist','husk','gaunt'],['skeleton','ghoul','cultist','gaunt','sapper'],['spider','shambler','bat','host','cultist'],['spider','shambler','host','direwolf','gaunt'],['eel','knight','wraith','harp','horror','deepone'],['knight','wraith','sailor','deepone']];
+const POOL=[null,['rat','rat','wolf','husk'],['rat','wolf','sapper','husk','marrowmite'],['skeleton','ghoul','cultist','husk','gaunt','saltleecher'],['skeleton','ghoul','cultist','gaunt','sapper','chainwretch'],['spider','shambler','bat','host','cultist','bellbound'],['spider','shambler','host','direwolf','gaunt','bellbound'],['eel','knight','wraith','harp','horror','deepone','glassoracle'],['knight','wraith','sailor','deepone','chainwretch','glassoracle']];
 const MXTRA={skeleton:{dread:1,weak:['holy'],resist:['frost']},ghoul:{dread:1,weak:['fire','holy']},spider:{dread:1,weak:['fire']},shambler:{dread:1,weak:['fire'],resist:['void']},harp:{dread:1,resist:['frost']},knight:{dread:1,resist:['frost'],weak:['lightning']},
   wraith:{dread:1,resist:['frost'],weak:['holy']},horror:{dread:2,weak:['lightning']},sailor:{dread:1,weak:['lightning']},eel:{weak:['lightning']},husk:{dread:1,weak:['fire']},gaunt:{dread:2,weak:['holy']},host:{dread:1,weak:['fire']},
   deepone:{dread:1,resist:['frost'],weak:['lightning']},cultist:{weak:['void']},shift:{dread:3,weak:['fire']},choir:{dread:3,weak:['holy'],resist:['void']},saint:{dread:3,weak:['fire']},stalker:{dread:3,resist:['frost','fire']},abbot:{dread:3,weak:['holy'],resist:['frost']}};
@@ -3161,6 +3176,17 @@ Object.assign(SPR_DATA,{
     {o:'#0a1a1a',C:'#5ae8d0',c:'#bffff0',S:'#d0e8e0'}],
   corpse:[["................","................","................","................","................","................","................","....oooo........","...oYYYYo.oooo..","..oSSSSSooBBBBo.","..oSeSSSoBBbBBBo","...oSSSoBBBBBBo.","....ooo.oooooo..","................","................","................"],
     {o:'#100c0a',Y:'#c8a040',S:'#a08a70',e:'#2a2a2a',B:'#4a5a6a',b:'#2a3a4a'}],
+
+  saltleecher:[["................","................","......oooo......",".....oSSSSo.....","....oSSeSSSo....","....oSSSSSSo....","...oSSsSSsSSo...","..oSSSSSSSSSSo..","..oSssSSSSssSo..","..oSSSSSSSSSSo..","...oSSSSSSSSo...","....oSSSSSSo....","....oSSooSSo....","...oSSo..oSSo...","...ooo....ooo...","................"],
+    {o:'#11151a',S:'#a9c9c8',s:'#587f82',e:'#d8f8e8'}],
+  bellbound:[["......oooo......",".....oMMMMo.....","....oMMmMMmMo...","....oMeMMeMMo...","....oMMMMMMMo...",".....oMmmMMo....","...ooMMMMMMoo...","..oRRRMMMMRRRo..","..oRrRMMMMRrRo..","..oRRRMMMRRRRo..","...oRRMMMMRRo...","...oRRRMRRRRo...","....oMMoMMo....","....oMMoMMo....","...ooo....ooo...","................"],
+    {o:'#121018',M:'#b6b9b0',m:'#666c68',e:'#f4d77a',R:'#58415f',r:'#33283e'}],
+  marrowmite:[["................","..o..o....o..o..",".oMMMo....oMMMo.","oMmmMMo..oMMmmMo","oMMMeMMooMMeMMMo",".oMMMMMMMMMMMMo.","..oMMmMMMMmMMo..","...oMMMMMMMMo...","..oMMmMMMMmMMo..",".oMMMMMMMMMMMMo.","oMMoMMMMMMMMoMMo","oMmoMMMMMMMMomMo",".oMoMMo..oMMoMo..","..o..o....o..o...","................","................"],
+    {o:'#111018',M:'#d5e4cf',m:'#7c9a83',e:'#ff9b64'}],
+  glassoracle:[["......oooo......",".....oCCCCo.....","....oCccccCo....","...oCceCceCCo...","...oCcCCCCCco...","....oCCCCCCo....","..ooCCCCCCCCoo..",".oCCcCCCCCCcCCo.","oCccCCCCCCCCccCo","oCCCCCCCCCCCCCCo",".oCCCCcCCcCCCCo..","..oCCcCCCCcCCo...","...oCCo..oCCo....","...oCCo..oCCo....","..ooo......ooo...","................"],
+    {o:'#10131c',C:'#8ce5ef',c:'#397d9a',e:'#fff2c4'}],
+  chainwretch:[[".....oooooo.....","....oMMMMMMo....","...oMmmMMMMMMo...","...oMMeMMMeMMo...","...oMMMMMMMMMo...","....oMMMMMMMo....","..ooMMMMMMMMMoo..",".oRRRMMMMMMMMRRRo","oRrRRRMMMMMMRRrRo","oRRRRRMMMMMMRRRRo",".oRRRRRMMMMRRRRo..","..oRRRMMMMRRRRo...","...oMMo..oMMo....","...oMMo..oMMo....","..ooo......ooo...","................"],
+    {o:'#111014',M:'#b4a18c',m:'#655a50',e:'#ff6a4a',R:'#8a4d3c',r:'#4c2928'}],
 });
 SPR_DATA.direwolf=[SPR_DATA.wolf[0],{o:'#120c0a',G:'#5a443a',g:'#36281e',e:'#ff4a3a',n:'#1a1a1a'}];
 const ICON_MASK={
@@ -3190,7 +3216,14 @@ const ICON_MASK={
   stairs:["............","............","#...........","####........","...#........","...####.....","......#.....","......####..",".........#..",".........###","............","............"],
 };
 const SPR={},SPRW={},ICON={};
-function mk(rows,pal){const c=document.createElement('canvas');c.width=16;c.height=16;const g=c.getContext('2d');rows.forEach((r,j)=>{r=r.padEnd(16,'.');for(let i=0;i<16;i++){const ch=r[i];if(ch&&ch!=='.'&&pal[ch]){g.fillStyle=pal[ch];g.fillRect(i,j,1,1)}}});return c}
+function mk(rows,pal){const c=document.createElement('canvas');c.width=16;c.height=16;const g=c.getContext('2d');rows.forEach((r,j)=>{r=r.padEnd(16,'.');for(let i=0;i<16;i++){const ch=r[i];if(ch&&ch!=='.'&&pal[ch]){g.fillStyle=pal[ch];g.fillRect(i,j,1,1)}}});
+  // Shared hand-inked pixel-art finish: directional rim light, edge occlusion, and tiny material glints.
+  const src=g.getImageData(0,0,16,16),px=src.data,out=g.createImageData(16,16),q=out.data;
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++){const i=(y*16+x)*4;if(!px[i+3])continue;let edgeTop=y===0||!px[((y-1)*16+x)*4+3],edgeLeft=x===0||!px[(y*16+x-1)*4+3],edgeBottom=y===15||!px[((y+1)*16+x)*4+3],edgeRight=x===15||!px[(y*16+x+1)*4+3];let hi=edgeTop||edgeLeft,shade=edgeBottom||edgeRight;for(let k=0;k<3;k++){const v=px[i+k];q[i+k]=hi?Math.min(255,v+((255-v)*0.16|0)):shade?(v*0.76|0):v}q[i+3]=px[i+3]}
+  g.putImageData(out,0,0);
+  // Sparse glints break up flat colour without changing the sprite silhouette.
+  for(let y=2;y<15;y++)for(let x=2;x<15;x++){const i=(y*16+x)*4;if(px[i+3]&&((x*17+y*31+rows.length*7)%47===0)){g.fillStyle='rgba(235,245,218,.24)';g.fillRect(x,y,1,1)}}
+  return c}
 function white(c){const w=document.createElement('canvas');w.width=c.width;w.height=c.height;const g=w.getContext('2d');g.drawImage(c,0,0);g.globalCompositeOperation='source-in';g.fillStyle='#fff';g.fillRect(0,0,w.width,w.height);return w}
 function corpseOf(c){const w=document.createElement('canvas');w.width=16;w.height=16;const g=w.getContext('2d');g.translate(8,10);g.rotate(Math.PI/2);g.scale(0.8,0.8);g.drawImage(c,-8,-8);g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-atop';g.fillStyle='rgba(30,10,10,.55)';g.fillRect(0,0,16,16);return w}
 for(const k in SPR_DATA){SPR[k]=mk(SPR_DATA[k][0],SPR_DATA[k][1]);SPRW[k]=white(SPR[k])}
@@ -3732,6 +3765,7 @@ function drawSprite(img,imgW,e,size,alpha,flipOk){const p=wpos(e);let ox=0,oy=0;
   ctx.save();if(alpha!=null)ctx.globalAlpha=alpha;
   ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(p.x+ox,p.y+T/2-3,sz*0.32,4,0,0,Math.PI*2);ctx.fill();
   if(flipOk!==false&&e.fx<0){ctx.translate(x+sz,y);ctx.scale(-1,1)}else ctx.translate(x,y);
+  if(imgW){ctx.save();ctx.globalAlpha=(alpha==null?1:alpha)*0.16;ctx.drawImage(imgW,-1,-1,sz,sz);ctx.restore()}
   ctx.drawImage(img,0,0,sz,sz);if(imgW&&e.flashT&&NOW-e.flashT<140)ctx.drawImage(imgW,0,0,sz,sz);ctx.restore()}
 function flame(x,y,s,seed){const t=NOW/90+seed;for(let k=0;k<3;k++){const h=(5+Math.sin(t+k*2.1)*2)*s,w=(3-k*0.6)*s;const fx=x+(k-1)*3*s+Math.sin(t*1.7+k)*s;ctx.fillStyle=['#c2533e','#ff8a3a','#fff2b0'][k];ctx.fillRect(Math.round(fx-w/2),Math.round(y-h),Math.ceil(w),Math.ceil(h))}}
 function drawObj(o){const x=Math.round((o.rx!=null?o.rx:o.x)*T),y=Math.round((o.ry!=null?o.ry:o.y)*T);let img;
@@ -3765,7 +3799,9 @@ function draw(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio);ctx.setTransform(dp
   const ox=Math.round(-camX+sx),oy=Math.round(-camY+sy);ctx.save();ctx.translate(ox,oy);
   const x0=Math.max(0,Math.floor(camX/T)-1),x1=Math.min(W-1,Math.ceil((camX+VW)/T)+1),y0=Math.max(0,Math.floor(camY/T)-1),y1=Math.min(H-1,Math.ceil((camY+VH)/T)+1);
   const wf=Math.floor(NOW/380);
-  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=I(x,y);if(!L.seen[i])continue;ctx.drawImage(tileImg(TS,L.map[i],x,y,wf),x*T,y*T,T,T)}
+  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=I(x,y);if(!L.seen[i])continue;ctx.drawImage(tileImg(TS,L.map[i],x,y,wf),x*T,y*T,T,T);
+    // Fine-grain environmental ink: restrained stone flecks, worn seams, and wet-floor glints.
+    {const tt=L.map[i],xx=x*T,yy=y*T,seed=(x*73856093^y*19349663)>>>0;if(tt===FLOOR||tt===RUBBLE||tt===WALL||tt===CRACK||tt===WATER){ctx.save();ctx.globalAlpha=tt===WATER?.17:.13;for(let k=0;k<4;k++){const n=(seed+k*83492791)>>>0,px=xx+3+(n%25),py=yy+3+((n>>>7)%25);ctx.fillStyle=(tt===WATER)?'#9dd8d0':(k%2?'#d7c8a5':'#020707');ctx.fillRect(px,py,1+(k%2),1)}if(tt===FLOOR||tt===WALL||tt===CRACK){ctx.globalAlpha=.11;ctx.fillStyle='#d8c7a2';ctx.fillRect(xx+2,yy+2,T-4,1);ctx.fillStyle='#020606';ctx.fillRect(xx+2,yy+T-3,T-4,1)}ctx.restore()}}}
   if(TS.face&&!L.town)drawDressing(L,TS,x0,x1,y0,y1);
   // fire
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=I(x,y);if(L.fire[i]>0&&L.seen[i]){ctx.fillStyle='rgba(255,120,40,.18)';ctx.fillRect(x*T,y*T,T,T);flame(x*T+10,y*T+T-4,1.6,i);flame(x*T+22,y*T+T-8,1.3,i+3)}}
