@@ -14,7 +14,13 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-save --ignore-scripts playwright@1.62.1
-      - run: npx playwright install --with-deps chromium
+      - name: Select test browser
+        run: |
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install --with-deps chromium --only-shell
+          fi
       - run: node --test tests/deaths.test.cjs
       - run: node tests/deaths-browser.cjs
         env:

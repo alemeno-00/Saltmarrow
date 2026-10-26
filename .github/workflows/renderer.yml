@@ -1,10 +1,10 @@
 name: Renderer and gameplay regression
 on:
   pull_request:
-    paths: ['index.html', 'sw.js', 'tests/**', 'package*.json', '.github/workflows/renderer.yml']
+    paths: ['index.html', 'isometric-art.js', 'assets/art/**', 'sw.js', 'tests/**', 'package*.json', '.github/workflows/renderer.yml']
   push:
     branches: [main]
-    paths: ['index.html', 'sw.js', 'tests/**', 'package*.json', '.github/workflows/renderer.yml']
+    paths: ['index.html', 'isometric-art.js', 'assets/art/**', 'sw.js', 'tests/**', 'package*.json', '.github/workflows/renderer.yml']
 jobs:
   renderer:
     runs-on: ubuntu-latest
@@ -23,6 +23,9 @@ jobs:
             npx playwright install --with-deps chromium --only-shell
           fi
       - run: npm test
+      - run: node tests/art-browser.cjs
+        env:
+          SCREENSHOT_DIR: test-results
       - run: npm run test:browser
         env:
           SCREENSHOT_DIR: test-results
