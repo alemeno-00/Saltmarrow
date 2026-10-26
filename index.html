@@ -232,6 +232,19 @@ textarea.code{width:100%;min-height:90px;background:var(--hull-2);color:var(--bo
 .bar2.dread{height:6px}.bar2.dread i{background:var(--dread)!important}
 .epi{font-family:var(--prose);font-size:17px;line-height:1.7;max-width:60ch;margin:0}
 .log p.dread{color:var(--dread)}.log p.whisper{color:#8a6aa8;font-style:italic;font-family:var(--prose);font-size:13.5px}
+/* Menu/modal isolation: never let the live dungeon HUD bleed through a modal. */
+#stage:has(#overlay:not([hidden])){isolation:isolate;background:#05090a}
+#overlay:not([hidden]){background:rgba(5,8,10,.995)!important;z-index:100;isolation:isolate;backdrop-filter:none}
+#stage:has(#overlay:not([hidden]))>.hud-tl,
+#stage:has(#overlay:not([hidden]))>.tracker,
+#stage:has(#overlay:not([hidden]))>.toast,
+#stage:has(#overlay:not([hidden]))>.tip,
+#stage:has(#overlay:not([hidden]))>.inspect,
+#stage:has(#overlay:not([hidden]))>.feed,
+#stage:has(#overlay:not([hidden]))>.tipcard{visibility:hidden!important}
+#stage:has(#overlay:not([hidden])):before,
+#stage:has(#overlay:not([hidden])):after{display:none!important}
+@media(max-width:860px){#overlay:not([hidden]){background:rgba(5,8,10,.995)!important}}
 /* overlays */
 .card{max-width:440px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
 .card h2{font-family:var(--display);font-size:40px;margin:0;line-height:1;color:var(--lantern);text-wrap:balance}
