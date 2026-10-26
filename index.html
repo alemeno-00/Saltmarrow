@@ -245,6 +245,31 @@ textarea.code{width:100%;min-height:90px;background:var(--hull-2);color:var(--bo
 #stage:has(#overlay:not([hidden])):before,
 #stage:has(#overlay:not([hidden])):after{display:none!important}
 @media(max-width:860px){#overlay:not([hidden]){background:rgba(5,8,10,.995)!important}}
+/* Full-screen title/picker isolation: hide all gameplay chrome while an overlay is active. */
+body:has(#overlay:not([hidden])){overflow:hidden}
+body:has(#overlay:not([hidden])) .wrap>header,
+body:has(#overlay:not([hidden])) .game,
+body:has(#overlay:not([hidden])) .bar,
+body:has(#overlay:not([hidden])) .controls,
+body:has(#overlay:not([hidden])) #dock{visibility:hidden!important}
+#stage:has(#overlay:not([hidden])){z-index:120}
+#overlay:not([hidden]){position:fixed!important;inset:0!important;width:100vw;height:100dvh;box-sizing:border-box;overflow-y:auto;display:flex;align-items:center;justify-content:center;padding:clamp(16px,4vh,48px) clamp(16px,4vw,64px)!important;z-index:1000!important;visibility:visible!important;border:0!important;border-radius:0!important;background:
+ radial-gradient(ellipse at 76% 24%,rgba(29,192,203,.26),transparent 32%),
+ radial-gradient(ellipse at 76% 74%,rgba(10,103,115,.34),transparent 38%),
+ radial-gradient(ellipse at 14% 90%,rgba(37,99,83,.22),transparent 30%),
+ linear-gradient(115deg,rgba(2,7,10,.98) 0%,rgba(3,13,17,.94) 38%,rgba(3,28,34,.82) 70%,rgba(2,8,12,.96) 100%)!important;
+ isolation:isolate;backdrop-filter:none}
+#overlay:not([hidden]):before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:
+ radial-gradient(ellipse at 78% 42%,transparent 0 15%,rgba(2,8,10,.12) 35%,rgba(1,4,6,.68) 100%),
+ repeating-linear-gradient(112deg,transparent 0 84px,rgba(121,202,190,.025) 85px 87px,transparent 88px 170px)}
+#overlay:not([hidden]) .picker{max-width:1000px;max-height:100%;overflow-y:auto;padding:clamp(18px,3vh,36px);box-sizing:border-box;border:1px solid rgba(111,181,160,.32);background:linear-gradient(135deg,rgba(4,13,17,.90),rgba(5,24,28,.72));box-shadow:0 24px 90px rgba(0,0,0,.48),inset 0 0 45px rgba(32,138,142,.08);border-radius:4px;backdrop-filter:blur(4px)}
+#overlay:not([hidden]) .picker h2{font-size:clamp(34px,5vw,58px);letter-spacing:.04em;text-shadow:0 3px 24px rgba(76,221,220,.25)}
+#overlay:not([hidden]) .picker>p{color:#c3d1c9}
+#overlay:not([hidden]) .cls{background:rgba(8,19,22,.9);border-color:rgba(111,181,160,.3)}
+#overlay:not([hidden]) .cls:hover,#overlay:not([hidden]) .cls:focus-visible{border-color:#6fe5dc;box-shadow:0 0 18px rgba(66,220,213,.14)}
+#overlay:not([hidden]) .cls h3{color:#f0d49b}
+@media(max-width:860px){#overlay:not([hidden]){align-items:flex-start;background:linear-gradient(145deg,rgba(2,7,10,.98),rgba(3,22,27,.96),rgba(2,8,12,.99))!important}#overlay:not([hidden]) .picker{margin:auto 0}}
+
 /* overlays */
 .card{max-width:440px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
 .card h2{font-family:var(--display);font-size:40px;margin:0;line-height:1;color:var(--lantern);text-wrap:balance}
