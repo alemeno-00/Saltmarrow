@@ -536,6 +536,7 @@ body.mob .mhead{display:none}
   <nav class="dock mobonly" id="dock"><button class="btn" data-tab="hero">Hero</button><button class="btn" data-tab="pack">Pack</button><button class="btn" data-tab="log">Log</button><button class="btn" id="dockJ">Journal</button></nav>
 </div>
 
+<script src="death-effects.js"></script>
 <script>
 (function(){
 'use strict';
@@ -1585,9 +1586,9 @@ function tickHazards(n){const L=S.L;
     L.fire[i]--;if(L.fire[i]<=0&&burnable(L.map[i]))L.map[i]=FLOOR}
   for(const[x,y]of spread)igniteAt(x,y);if(S.over)return;
   for(const e of [S.P,...L.mons.slice()]){if(e.dead||S.over)continue;const i=I(e.x,e.y);
-    if(isP(e)&&relic('notebook')){if(L.fire[i]>0){log('You are burning!','bad');damage(e,3,null)}continue}
-    if(L.fire[i]>0){if(isP(e))log('You are burning!','bad');damage(e,3,null);if(!e.dead&&!isP(e)&&e.state!=='alert'&&!e.inCombat){e.state='sus';e.inv={x:e.x,y:e.y}}}
-    if(!e.dead&&!S.over&&L.spore[i]>0&&!(MT(e)||{}).sporeproof){damage(e,2,null);if(!e.dead&&S.C)addC(e,'dazed')}}
+    if(isP(e)&&relic('notebook')){if(L.fire[i]>0){log('You are burning!','bad');damage(e,3,null,{kind:'fire'})}continue}
+    if(L.fire[i]>0){if(isP(e))log('You are burning!','bad');damage(e,3,null,{kind:'fire'});if(!e.dead&&!isP(e)&&e.state!=='alert'&&!e.inCombat){e.state='sus';e.inv={x:e.x,y:e.y}}}
+    if(!e.dead&&!S.over&&L.spore[i]>0&&!(MT(e)||{}).sporeproof){damage(e,2,null,{kind:'spores'});if(!e.dead&&S.C)addC(e,'dazed')}}
   if(any)computeLight()}
 function burstPod(o){const L=S.L;const i=L.objs.indexOf(o);if(i<0)return;L.objs.splice(i,1);sporeCloud(o.x,o.y,1,6);log('The spore pod bursts in a choking cloud!','gold');noise(o.x,o.y,5)}
 function sporeCloud(x,y,r,n){for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const nx=x+dx,ny=y+dy;if(inb(nx,ny)&&!solid(tileAt(nx,ny)))S.L.spore[I(nx,ny)]=Math.max(S.L.spore[I(nx,ny)],n)}UI.fx('sporepuff',{x,y,r});computeFov()}
@@ -1757,8 +1758,8 @@ async function descend(fell){if(S.mode==='combat'&&!fell){log('You can\'t take t
   UI.save();UI.render()}
 
 /* ================= damage, death, xp ================= */
-function damage(e,amt,src){if(amt<=0||e.dead||S.over)return;if(isP(e)&&amt>1){const ar=armorTotal();if(ar>0){const cut=Math.min(Math.floor(amt*0.3),Math.floor(ar/2)+((ar%2)&&Math.random()<0.5?1:0));if(cut>0){amt-=cut;e.lastBlock=cut}}}let a=amt;if(e.temp){const u=Math.min(e.temp,a);e.temp-=u;a-=u}
-  const wasW=winded(e);e.lastHit={kind:src?(isP(src)?'weapon':'claw'):'hazard',at:NOW,source:src&&src.type||null,amount:a};e.hitT=NOW;e.stam-=a;UI.fx('hit',{e,amt});
+function damage(e,amt,src,hit){if(amt<=0||e.dead||S.over)return;if(isP(e)&&amt>1){const ar=armorTotal();if(ar>0){const cut=Math.min(Math.floor(amt*0.3),Math.floor(ar/2)+((ar%2)&&Math.random()<0.5?1:0));if(cut>0){amt-=cut;e.lastBlock=cut}}}let a=amt;if(e.temp){const u=Math.min(e.temp,a);e.temp-=u;a-=u}
+  const wasW=winded(e);e.lastHit=Object.assign({kind:src?(isP(src)?'slash':'impact'):'impact',at:HEADLESS?0:NOW,source:src&&src.type||null,amount:a,max:(MT(e)||{}).stam||e.max||10,overkill:Math.max(0,a-e.stam),dx:src?e.x-src.x:0,dy:src?e.y-src.y:0},hit||{});e.hitT=HEADLESS?0:NOW;e.stam-=a;UI.fx('hit',{e,amt});
   if(isP(e)){const C=S.C;
     if(C&&S.cls==='riptide'){if(!C.flags.hurt){C.flags.hurt=1;e.res++}if(!wasW&&winded(e)&&!C.flags.wind){C.flags.wind=1;e.res++}}
     if(C&&S.cls==='flag'&&!C.flags.fhurt){C.flags.fhurt=1;e.res++}
@@ -1767,7 +1768,7 @@ function damage(e,amt,src){if(amt<=0||e.dead||S.over)return;if(isP(e)&&amt>1){co
     if(!wasW&&winded(e)&&e.stam>0){log('You are winded.','bad');tip('winded')}return}
   if(S.mode==='explore'&&!e.inCombat&&e.state!=='alert'){e.state='sus';e.inv=src&&!isP(src)?{x:e.x,y:e.y}:{x:S.P.x,y:S.P.y}}
   if(e.stam<=0)killMon(e,null,src)}
-function killMon(m,how,src){m.dead=true;const L=S.L;const i=L.mons.indexOf(m);if(i>=0)L.mons.splice(i,1);releaseGrabs(m);S.kills++;if(S.C)S.C.kills++;
+function killMon(m,how,src){if(m.dead)return;m.dead=true;const L=S.L;const i=L.mons.indexOf(m);if(i>=0)L.mons.splice(i,1);releaseGrabs(m);S.kills++;if(S.C)S.C.kills++;
   UI.fx('death',{e:m,hit:m.lastHit||null,source:src||null});log(how||`${The(m)} is destroyed.`,'good');recordKill(m);
   const M=MT(m);if(M.final){S.C=null;S.mode='explore';UI.ending();return}
   const drop=it=>{const x=m.x,y=m.y;if(tileAt(x,y)!==PIT)L.items.push(Object.assign(it,{x,y}))};
@@ -1811,9 +1812,9 @@ async function forceMove(t,fx,fy,n,mode,isObj){
       t.x=nx;t.y=ny;await UI.sleep(120);killMon(t,`${The(t)} plunges down the shaft!`);return}
     t.x=nx;t.y=ny;await UI.sleep(55);
     if(isObj)continue;
-    if(S.L.fire[I(nx,ny)]>0){damage(t,3,null);if(t.dead||S.over)return;log(`${The(t)} ${isP(t)?'are':'is'} shoved into the flames!`,'gold')}
+    if(S.L.fire[I(nx,ny)]>0){damage(t,3,null,{kind:'fire'});if(t.dead||S.over)return;log(`${The(t)} ${isP(t)?'are':'is'} shoved into the flames!`,'gold')}
     if(tileAt(nx,ny)===WEB&&!(MT(t)||{}).webwalk){addC(t,'grabbed','web');log(`${The(t)} ${isP(t)?'are':'is'} stuck fast in the web.`);return}
-    if(!isP(t)&&tileAt(nx,ny)===WATER&&MT(t).noSwim){damage(t,3,null);if(!t.dead){addC(t,'slowed');log(`${The(t)} flounders in the deep water.`)}return}}}
+    if(!isP(t)&&tileAt(nx,ny)===WATER&&MT(t).noSwim){damage(t,3,null,{kind:'water'});if(!t.dead){addC(t,'slowed');log(`${The(t)} flounders in the deep water.`)}return}}}
 function explode(o0){const L=S.L,q=[o0];let g=0;
   while(q.length&&g++<40){const o=q.shift();const i=L.objs.indexOf(o);if(i>=0)L.objs.splice(i,1);
     const keg=o.type==='keg',r=keg?2:1,dmg=keg?12:9,x=o.x,y=o.y;
@@ -1981,7 +1982,7 @@ async function heroAttack(id,tx,ty){const ab=AB[id],P=S.P,C=S.C;
   let dealt=0;const pushB=gearSum('push'),pullB=gearSum('pull')+((wpn()&&wpn().aff.push)||0);
   if(ab.rubble){for(const c of areaOf(ab,cx,cy)){const i=I(c.x,c.y),tt=S.L.map[i];if(tt===FLOOR||tt===GRASS||tt===WEB||tt===BONES)S.L.map[i]=RUBBLE}UI.fx('shake',{m:9});for(const c of areaOf(ab,cx,cy))UI.fx('debris',{x:c.x,y:c.y})}
   for(const t of targets){if(t.dead||S.over)continue;if(ab.strip&&t.temp)t.temp=0;const dmg=heroDmg(ab,tier,t,r);
-    if(dmg>0){damage(t,dmg,P);dealt+=dmg}if(t.dead||S.over)continue;
+    if(dmg>0){damage(t,dmg,P,{kind:SaltmarrowDeaths.kind(id,ab,el),ability:id,crit:!!r.crit,execution:!!(ab.hiddenDouble&&P.hidden)});dealt+=dmg}if(t.dead||S.over)continue;
     if(tier.push)await forceMove(t,ab.kind==='burst'?cx:P.x,ab.kind==='burst'?cy:P.y,tier.push+pushB,'push');
     else if(tier.out){if(t.x===cx&&t.y===cy){const d=pick(DIR8);await forceMove(t,cx-d[0],cy-d[1],tier.out+pushB,'push')}else await forceMove(t,cx,cy,tier.out+pushB,'push')}
     else if(tier.in&&!(t.x===cx&&t.y===cy))await forceMove(t,cx,cy,tier.in,'pull');
@@ -2050,7 +2051,7 @@ async function doUtility(id,tx,ty){const P=S.P,C=S.C;
     case'oil':{S.inv.oil--;UI.fx('bolt',{from:P,to:{x:tx,y:ty},color:'#f2b14a'});await UI.sleep(160);UI.fx('fire',{x:tx,y:ty});const dmg=6+S.depth;
       for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)igniteAt(tx+dx,ty+dy,burnable(tileAt(tx+dx,ty+dy)||0)?4:2);
       if(S.over)return;const hit=S.L.mons.filter(m=>cheb(m.x,m.y,tx,ty)<=1);if(cheb(P.x,P.y,tx,ty)<=1)hit.push(P);
-      log('The firepot bursts into flame!','gold');for(const e of hit){damage(e,dmg,P);if(S.over)return}computeLight();
+      log('The firepot bursts into flame!','gold');for(const e of hit){damage(e,dmg,P,{kind:'fire',ability:'oil'});if(S.over)return}computeLight();
       if(S.mode==='explore'&&hit.some(m=>!isP(m)&&!m.dead)){const m=hit.find(m=>!isP(m)&&!m.dead);m.state='alert';await startCombat('ambush',m)}
       noise(tx,ty,8);break}
   }
@@ -2729,7 +2730,7 @@ function dropChandelier(o){const L=S.L;const i=L.objs.indexOf(o);if(i<0)return;L
   for(const e of[S.P,...L.mons.slice()]){if(cheb(e.x,e.y,o.x,o.y)<=1){damage(e,10+S.depth,null);if(S.over)return;if(!e.dead&&S.C)addC(e,'dazed')}}for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)igniteAt(o.x+dx,o.y+dy,2);computeLight()}
 function breakSluice(o){const L=S.L;const i=L.objs.indexOf(o);if(i<0)return;L.objs.splice(i,1);UI.fx('splash',{x:o.x,y:o.y,r:2});UI.fx('shake',{m:6});log('The sluice gives way and black water roars into the room!','gold');noise(o.x,o.y,12);
   for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const x=o.x+dx,y=o.y+dy;if(!inb(x,y))continue;const j=I(x,y);const t=L.map[j];if((t===FLOOR||t===RUBBLE||t===BONES||t===GRASS||t===WEB)&&!L.objs.some(q=>q.x===x&&q.y===y&&FEAT[q.type].block))L.map[j]=WATER;L.fire[j]=0;if(L.gas)L.gas[j]=0;if(L.oil)L.oil[j]=0}
-  for(const m of L.mons.slice())if(cheb(m.x,m.y,o.x,o.y)<=2&&MT(m).noSwim){damage(m,4,null);if(!m.dead)addC(m,'slowed')}computeLight();computeFov()}
+  for(const m of L.mons.slice())if(cheb(m.x,m.y,o.x,o.y)<=2&&MT(m).noSwim){damage(m,4,null,{kind:'water'});if(!m.dead)addC(m,'slowed')}computeLight();computeFov()}
 async function rollBoulder(o,dx,dy){const L=S.L;if(!dx&&!dy)return;log('The boulder grinds forward and picks up speed!','gold');noise(o.x,o.y,8);
   for(let k=0;k<14;k++){const nx=o.x+dx,ny=o.y+dy;if(!inb(nx,ny)||solid(tileAt(nx,ny))||tileAt(nx,ny)===GATE){UI.fx('shake',{m:6});UI.fx('debris',{x:nx,y:ny});log('The boulder smashes to a halt.');if(tileAt(nx,ny)===CRACK){L.map[I(nx,ny)]=RUBBLE;rebuildOpq();computeFov()}return}
     if(tileAt(nx,ny)===PIT){L.objs.splice(L.objs.indexOf(o),1);log('The boulder drops into the dark. A long time later, it lands.');return}
@@ -3167,7 +3168,7 @@ function newHero(k){const c=CLASSES[k];const bm=c.stam+META.upg.stam*4,br=c.reco
 function newGame(k,d){newRun(k,d||1,{items:[]})}
 
 /* ================= export for tests ================= */
-if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,spawnMon:(...a)=>spawnMon(...a),startCombat:(...a)=>startCombat(...a),gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems};return}
+if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,spawnMon:(...a)=>spawnMon(...a),startCombat:(...a)=>startCombat(...a),gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems,damage,killMon,heroAttack};return}
 /* =====================================================================
    BROWSER: sprites, rendering, animation, UI
    ===================================================================== */
@@ -3805,6 +3806,9 @@ function envTiles(T,key){const bio=key.replace(/2$/,''),B=BPAL[key]||BPAL[bio];c
 const WALLISH=t=>t===WALL||t===CRACK||t===DOOR||t===OPEN||t===GATE||t===GATEOPEN;
 const OPENT=t=>!WALLISH(t);
 /* ---------- effects ---------- */
+const DEATHS=SaltmarrowDeaths.create();
+const deathVisible=(x,y)=>inb(Math.floor(x),Math.floor(y))&&!!vis[I(Math.floor(x),Math.floor(y))];
+const deathProject=(x,y,z)=>({x:x*T,y:(y-z)*T});
 const FX={floats:[],parts:[],rings:[],bolts:[],lights:[],amb:[],stains:[],shake:{m:0,t:0}};
 let NOW=0;
 const REDUCE=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -3816,37 +3820,7 @@ UI.fx=(type,d)=>{
     case'hit':{d.e.flashT=NOW;const p=wpos(d.e);FX.floats.push({x:p.x,y:p.y-T*0.4,text:'-'+d.amt,c:isP(d.e)?'#ff8a70':'#fff4dc',t0:NOW,big:true});burst(p.x,p.y,6,isP(d.e)?['#c2533e','#ff8a70']:['#e8dcc4','#c2533e'],70,0.4,200,2);break}
     case'lunge':{const e=d.e;e.lunge={dx:Math.sign(d.tx-e.x),dy:Math.sign(d.ty-e.y),t0:NOW};break}
     case'bolt':{const a=wpos(d.from),b={x:d.to.x*T+T/2,y:d.to.y*T+T/2};FX.bolts.push({a,b,c:d.color,t0:NOW,dur:170});break}
-    case'death':{
-      const e=d.e,p=wpos(e),hit=d.hit||{},L=S.L,tile=tileAt(e.x,e.y);
-      const fire=!!(L.fire&&L.fire[I(e.x,e.y)]>0),water=tile===WATER,spore=!!((L.spore&&L.spore[I(e.x,e.y)]>0)||MT(e).burst);
-      const source=d.source,kind=hit.kind||'hazard';
-      // Readable, stylised pixel-VFX: the damage source changes colour, motion and aftermath.
-      const palette=fire?['#fff2b0','#ff9a3a','#c2533e','#28201b']:water?['#e6ffff','#78dce8','#287e9b','#1a3548']:spore?['#eaff8b','#a6ce43','#5f8e37','#342c4d']:kind==='weapon'?['#f1d8b5','#c2533e','#8b2936','#57232b','#2a403b']:['#d7e5dd','#8b2936','#c2533e','#526e70'];
-      burst(p.x,p.y,fire?34:water?34:spore?38:kind==='weapon'?42:30,palette,fire?180:145,0.8,fire?300:340,3);
-      if(spore){
-        burst(p.x,p.y,22,['#efff9a','#b5dc4e','#77a843','#4b6a35'],95,1.15,520,4);
-        FX.lights.push({x:p.x,y:p.y,r:T*1.45,t0:NOW,dur:460,c:'#a8cf52'});
-      }else if(water){
-        burst(p.x,p.y,18,['#efffff','#8be5f0','#3188a5'],125,1.05,380,3);
-        FX.rings.push({x:p.x,y:p.y,r:T*.3,t0:NOW,dur:420,c:'#79dbe9'});
-      }else if(fire){
-        burst(p.x,p.y,18,['#fff2b0','#ffbd4a','#ff6a28','#40251e'],165,1.25,360,3);
-        FX.lights.push({x:p.x,y:p.y,r:T*2.5,t0:NOW,dur:420,c:'#ff8b35'});
-      }else if(kind==='weapon'){
-        burst(p.x,p.y,15,['#501b26','#8b2936','#c2533e'],110,1.05,360,2);
-        burst(p.x,p.y,10,['#f0e5ce','#c6bca4','#a9b9b2'],130,.95,420,2);
-      }
-      // Fragments kick away from the attacker; elemental deaths rise, drift or scatter differently.
-      const src=source,dx=src?Math.sign(e.x-src.x):0,dy=src?Math.sign(e.y-src.y):0;
-      const count=fire?9:water?8:spore?12:kind==='weapon'?10:6;
-      for(let k=0;k<count;k++){
-        const a=(Math.PI*2*k/count)+(dx||dy?Math.atan2(dy,dx):0),v=48+Math.random()*(fire?110:90);
-        const c=fire?['#ffb347','#ff7a2a','#fff2b0','#332a25'][k%4]:water?['#7fd0d8','#23606f','#bff4ff'][k%3]:spore?['#c8d86a','#9aa84a','#e8f0a0','#542d3b'][k%4]:['#8b2936','#c2533e','#e8dcc4','#2a403b'][k%4];
-        FX.parts.push({x:p.x,y:p.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-(spore?65:fire?45:25),life:.48+Math.random()*.34,age:0,c,s:k%3?3:4,g:spore?-35:fire?190:water?90:260});
-      }
-      FX.rings.push({x:p.x,y:p.y,r:T*(fire?.62:water?.58:spore?.7:.48),t0:NOW,dur:fire?360:spore?460:320,c:fire?'#ff9a3a':water?'#7fd0d8':spore?'#b5dc4e':'#8b2936'});
-      if(!fire&&!water)FX.stains.push({x:e.x,y:e.y,t0:NOW,life:spore?14000:12000,c:spore?'#5e5630':'#57232b',seed:(e.x*31+e.y*17)%5});
-      break}
+    case'death':{if(tileAt(d.e.x,d.e.y)===PIT)break;const result=DEATHS.emit(S.L,d.e,d.hit||{},REDUCE);if(deathVisible(d.e.x,d.e.y)){const p=wpos(d.e);const label={x:p.x,y:p.y-T*.7,text:result.label+(result.variant==='normal'?'':' · '+result.variant.toUpperCase()),c:SaltmarrowDeaths.COLORS[result.kind],t0:NOW,death:true};const prior=FX.floats.find(f=>f.death&&f.x===label.x&&f.y===label.y&&NOW-f.t0<180);if(prior)Object.assign(prior,label);else FX.floats.push(label);if(FX.floats.length>48)FX.floats.splice(0,FX.floats.length-48);}break}
     case'explosion':{const x=d.x*T+T/2,y=d.y*T+T/2;burst(x,y,50,['#fff2b0','#ffb347','#ff7a2a','#c2533e','#3a3a3a'],260*(d.r||1)/1.5,0.9,120,3);burst(x,y,24,['#2a2a2a','#555','#3a5751'],120,1.6,-20,4);FX.lights.push({x,y,r:T*(d.r+3),t0:NOW,dur:600,c:'#ffb347'});break}
     case'debris':{const x=d.x*T+T/2,y=d.y*T+T/2;burst(x,y,26,d.c==='crystal'?['#f0c8e0','#ffffff','#c890b8']:['#6a625a','#3a342e','#8a8278','#5a3a1a'],140,0.8,300,3);if(d.c==='crystal')FX.lights.push({x,y,r:T*3,t0:NOW,dur:400,c:'#f0c8e0'});break}
     case'fire':{const x=d.x*T+T/2,y=d.y*T+T/2;burst(x,y,40,['#fff2b0','#f2b14a','#ff7a2a','#c2533e'],150,0.9,-60,3);FX.lights.push({x,y,r:T*4,t0:NOW,dur:700,c:'#ff9a3a'});break}
@@ -3876,7 +3850,7 @@ function resize(){const st=$('stage');const w=Math.max(1,st.clientWidth);const m
 /* ---------- drawing ---------- */
 let lastT=0;
 function frame(now){if(window.__pause){requestAnimationFrame(frame);return}NOW=now;const dt=Math.min(0.05,(now-lastT)/1000||0);lastT=now;if(S&&S.L){animate(dt);draw()}requestAnimationFrame(frame)}
-function animate(dt){const k=Math.min(1,dt*16);const ents=[S.P,...S.L.mons];for(const e of ents){if(e.rx==null){e.rx=e.x;e.ry=e.y}e.rx+=(e.x-e.rx)*k;e.ry+=(e.y-e.ry)*k;if(Math.abs(e.x-e.rx)<0.01)e.rx=e.x;if(Math.abs(e.y-e.ry)<0.01)e.ry=e.y}
+function animate(dt){DEATHS.update(S.L,dt,(x,y)=>!inb(Math.floor(x),Math.floor(y))||solid(tileAt(Math.floor(x),Math.floor(y))),REDUCE);const k=Math.min(1,dt*16);const ents=[S.P,...S.L.mons];for(const e of ents){if(e.rx==null){e.rx=e.x;e.ry=e.y}e.rx+=(e.x-e.rx)*k;e.ry+=(e.y-e.ry)*k;if(Math.abs(e.x-e.rx)<0.01)e.rx=e.x;if(Math.abs(e.y-e.ry)<0.01)e.ry=e.y}
   for(const o of S.L.objs){if(o.rx==null){o.rx=o.x;o.ry=o.y}o.rx+=(o.x-o.rx)*k;o.ry+=(o.y-o.ry)*k}
   if(S.L.npcs)for(const n of S.L.npcs){if(n.rx==null){n.rx=n.x;n.ry=n.y}n.rx+=(n.x-n.rx)*k*0.5;n.ry+=(n.y-n.ry)*k*0.5}
   for(const p of FX.parts){p.age+=dt;p.vy+=p.g*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=0.97}FX.parts=FX.parts.filter(p=>p.age<p.life);
@@ -4075,6 +4049,7 @@ function draw(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio);ctx.setTransform(dp
       ctx.fillRect(xx+T*.42,yy+T*.32,1,Math.max(3,T*.18));ctx.fillRect(xx+T*.42,yy+T*.49,Math.max(3,T*.16),1);ctx.restore();
     }
   }
+  DEATHS.sync(L);DEATHS.draw(ctx,deathProject,deathVisible,'floor');
   // Battlefield residue: tiny, fading pixel pools sit on the floor beneath later action.
   for(const s of FX.stains){if(s.x<x0||s.x>x1||s.y<y0||s.y>y1||!L.seen[I(s.x,s.y)])continue;const fade=Math.max(0,1-(NOW-s.t0)/s.life);ctx.save();ctx.globalAlpha=fade*.72;ctx.fillStyle=s.c;const bx=s.x*T,by=s.y*T;ctx.fillRect(bx+T*.28,by+T*.55,T*.4,T*.18);ctx.fillRect(bx+T*.38,by+T*.48,T*.22,T*.12);if(s.seed%2===0)ctx.fillRect(bx+T*.18,by+T*.62,T*.12,T*.06);ctx.restore()}
   if(TS.face&&!L.town)drawDressing(L,TS,x0,x1,y0,y1);
@@ -4106,6 +4081,7 @@ function draw(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio);ctx.setTransform(dp
     if(m.conds.length){let k=0;for(const c of m.conds){ctx.fillStyle={slowed:'#7fb0e0',grabbed:'#e3a548',bleeding:'#c2533e',weakened:'#b9a0e8',dazed:'#fff2b0'}[c.id];ctx.fillRect(p.x-T/2+3+k*5,p.y-T/2+2,4,4);k++}}}
   // memory dimming
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=I(x,y);if(L.seen[i]&&!vis[i]){ctx.fillStyle='rgba(3,6,8,.42)';ctx.fillRect(x*T,y*T,T,T)}}
+  DEATHS.draw(ctx,deathProject,deathVisible,'air');
   // particles, rings, bolts
   for(const a of FX.amb){const t=a.age/a.life;ctx.globalAlpha=Math.sin(t*Math.PI)*0.55;ctx.fillStyle=a.c;ctx.fillRect(Math.round(a.x),Math.round(a.y),a.s,a.s)}
   for(const p of FX.parts){ctx.globalAlpha=Math.max(0,1-p.age/p.life);ctx.fillStyle=p.c;ctx.fillRect(Math.round(p.x),Math.round(p.y),p.s,p.s)}ctx.globalAlpha=1;
@@ -4147,7 +4123,7 @@ function draw(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio);ctx.setTransform(dp
   drawAtmos(ox,oy);
   ctx.save();ctx.translate(ox,oy);drawOverlays(x0,x1,y0,y1);if(L.town&&!L.interior)drawLabels();ctx.restore();
   // floats
-  ctx.textAlign='center';for(const f of FX.floats){const t=(NOW-f.t0)/1000;if(t<0)continue;ctx.globalAlpha=Math.max(0,1-t);const pop=t<0.12?1+(0.12-t)*7:1;ctx.font='700 '+Math.round((f.huge?24:f.big?17:11)*pop)+'px "Spline Sans Mono", monospace';const x=f.x+ox,y=f.y+oy-t*(f.huge?18:26);ctx.fillStyle='#040a0b';ctx.fillText(f.text,x+1,y+1);ctx.fillStyle=f.c;ctx.fillText(f.text,x,y)}ctx.globalAlpha=1;ctx.textAlign='start';
+  ctx.textAlign='center';for(const f of FX.floats){const t=(NOW-f.t0)/1000;if(t<0)continue;ctx.globalAlpha=Math.max(0,1-t);const pop=!REDUCE&&t<0.12?1+(0.12-t)*7:1;ctx.font='700 '+Math.round((f.huge?24:f.big?17:11)*pop)+'px "Spline Sans Mono", monospace';const x=f.x+ox,y=f.y+oy-(REDUCE?0:t*(f.huge?18:26));ctx.fillStyle='#040a0b';ctx.fillText(f.text,x+1,y+1);ctx.fillStyle=f.c;ctx.fillText(f.text,x,y)}ctx.globalAlpha=1;ctx.textAlign='start';
   if(S.mode==='combat'&&S.C&&S.C.phase!=='hero'){ctx.fillStyle='rgba(194,83,62,.07)';ctx.fillRect(0,0,VW,VH)}}
 function drawOverlays(x0,x1,y0,y1){const P=S.P,L=S.L;
   if(SEL.cone){ctx.fillStyle='rgba(230,90,60,.16)';for(const i of SEL.cone){if(!vis[i])continue;ctx.fillRect((i%W)*T,((i/W)|0)*T,T,T)}}
@@ -6681,7 +6657,7 @@ body.mob .pk-pouch{width:28px;height:28px}body.mob .pk-pouch img{width:20px;heig
 `;document.head.appendChild(st)}
 setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{kitPv:(c,k)=>kitPreview(c,k,100),ringBell:(...a)=>ringBell(...a),carriedItems:()=>carriedItems(),genArmor,equipItem,unequip,bagSettle,inSlot})}catch(e){}},400);
 // armour soaking a hit: a dull clink and a small grey number
-{const d0=damage;damage=function(e,amt,src){const r=d0(e,amt,src);try{if(e&&e.lastBlock&&isP(e)){const b=e.lastBlock;e.lastBlock=0;UI.fx('float',{e,text:'−'+b+' armour',color:'#b8c0c8'});if(AU.on&&AU.ctx){const d=spOut(null,null,1);if(d){clang(d,jit(700),0.025,0.25);nz(d,{f:jit(1800),q:2,peak:0.05,dur:0.04})}}}}catch(er){}return r}}
+{const d0=damage;damage=function(e,amt,src,hit){const r=d0(e,amt,src,hit);try{if(e&&e.lastBlock&&isP(e)){const b=e.lastBlock;e.lastBlock=0;UI.fx('float',{e,text:'−'+b+' armour',color:'#b8c0c8'});if(AU.on&&AU.ctx){const d=spOut(null,null,1);if(d){clang(d,jit(700),0.025,0.25);nz(d,{f:jit(1800),q:2,peak:0.05,dur:0.04})}}}}catch(er){}return r}}
 /* ---------- armour is retired: anything already found is sold back to Tobias ---------- */
 function scrubArmor(){let v=0,n=0;const take=it=>{v+=it.value||20;n++};
   try{if(META&&META.stash)META.stash=META.stash.filter(it=>{if(it&&it.kind==='armor'){take(it);return false}return true});if(META&&META.smith)META.smith=META.smith.filter(it=>it.kind!=='armor');
@@ -6898,11 +6874,12 @@ const FLOATERS=new Set(['wraith','bat','choir','harp']);
 /* --- and they die in their own way --- */
 const DEATHK={skeleton:'crumble',gaunt:'crumble',knight:'topple',wraith:'fade',choir:'fade',saint:'spore',shambler:'spore',host:'spore',deepone:'sink',eel:'sink',horror:'sink',harp:'sink',sailor:'sink',bat:'drop',rat:'drop',spider:'curl',abbot:'sink'};
 const DYING=[];
-{const k0=killMon;killMon=function(m,how,src){const p=m.rx!=null?{x:m.rx*T+T/2,y:m.ry*T+T/2}:{x:m.x*T+T/2,y:m.y*T+T/2};const r=k0(m,how,src);
-  try{if(!REDUCE&&SPR[m.type]){const M=MT(m);DYING.push({img:SPR[m.type],x:p.x,y:p.y,k:DEATHK[m.type]||'topple',t0:NOW,sz:M.boss?T*1.5:T,dir:src&&src.x!=null&&src.x>m.x?-1:1,seed:Math.random()*6})}}catch(e){}return r}}
+{const k0=killMon;killMon=function(m,how,src){if(m.dead)return;const p=m.rx!=null?{x:m.rx*T+T/2,y:m.ry*T+T/2}:{x:m.x*T+T/2,y:m.y*T+T/2};const r=k0(m,how,src);
+  try{if(!REDUCE&&SPR[m.type]){const M=MT(m);DYING.push({img:SPR[m.type],x:p.x,y:p.y,k:m.lastHit&&m.lastHit.kind==='ice'?'crumble':m.lastHit&&m.lastHit.kind==='occult'?'fade':m.lastHit&&['slash','piercing'].includes(m.lastHit.kind)?'sever':DEATHK[m.type]||'topple',t0:NOW,sz:M.boss?T*1.5:T,dir:src&&src.x!=null&&src.x>m.x?-1:1,seed:Math.random()*6});if(DYING.length>24)DYING.splice(0,DYING.length-24)}}catch(e){}return r}}
 {const a0=drawAnims;drawAnims=function(){a0();if(!DYING.length)return;try{for(let i=DYING.length-1;i>=0;i--){const d=DYING[i],dur=d.k==='fade'?900:d.k==='crumble'?700:620,t=(NOW-d.t0)/dur;if(t>1){DYING.splice(i,1);continue}if(t<0)continue;
   const sz=d.sz,x=d.x,y=d.y;ctx.save();ctx.globalCompositeOperation='source-over';
   switch(d.k){
+    case'sever':{ctx.globalAlpha=1-t;const h=d.img.height/3;for(let k=0;k<3;k++){const shift=(k===0?1:-1)*d.dir*t*T*.5;ctx.drawImage(d.img,0,k*h,d.img.width,h,x-sz/2+shift,y-sz/2+k*sz/3+t*t*T*.4,sz,sz/3)}break}
     case'topple':{const a=Math.min(1,t*1.6)*Math.PI/2*d.dir;ctx.globalAlpha=1-Math.max(0,t-0.6)/0.4;ctx.translate(x,y+sz/2);ctx.rotate(a);ctx.drawImage(d.img,-sz/2,-sz,sz,sz);break}
     case'crumble':{const n=4;for(let k=0;k<n;k++){const sy=d.img.height/n,dy=Math.pow(t,2)*T*0.5*(k+1)/n,dx=Math.sin(d.seed+k*2)*t*10;ctx.globalAlpha=1-Math.max(0,t-0.5)*2;ctx.drawImage(d.img,0,k*sy,d.img.width,sy,x-sz/2+dx,y-sz/2+k*sz/n+dy,sz,sz/n)}
       if(!d.b){d.b=1;burst(x,y+T*0.3,14,['#e4dcc4','#a89c80'],90,0.6,300,2)}break}
@@ -6912,6 +6889,7 @@ const DYING=[];
     case'drop':{const fy=Math.min(1,t*2);ctx.globalAlpha=1-Math.max(0,t-0.6)/0.4;ctx.translate(x,y+fy*T*0.2);ctx.scale(1,1-fy*0.5);ctx.rotate(fy*Math.PI*d.dir);ctx.drawImage(d.img,-sz/2,-sz/2,sz,sz);break}
     case'curl':{const k=1-Math.min(1,t*1.4)*0.5;ctx.globalAlpha=1-Math.max(0,t-0.6)/0.4;ctx.translate(x,y+sz*0.3);ctx.scale(k,-k);ctx.drawImage(d.img,-sz/2,-sz*0.8,sz,sz);break}}
   ctx.restore()}}catch(e){}}}
+{const fx0=UI.fx;UI.fx=function(type,d){const out=fx0(type,d);if(REDUCE){FX.shake.m=0;FX.stop=0;FX.flash=null;if(type==='hit'&&d&&d.e){d.e.kb=null;d.e.lunge=null;FX.parts.length=0;FX.imp.length=0}}return out}}
 setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{DYING,HEARD,STEPR,killMon:(...a)=>killMon(...a),noise:(...a)=>noise(...a)})}catch(e){}},470);
 /* ---------- music: slow generated pads and a far-off melody, thickening with Dread; a pulse for fights ---------- */
 const MUS={on:false,bus:null,ex:null,cb:null,echo:null,next:0,chordAt:0,ci:0,beat:0,beatAt:0,melAt:0,mode:'explore',voices:[]};
