@@ -3281,7 +3281,11 @@ const tileC=fn=>{const c=document.createElement('canvas');c.width=c.height=16;co
   for(let y=0;y<16;y++)for(let x=0;x<16;x++){const i=(y*16+x)*4;if(!d[i+3])continue;const h=(x*19+y*43+x*y*7)%37;
     if(h===0||h===13){const k=h===0?1.12:.78;d[i]=Math.min(255,d[i]*k)|0;d[i+1]=Math.min(255,d[i+1]*k)|0;d[i+2]=Math.min(255,d[i+2]*k)|0}
     if((x===0||y===0)&&h%3===0){d[i]=Math.min(255,d[i]+8);d[i+1]=Math.min(255,d[i+1]+8);d[i+2]=Math.min(255,d[i+2]+8)}
-  }g.putImageData(im,0,0);return c};
+  }g.putImageData(im,0,0);
+  // Deep-cavern pixel art pass: chipped stone corners, hairline cuts, and damp glints.
+  for(let y=1;y<15;y++)for(let x=1;x<15;x++){const h=(x*31+y*17+x*y*3)%53;if(h===0||h===19){g.fillStyle=h===0?'rgba(230,225,193,.22)':'rgba(0,0,0,.24)';g.fillRect(x,y,1,1)}}
+  for(const [x,y] of [[1,1],[14,1],[1,14],[14,14]]){if(((x*7+y*11)%3)!==0){g.fillStyle='rgba(0,0,0,.16)';g.fillRect(x,y,1,1)}}
+  return c};
 function wallPaint(p,v,cracked,B,bio){p(B.w,0,0,16,16);
   if(bio==='mine'||bio==='fungal'){const blocks=[[0,0,7,5],[7,0,9,4],[0,5,5,6],[5,4,6,6],[11,4,5,7],[0,11,8,5],[8,10,8,6]];for(const[x,y,w,h]of blocks){p(B.wl,x,y,w,1);p(B.wd,x,y+h-1,w,1);p(B.wd,x+w-1,y,1,h)}}
   else{for(const y of[0,4,8,12]){p(B.wl,0,y,16,1);p(B.wd,0,y+3,16,1)}for(let k=0;k<4;k++){const off=(k%2?4:0)+(v%2?2:0);for(let x=off;x<16;x+=8)p(B.wd,x,k*4,1,3)}}
@@ -3810,7 +3814,9 @@ function drawSprite(img,imgW,e,size,alpha,flipOk){const p=wpos(e);let ox=0,oy=0;
   ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(p.x+ox,p.y+T/2-3,sz*0.32,4,0,0,Math.PI*2);ctx.fill();
   if(flipOk!==false&&e.fx<0){ctx.translate(x+sz,y);ctx.scale(-1,1)}else ctx.translate(x,y);
   if(imgW){ctx.save();ctx.globalAlpha=(alpha==null?1:alpha)*0.16;ctx.drawImage(imgW,-1,-1,sz,sz);ctx.restore()}
-  ctx.drawImage(img,0,0,sz,sz);if(imgW&&e.flashT&&NOW-e.flashT<140)ctx.drawImage(imgW,0,0,sz,sz);ctx.restore()}
+  ctx.drawImage(img,0,0,sz,sz);
+  if(sz>=24){ctx.save();ctx.globalAlpha=(alpha==null?1:alpha)*0.42;ctx.fillStyle='#b8d8c8';ctx.fillRect(2,2,Math.max(2,sz*.16),Math.max(1,sz*.035));ctx.fillStyle='#05090b';ctx.fillRect(sz*.2,sz*.91,sz*.6,Math.max(1,sz*.025));ctx.restore()}
+  if(imgW&&e.flashT&&NOW-e.flashT<140)ctx.drawImage(imgW,0,0,sz,sz);ctx.restore()}
 function flame(x,y,s,seed){const t=NOW/90+seed;for(let k=0;k<3;k++){const h=(5+Math.sin(t+k*2.1)*2)*s,w=(3-k*0.6)*s;const fx=x+(k-1)*3*s+Math.sin(t*1.7+k)*s;ctx.fillStyle=['#c2533e','#ff8a3a','#fff2b0'][k];ctx.fillRect(Math.round(fx-w/2),Math.round(y-h),Math.ceil(w),Math.ceil(h))}}
 function drawObj(o){const x=Math.round((o.rx!=null?o.rx:o.x)*T),y=Math.round((o.ry!=null?o.ry:o.y)*T);let img;
   switch(o.type){
@@ -3844,8 +3850,8 @@ function draw(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio);ctx.setTransform(dp
   const x0=Math.max(0,Math.floor(camX/T)-1),x1=Math.min(W-1,Math.ceil((camX+VW)/T)+1),y0=Math.max(0,Math.floor(camY/T)-1),y1=Math.min(H-1,Math.ceil((camY+VH)/T)+1);
   const wf=Math.floor(NOW/380);
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=I(x,y);if(!L.seen[i])continue;ctx.drawImage(tileImg(TS,L.map[i],x,y,wf),x*T,y*T,T,T);
-    // Fine-grain environmental ink: restrained stone flecks, worn seams, and wet-floor glints.
-    {const tt=L.map[i],xx=x*T,yy=y*T,seed=(x*73856093^y*19349663)>>>0;if(tt===FLOOR||tt===RUBBLE||tt===WALL||tt===CRACK||tt===WATER){ctx.save();ctx.globalAlpha=tt===WATER?.17:.13;for(let k=0;k<4;k++){const n=(seed+k*83492791)>>>0,px=xx+3+(n%25),py=yy+3+((n>>>7)%25);ctx.fillStyle=(tt===WATER)?'#9dd8d0':(k%2?'#d7c8a5':'#020707');ctx.fillRect(px,py,1+(k%2),1)}if(tt===FLOOR||tt===WALL||tt===CRACK){ctx.globalAlpha=.11;ctx.fillStyle='#d8c7a2';ctx.fillRect(xx+2,yy+2,T-4,1);ctx.fillStyle='#020606';ctx.fillRect(xx+2,yy+T-3,T-4,1)}ctx.restore()}}}
+    // Unified environmental finish: pores, salt bloom, chips, and wet specular pixels.
+    {const tt=L.map[i],xx=x*T,yy=y*T,seed=(x*73856093^y*19349663)>>>0;if(tt===FLOOR||tt===RUBBLE||tt===WALL||tt===CRACK||tt===WATER){ctx.save();ctx.globalAlpha=tt===WATER?.2:.16;for(let k=0;k<6;k++){const n=(seed+k*83492791)>>>0,px=xx+3+(n%25),py=yy+3+((n>>>7)%25);ctx.fillStyle=tt===WATER?(k%2?'#9dd8d0':'#d9f3e8'):(k%3?'#d7c8a5':'#020707');ctx.fillRect(px,py,1+(k%2),1)}if(tt===FLOOR||tt===WALL||tt===CRACK){ctx.globalAlpha=.16;ctx.fillStyle='#d8c7a2';ctx.fillRect(xx+2,yy+2,T-4,1);ctx.fillStyle='#020606';ctx.fillRect(xx+2,yy+T-3,T-4,1);if(((seed>>>4)%5)===0){ctx.globalAlpha=.22;ctx.fillStyle='#c9b98e';ctx.fillRect(xx+5+(seed%13),yy+7,1,3);ctx.fillRect(xx+6+(seed%13),yy+9,2,1)}}if(tt===WATER){ctx.globalAlpha=.2;ctx.fillStyle='#d8f7ee';ctx.fillRect(xx+4+(seed%19),yy+6+(seed%13),4,1)}ctx.restore()}}}
   if(TS.face&&!L.town)drawDressing(L,TS,x0,x1,y0,y1);
   // fire
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=I(x,y);if(L.fire[i]>0&&L.seen[i]){ctx.fillStyle='rgba(255,120,40,.18)';ctx.fillRect(x*T,y*T,T,T);flame(x*T+10,y*T+T-4,1.6,i);flame(x*T+22,y*T+T-8,1.3,i+3)}}
