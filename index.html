@@ -62,6 +62,22 @@ h1,h2,h3,.panel-title,.section-title{ text-shadow:0 1px 0 #000,0 0 18px rgba(111
 canvas{image-rendering:pixelated}
 @media(prefers-reduced-transparency:reduce){.stage:after{background:rgba(1,7,9,.08)}}
 canvas{display:block;width:100%;touch-action:manipulation;image-rendering:pixelated;cursor:default}
+/* SALTMARROW DEEP — complete atmospheric art direction pass */
+:root{--ink:#080d0f;--salt:#b8c7b8;--brass:#b58a4b;--moss:#527b68;--rust:#9c493d}
+body{background:radial-gradient(ellipse at 50% 12%,#172326 0,#0b1113 42%,#050809 100%);color:#d0d5c7}
+.stage{isolation:isolate;background:#070c0e;box-shadow:inset 0 0 0 1px #28383a,0 18px 48px #0009}
+.stage:before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(0,0,0,.045) 3px 4px),radial-gradient(ellipse at center,transparent 46%,rgba(1,5,7,.23) 78%,rgba(1,4,5,.7) 100%);mix-blend-mode:multiply}
+.stage:after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;box-shadow:inset 0 0 0 1px rgba(184,199,184,.08),inset 0 0 32px rgba(0,0,0,.28)}
+.stage canvas{filter:contrast(1.055) saturate(.92)}
+.panel,.card,.sheet,.side-panel{background:linear-gradient(145deg,rgba(26,38,39,.98),rgba(11,17,19,.99));border-color:#344749;box-shadow:inset 0 1px 0 #d4dfc90a,0 8px 24px #0005}
+.btn{border-radius:2px;letter-spacing:.025em;transition:background .12s,border-color .12s,transform .12s}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn.primary{background:linear-gradient(#3a3020,#1b1a14);border-color:#9b7843;color:#f0d7a1}
+h1,h2,h3,.panel-title,.section-title{letter-spacing:.035em}
+.inspect{background:linear-gradient(150deg,#1a2929fa,#090f11fa);border:1px solid #a4864e;box-shadow:0 12px 40px #000b,inset 0 1px #f5df9b18}
+.hp,.health,.meter{filter:drop-shadow(0 1px 1px #000)}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
+
 /* HUD on the map */
 .hud-tl{position:absolute;top:8px;left:8px;pointer-events:none;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
 .chip{background:rgba(9,13,16,.82);border:1px solid var(--line);border-radius:5px;padding:3px 9px;font-size:11.5px;white-space:nowrap}
@@ -3239,6 +3255,12 @@ function mk(rows,pal){const c=document.createElement('canvas');c.width=16;c.heig
   g.putImageData(out,0,0);
   // Sparse glints break up flat colour without changing the sprite silhouette.
   for(let y=2;y<15;y++)for(let x=2;x<15;x++){const i=(y*16+x)*4;if(px[i+3]&&((x*17+y*31+rows.length*7)%47===0)){g.fillStyle='rgba(235,245,218,.24)';g.fillRect(x,y,1,1)}}
+  // Material pass: palette-aware pixel grain, wet highlights, and engraved seams.
+  for(let y=1;y<15;y++)for(let x=1;x<15;x++){
+    const i=(y*16+x)*4;if(!px[i+3])continue;
+    const hash=(x*37+y*71+rows.length*19)%29;
+    if(hash===0||hash===11){g.fillStyle=hash===0?'rgba(226,231,202,.22)':'rgba(0,0,0,.20)';g.fillRect(x,y,1,1)}
+  }
   return c}
 function white(c){const w=document.createElement('canvas');w.width=c.width;w.height=c.height;const g=w.getContext('2d');g.drawImage(c,0,0);g.globalCompositeOperation='source-in';g.fillStyle='#fff';g.fillRect(0,0,w.width,w.height);return w}
 function corpseOf(c){const w=document.createElement('canvas');w.width=16;w.height=16;const g=w.getContext('2d');g.translate(8,10);g.rotate(Math.PI/2);g.scale(0.8,0.8);g.drawImage(c,-8,-8);g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-atop';g.fillStyle='rgba(30,10,10,.55)';g.fillRect(0,0,16,16);return w}
@@ -3253,7 +3275,13 @@ const BPAL={
   fungal:{w:'#3c2f46',wl:'#52405e',wd:'#1c1424',acc:'#5ae8d0',acc2:'#2a9a8a',f:'#1e2622',fa:'#232d24',fl:'#121914',fd:'#3a5a3c',wa:['#12302e','#1f5050','#7fe0d0'],beam:'#4a3a2a',beamd:'#2a1e14'},
   drowned:{w:'#28403b',wl:'#3a5751',wd:'#14221f',acc:'#4a8a90',acc2:'#2a6a7a',f:'#12302a',fa:'#153530',fl:'#0b211d',fd:'#1d4239',wa:['#0e3644','#23606f','#7fd0d8'],beam:'#4a5a50',beamd:'#2a3a34'},
 };
-const tileC=fn=>{const c=document.createElement('canvas');c.width=c.height=16;const g=c.getContext('2d');fn((col,x,y,w,h)=>{g.fillStyle=col;g.fillRect(x,y,w||1,h||1)});return c};
+const tileC=fn=>{const c=document.createElement('canvas');c.width=c.height=16;const g=c.getContext('2d');fn((col,x,y,w,h)=>{g.fillStyle=col;g.fillRect(x,y,w||1,h||1)});
+  // Unified tile-art finish: stone pores, worn corners, damp mineral flecks, and fine seams.
+  const im=g.getImageData(0,0,16,16),d=im.data;
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++){const i=(y*16+x)*4;if(!d[i+3])continue;const h=(x*19+y*43+x*y*7)%37;
+    if(h===0||h===13){const k=h===0?1.12:.78;d[i]=Math.min(255,d[i]*k)|0;d[i+1]=Math.min(255,d[i+1]*k)|0;d[i+2]=Math.min(255,d[i+2]*k)|0}
+    if((x===0||y===0)&&h%3===0){d[i]=Math.min(255,d[i]+8);d[i+1]=Math.min(255,d[i+1]+8);d[i+2]=Math.min(255,d[i+2]+8)}
+  }g.putImageData(im,0,0);return c};
 function wallPaint(p,v,cracked,B,bio){p(B.w,0,0,16,16);
   if(bio==='mine'||bio==='fungal'){const blocks=[[0,0,7,5],[7,0,9,4],[0,5,5,6],[5,4,6,6],[11,4,5,7],[0,11,8,5],[8,10,8,6]];for(const[x,y,w,h]of blocks){p(B.wl,x,y,w,1);p(B.wd,x,y+h-1,w,1);p(B.wd,x+w-1,y,1,h)}}
   else{for(const y of[0,4,8,12]){p(B.wl,0,y,16,1);p(B.wd,0,y+3,16,1)}for(let k=0;k<4;k++){const off=(k%2?4:0)+(v%2?2:0);for(let x=off;x<16;x+=8)p(B.wd,x,k*4,1,3)}}
