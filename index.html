@@ -7147,7 +7147,7 @@ const DROWNED_ART=SaltmarrowDrownedSprites.create(document,(type,idle)=>{SPR[typ
   ctx.drawImage(frame,Math.round(p.x-sz/2+ox),Math.round(p.y+T/2-sz+oy),sz,sz);ctx.restore();
 }}
 {const d0=drawOverlays;drawOverlays=function(){d0.apply(this,arguments);if(!S||!S.L)return;ctx.save();
-  for(const m of S.L.mons){const mark=m.drownedIntent;if(!mark||m.dead||!m.inCombat||!monVisible(m))continue;const r=mark.radius||0;
+  for(const m of S.L.mons){const mark=m.drownedIntent;if(!mark||m.dead||!m.inCombat||!S.L.seen[I(mark.x,mark.y)])continue;const r=mark.radius||0;
     for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const x=mark.x+dx,y=mark.y+dy;if(!inb(x,y)||!S.L.seen[I(x,y)]||solid(tileAt(x,y)))continue;
       ctx.fillStyle='rgba(37,182,178,.27)';ctx.fillRect(x*T+1,y*T+1,T-2,T-2);ctx.strokeStyle='#e1b967';ctx.lineWidth=2;ctx.strokeRect(x*T+2,y*T+2,T-4,T-4)}
     ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.fillStyle='#fff0bf';const label=m.type==='saltleecher'?'EMERGE':m.type==='brinewraith'?'AMBUSH':mark.ability==='The Last Bell'?'LAST BELL':'TIDE';ctx.fillText(label,mark.x*T+T/2,mark.y*T+T/2+3);
