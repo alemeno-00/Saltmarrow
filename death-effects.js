@@ -1,0 +1,26 @@
+/* Cosmetic world-space aftermath. No gameplay state or gameplay random numbers. */
+(function(root){
+'use strict';
+const COLORS={slash:'#a33245',piercing:'#bb4550',fire:'#e58839',ice:'#9cdeed',lightning:'#e4edb5',water:'#579caa',spores:'#a3b85c',occult:'#b187cf',impact:'#996b60'};
+const ANATOMY={skeleton:['#d8cdb0','skull','rib','bone'],cultist:['#923746','head','cloth','limb'],spider:['#698957','carapace','leg','leg'],drowned:['#476f72','head','seaweed','limb'],armoured:['#a6aab1','helmet','plate','gauntlet'],eldritch:['#9b689f','eye','tendril','tendril'],flesh:['#a3484c','head','limb','rib']};
+const TYPES={skeleton:'skeleton',cultist:'cultist',spider:'spider',knight:'armoured',harp:'drowned',sailor:'drowned',drowned:'drowned',deepone:'drowned',eel:'drowned',horror:'eldritch',husk:'eldritch',gaunt:'eldritch',wraith:'eldritch',choir:'eldritch',abbot:'eldritch',stalker:'eldritch'};
+const VERBS={slash:'Severed',piercing:'Impaled',fire:'Incinerated',ice:'Shattered',lightning:'Electrocuted',water:'Ruptured',spores:'Sporeburst',occult:'Unravelled',impact:'Crushed'};
+function kind(id,ab={},el){if(id==='waterspout'||id==='grasp'||id==='ballstorm')return'water';if(el==='frost')return'ice';if(el==='void'||el==='holy')return'occult';if(COLORS[el])return el;if(/spore|venom/.test(id))return'spores';if(/undertow|ironwake|bone|redtide|caveblow|headbutt|quake|shove|squall|chainlash/.test(id))return'impact';if(/fishhook|gaff|dart|brand|knife|caltrops/.test(id)||ab.kind==='ranged')return'piercing';return'slash'}
+function describe(e,hit={}){const k=COLORS[hit.kind]?hit.kind:'impact',anatomy=TYPES[e.type]||'flesh';return{kind:k,anatomy,variant:hit.execution?'execution':hit.overkill>=Math.max(4,(hit.max||10)*.35)?'overkill':'normal',label:VERBS[k]}}
+function create(){let level=null,parts=[],stains=[],clock=0;const caps={parts:160,stains:96};
+ function sync(L){if(level!==L){level=L;parts=[];stains=[];clock=0}}
+ function emit(L,e,hit={},reduced=false){sync(L);const d=describe(e,hit),a=ANATOMY[d.anatomy],n=reduced?3:d.variant==='normal'?6:12;const dx=hit.dx||0,dy=hit.dy||0,len=Math.hypot(dx,dy)||1;
+  stains.push({x:e.x+.5,y:e.y+.65,c:d.kind==='fire'?'#343034':d.kind==='ice'?'#65909d':d.kind==='spores'?'#64703d':a[0],born:clock});
+  for(let i=0;i<n;i++){const angle=i*2.39996,speed=(d.variant==='normal'?.9:1.7)*(0.7+(i%4)*.18);let vx=dx/len*speed+Math.cos(angle)*.65,vy=dy/len*speed+Math.sin(angle)*.65;
+   if(d.kind==='piercing'){vx+=dx/len;vy+=dy/len}if(d.kind==='occult'){vx=-vx*.55;vy=-vy*.55}
+   const p={kind:d.kind,x:e.x+.5,y:e.y+.5,z:reduced?0:.16,vx:reduced?0:vx,vy:reduced?0:vy,vz:reduced?0:d.kind==='spores'?1.1:2+(i%3)*.4,angle:angle,spin:reduced?0:(i%2?5:-5),age:0,c:d.kind==='fire'?(i%2?'#353037':'#d27a36'):d.kind==='lightning'?(i%2?'#32303b':'#d8dc99'):i%3===0?COLORS[d.kind]:a[0],shape:d.kind==='ice'?'shard':d.kind==='fire'?'ash':d.kind==='water'&&i%2?'droplet':d.kind==='spores'&&i%2?'cap':d.kind==='lightning'&&i%2?'char':a[1+i%3],settled:reduced};
+   if(reduced){p.x+=Math.cos(angle)*.22;p.y+=Math.sin(angle)*.16}parts.push(p)}
+  if(parts.length>caps.parts)parts.splice(0,parts.length-caps.parts);if(stains.length>caps.stains)stains.splice(0,stains.length-caps.stains);return d;
+ }
+ function update(L,dt,blocked,reduced=false){sync(L);dt=Math.max(0,Math.min(.05,dt));clock+=dt;for(const p of parts){p.age+=dt;if(p.settled)continue;if(reduced){p.z=0;p.settled=true;continue}const x=p.x+p.vx*dt,y=p.y+p.vy*dt;if(blocked(x,p.y))p.vx*=-.35;else p.x=x;if(blocked(p.x,y))p.vy*=-.35;else p.y=y;p.vz-=6*dt;p.z+=p.vz*dt;p.angle+=p.spin*dt;if(p.z<=0){p.z=0;if(Math.abs(p.vz)>.6){p.vz*=-.28;p.vx*=.5;p.vy*=.5}else{p.settled=true;p.vx=p.vy=p.vz=0}}}parts=parts.filter(p=>p.age<90);stains=stains.filter(p=>clock-p.born<180)}
+ function draw(ctx,project,visible,layer){ctx.save();if(layer==='floor')for(const s of stains){if(!visible(s.x,s.y))continue;const p=project(s.x,s.y,0);ctx.fillStyle=s.c;ctx.globalAlpha=.48*Math.min(1,(180-clock+s.born)/10);ctx.fillRect(p.x-6,p.y-2,12,4);ctx.fillRect(p.x-2,p.y-4,6,7)}
+ for(const p of parts){if((layer==='floor')!==p.settled||!visible(p.x,p.y))continue;const q=project(p.x,p.y,p.z);ctx.save();ctx.translate(Math.round(q.x),Math.round(q.y));ctx.rotate(p.angle);ctx.globalAlpha=.85*Math.min(1,(90-p.age)/8);ctx.fillStyle=p.c;const long=/leg|limb|bone|tendril|seaweed/.test(p.shape);ctx.fillRect(-2,-1,long?7:4,p.shape==='plate'?5:3);if(/head|skull|helmet|eye/.test(p.shape)){ctx.fillStyle='#241d2a';ctx.fillRect(-1,-1,1,1);ctx.fillRect(1,-1,1,1)}if(p.shape==='rib'){ctx.fillRect(-2,-3,1,6);ctx.fillRect(1,-3,1,6)}if(p.shape==='shard'){ctx.beginPath();ctx.moveTo(-3,1);ctx.lineTo(1,-5);ctx.lineTo(3,2);ctx.fill();ctx.fillStyle='#e2faff';ctx.fillRect(0,-2,1,3)}if(p.shape==='cap'){ctx.fillRect(-4,-3,8,2);ctx.fillStyle='#d5d888';ctx.fillRect(0,-5,1,1);ctx.fillRect(4,1,1,1)}if(p.shape==='droplet'){ctx.fillRect(0,-3,2,5)}if(p.kind==='occult'&&!p.settled){ctx.strokeStyle='#c4a0dc';ctx.lineWidth=1;ctx.strokeRect(-4,-4,8,8)}ctx.restore()}ctx.restore()}
+ return{emit,update,draw,sync,caps,get state(){return{parts,stains,level}}};
+}
+root.SaltmarrowDeaths={create,kind,describe,COLORS,ANATOMY};
+})(typeof globalThis==='undefined'?window:globalThis);
