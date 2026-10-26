@@ -2145,7 +2145,7 @@ async function doMalice(m,a){const C=S.C,P=S.P;C.malice-=a.cost;UI.fx('float',{e
   }}
 async function freeStrike(att,tgt){if(S.over)return;const dmg=isP(att)?2+S.P.chars[cls().prime]+gearSum('free')*2+gearSum('dmg'):MT(att).free+Math.floor((S.depth-1)/2)+(att.mut==='hulking'?2:0);
   UI.fx('lunge',{e:att,tx:tgt.x,ty:tgt.y});await UI.sleep(110);log(`${The(att)} make${isP(att)?'':'s'} a free strike for ${dmg}.`,isP(att)?'':'bad');damage(tgt,dmg,att)}
-async function monsterAttack(m,ab,center){const M=MT(m),P=S.P,C=S.C;let e=0,b=0;
+async function monsterAttack(m,ab,center){const M=MT(m),P=S.P,C=S.C; m.attackT=NOW;m.attackKind=ab.kind;let e=0,b=0;
   if(C.shanty===C.round)e++;if(flanked(m))e++;if(hasC(m,'weakened'))b++;if(P.defending)b+=2;if(inWater(m)&&ab.kind==='melee'&&!M.swim&&!M.fly)b++;
   if(M.ai==='ghoul'&&winded(P))e++;
   const r=powerRoll(M.bonus,e,b),tier=ab.t[r.tier-1];const cx=center?center.x:P.x,cy=center?center.y:P.y;
@@ -3839,7 +3839,7 @@ function animate(dt){const k=Math.min(1,dt*16);const ents=[S.P,...S.L.mons];for(
 function drawSprite(img,imgW,e,size,alpha,flipOk){const p=wpos(e);let ox=0,oy=0;
   if(e.lunge){const t=(NOW-e.lunge.t0)/200;if(t<1){const s=Math.sin(t*Math.PI)*T*0.32;ox=e.lunge.dx*s;oy=e.lunge.dy*s}else e.lunge=null}
   const moving=e.rx!=null&&(Math.abs((e.x||0)-e.rx)>.035||Math.abs((e.y||0)-e.ry)>.035);const bob=REDUCE?0:Math.round(Math.sin(NOW/(moving?105:420)+(e.id==='P'?0:e.id*1.7))*(moving?1.8:1.2));
-  const sz=size||T;let recoilX=0,recoilY=0,squashX=1,squashY=1;if(!REDUCE&&e.hitT&&NOW-e.hitT<190){const h=1-(NOW-e.hitT)/190;recoilX=(e.fx||1)*-Math.sin(h*Math.PI)*T*.12;squashX=1+h*.12;squashY=1-h*.1}const x=Math.round(p.x-sz/2+ox+recoilX),y=Math.round(p.y+T/2-sz+oy+bob+recoilY);
+  const sz=size||T;let recoilX=0,recoilY=0,squashX=1,squashY=1;if(!REDUCE&&e.hitT&&NOW-e.hitT<190){const h=1-(NOW-e.hitT)/190;recoilX=(e.fx||1)*-Math.sin(h*Math.PI)*T*.12;squashX=1+h*.12;squashY=1-h*.1}if(!REDUCE&&e.attackT&&NOW-e.attackT<380){const a=(NOW-e.attackT)/380,wind=Math.sin(Math.min(1,a/.42)*Math.PI/2),recover=Math.sin(Math.max(0,(a-.42)/.58)*Math.PI);const dir=e.fx||1;ox+=dir*T*(a<.42?-.07*wind:.13*recover);squashX*=1+(a<.42?.10*wind:-.05*recover);squashY*=1-(a<.42?.07*wind:-.03*recover)}const x=Math.round(p.x-sz/2+ox+recoilX),y=Math.round(p.y+T/2-sz+oy+bob+recoilY);
   ctx.save();if(alpha!=null)ctx.globalAlpha=alpha;
   ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(p.x+ox,p.y+T/2-3,sz*0.32,4,0,0,Math.PI*2);ctx.fill();
   if(flipOk!==false&&e.fx<0){ctx.translate(x+sz,y);ctx.scale(-1,1)}else ctx.translate(x,y);
