@@ -537,6 +537,7 @@ body.mob .mhead{display:none}
 </div>
 
 <script src="death-effects.js"></script>
+<script src="drowned-sprites.js"></script>
 <script>
 (function(){
 'use strict';
@@ -2127,7 +2128,7 @@ async function monsterTurn(m){const M=MT(m),P=S.P;
   let see=combatSees(m);
   if(M.ai==='stalker'||m.mut==='eyes')see=true;
   if(see&&P.hidden){P.hidden=false;log(`${The(m)} finds you!`,'bad')}
-  if(!see){m.lost=(m.lost||0)+1;
+  if(!see){m.drownedIntent=null;m.burrowed=false;m.lost=(m.lost||0)+1;
     if(M.ai!=='lurker'&&m.lastKnown&&!(m.x===m.lastKnown.x&&m.y===m.lastKnown.y))await chase(m,m.lastKnown.x,m.lastKnown.y,speedOf(m));
     if(P.hidden&&cheb(m.x,m.y,P.x,P.y)<=1){P.hidden=false;log(`${The(m)} stumbles onto you!`,'bad')}
     else if(m.lost>=3){m.inCombat=false;m.state='sus';m.inv=m.lastKnown;m.look=0;m.sus=1;log(`${The(m)} loses your trail.`,'good')}
@@ -2138,6 +2139,7 @@ async function monsterTurn(m){const M=MT(m),P=S.P;
   m.fleeing=false;
   const mal=chooseMalice(m);if(mal){await doMalice(m,mal);if(m.dead||!S.C||S.over)return}
   switch(M.ai){
+    case'burrow':case'bellsupport':case'brineassassin':case'admiral':await drownedTurn(m);break;
     case'ghoul':if(await ghoulFeed(m))break;await basicTurn(m,false);break;
     case'support':await supportTurn(m);break;
     case'kite':await kiteTurn(m);break;
@@ -2148,7 +2150,7 @@ async function monsterTurn(m){const M=MT(m),P=S.P;
     case'pack':await basicTurn(m,true);break;
     default:await basicTurn(m,false)}
   if(m.mut==='frenzied')m.extra=true;
-  if(m.extra&&S.C&&!S.over&&!m.dead){const ab=pickAb(m);if(inReach(m,ab,m.x,m.y)){await UI.sleep(150);await monsterAttack(m,ab)}}
+  if(m.extra&&S.C&&!S.over&&!m.dead&&!['burrow','bellsupport','brineassassin','admiral'].includes(M.ai)){const ab=pickAb(m);if(inReach(m,ab,m.x,m.y)){await UI.sleep(150);await monsterAttack(m,ab)}}
   m.extra=false;if(!m.dead)endConds(m)}
 async function basicTurn(m,flank){const ab=pickAb(m);if(!inReach(m,ab,m.x,m.y))await approachFor(m,ab,flank);if(m.dead||!S.C||S.over)return;
   const ab2=inReach(m,ab,m.x,m.y)?ab:MT(m).ab.find(a=>inReach(m,a,m.x,m.y));if(ab2)await monsterAttack(m,ab2)}
@@ -2197,7 +2199,7 @@ async function doMalice(m,a){const C=S.C,P=S.P;C.malice-=a.cost;UI.fx('float',{e
   }}
 async function freeStrike(att,tgt){if(S.over)return;const dmg=isP(att)?2+S.P.chars[cls().prime]+gearSum('free')*2+gearSum('dmg'):MT(att).free+Math.floor((S.depth-1)/2)+(att.mut==='hulking'?2:0);
   UI.fx('lunge',{e:att,tx:tgt.x,ty:tgt.y});await UI.sleep(110);log(`${The(att)} make${isP(att)?'':'s'} a free strike for ${dmg}.`,isP(att)?'':'bad');damage(tgt,dmg,att)}
-async function monsterAttack(m,ab,center){const M=MT(m),P=S.P,C=S.C; m.attackT=NOW;m.attackKind=ab.kind;let e=0,b=0;
+async function monsterAttack(m,ab,center){const M=MT(m),P=S.P,C=S.C; m.attackT=HEADLESS?0:NOW;m.attackKind=ab.kind;let e=0,b=0;
   if(C.shanty===C.round)e++;if(flanked(m))e++;if(hasC(m,'weakened'))b++;if(P.defending)b+=2;if(inWater(m)&&ab.kind==='melee'&&!M.swim&&!M.fly)b++;
   if(M.ai==='ghoul'&&winded(P))e++;
   const r=powerRoll(M.bonus,e,b),tier=ab.t[r.tier-1];const cx=center?center.x:P.x,cy=center?center.y:P.y;
@@ -2209,9 +2211,9 @@ async function monsterAttack(m,ab,center){const M=MT(m),P=S.P,C=S.C; m.attackT=N
   const pk=M.ai==='pack'?packBonus(m):0;
   const dmg=tier.d>0?tier.d+Math.floor((S.depth-1)/2)+pk+(omen('stirs')?1:0)+(m.mut==='hulking'?2:0)+(m.mut==='frenzied'?1:0):0;if(r.crit)addDread(1,'The blow rattles something loose behind your eyes.');
   log(`${The(m)} · ${ab.name}: ${r.a}+${r.c}+${M.bonus}=${r.total}${netTxt(r.net)} → tier ${r.tier}${r.crit?' CRIT':''}${dmg?`, ${dmg} damage`:''}${pk?` (+${pk} pack)`:''}.`,'bad');
-  if(ab.kind==='area'){UI.fx('explosion',{x:cx,y:cy,r:1});UI.fx('shake',{m:4});for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)igniteAt(cx+dx,cy+dy,0);
-    if(cheb(P.x,P.y,cx,cy)<=ab.radius)damage(P,dmg,m);if(S.over)return;if(tier.cond&&cheb(P.x,P.y,cx,cy)<=ab.radius)addC(P,tier.cond,m);noise(cx,cy,8,true);return}
-  if(dmg)damage(P,dmg,m);if(S.over)return;
+  if(ab.kind==='area'){UI.fx(ab.el==='water'?'splash':'explosion',{x:cx,y:cy,r:ab.radius||1});UI.fx('shake',{m:4});if(ab.el!=='water')for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)igniteAt(cx+dx,cy+dy,0);
+    if(cheb(P.x,P.y,cx,cy)<=ab.radius)damage(P,dmg,m,{kind:ab.el==='water'?'water':ab.kind==='ranged'?'piercing':'slash',ability:ab.name});if(S.over)return;if(tier.cond&&cheb(P.x,P.y,cx,cy)<=ab.radius)addC(P,tier.cond,m);noise(cx,cy,8,true);return}
+  if(dmg)damage(P,dmg,m,{kind:ab.el==='water'?'water':ab.kind==='ranged'?'piercing':'slash',ability:ab.name});if(S.over)return;
   if(tier.push)await forceMove(P,m.x,m.y,tier.push,'push');if(S.over||!S.C)return;
   if(tier.pull)await forceMove(P,m.x,m.y,tier.pull,'pull');if(S.over||!S.C)return;
   if(tier.cond){if(ab.web){addC(P,tier.cond,'web');if(tier.cond==='grabbed'&&[FLOOR,RUBBLE,BONES].includes(tileAt(P.x,P.y)))S.L.map[I(P.x,P.y)]=WEB}else addC(P,tier.cond,m)}
@@ -2448,7 +2450,7 @@ function placePassage(){const L=S.L;if(L.town||![2,4].includes(S.depth)||Math.ra
   S.depth++;S.busy=false;await descend(true);log('You crawl out of the passage two levels below where you went in.','gold');return false}}
 
 /* ---------- enemy intent ---------- */
-function intentOf(m){const M=MT(m),P=S.P;if(m.surprised)return{kind:'stunned'};if(m.primed)return{kind:'bomb',x:m.primed.x,y:m.primed.y};
+function intentOf(m){const M=MT(m),P=S.P;if(m.surprised)return{kind:'stunned'};if(m.drownedIntent)return{kind:'aim'};if(m.primed)return{kind:'bomb',x:m.primed.x,y:m.primed.y};
   if(m.fleeing)return{kind:'flee'};const d=cheb(m.x,m.y,P.x,P.y);const dep=Math.floor((S.depth-1)/2)+(m.mut==='hulking'?2:0)+(omen('stirs')?1:0);
   const est=ab=>ab&&ab.t&&ab.t[1]?Math.max(0,ab.t[1].d+dep):0;
   if(M.ai==='support'&&S.L.mons.some(o=>o!==m&&o.inCombat&&winded(o)))return{kind:'heal'};
@@ -3167,8 +3169,62 @@ function newHero(k){const c=CLASSES[k];const bm=c.stam+META.upg.stam*4,br=c.reco
   return{id:'P',x:0,y:0,rx:0,ry:0,stam:bm,max:bm,baseMax:bm,temp:0,lvl:1,chars:Object.assign({},c.chars),recov:br,recovMax:br,baseRecov:br,res:0,lantern:true,hidden:false,defending:false,conds:[],fx:1,fy:0,stab:c.stab,webbed:0,dread:0,lens:META.upg.lamp?1:0}}
 function newGame(k,d){newRun(k,d||1,{items:[]})}
 
+/* ================= Drowned faction: approved concept roles ================= */
+Object.assign(MON,{
+  mariner:{name:'Drowned Mariner',ai:'kite',swim:true,stam:22,speed:4,bonus:3,free:3,xp:12,pts:7,
+    ab:[{name:'Chain Hook',kind:'ranged',range:5,t:[{d:3,pull:1},{d:5,pull:2},{d:7,pull:3,cond:'slowed'}]},{name:'Rusted Cutlass',kind:'melee',range:1,t:[{d:3},{d:5},{d:7,cond:'bleeding'}]}],
+    weak:['lightning'],resist:['frost'],desc:'Keeps a hook-length away. Its chain pulls you through the flooded ranks; close in or break its line of sight.'},
+  brinewraith:{name:'Brine Wraith',ai:'brineassassin',fly:true,stam:18,speed:5,bonus:3,free:2,xp:13,pts:8,
+    ab:[{name:'Brine Talons',kind:'melee',range:1,t:[{d:3},{d:5,cond:'weakened'},{d:7,cond:'bleeding'}]}],
+    weak:['holy','lightning'],resist:['frost'],desc:'Marks a square with spectral brine, then teleports beside it and strikes next turn. Move out of the mark or daze it to interrupt.'},
+  admiral:{name:'Drowned Admiral',title:'The Drowned Admiral',boss:true,ai:'admiral',swim:true,stam:100,speed:3,stab:2,bonus:4,free:4,xp:45,pts:0,
+    ab:[{name:'Admiral’s Trident',kind:'melee',range:2,t:[{d:4},{d:6,push:1},{d:8,push:2}]},{name:'Rising Tide',kind:'area',el:'water',range:7,radius:1,t:[{d:4},{d:6,cond:'slowed'},{d:8,cond:'slowed'}]},{name:'The Last Bell',kind:'area',el:'water',range:7,radius:2,t:[{d:5},{d:7,cond:'weakened'},{d:9,cond:'dazed'}]}],
+    weak:['lightning'],resist:['frost'],desc:'Commands a drowned crew at depth 7. At two-thirds stamina the tide rises; below one-third the Last Bell tolls. Marked attacks land next turn. Move away or daze him.'}
+});
+Object.assign(MON.saltleecher,{name:'Saltleecher',ai:'burrow',swim:true,coward:false,mal:null,weak:['lightning'],resist:['frost'],desc:'Burrows beneath brine and marks a square before erupting next turn. Move off the ripple or daze it. Its bite drinks back stamina.'});
+Object.assign(MON.bellbound,{name:'Bellbound',ai:'bellsupport',coward:false,mal:null,desc:'Rings a funeral bell to shield nearby drowned allies and calls a Saltleecher every fourth turn. Dazing it interrupts its toll.'});
+for(const d of [7,8])for(const k of ['saltleecher','mariner','bellbound','brinewraith'])if(!POOL[d].includes(k))POOL[d].push(k);
+Object.assign(AI_TXT,{burrow:'Burrowing aquatic hunter',bellsupport:'Summons and shields allies',brineassassin:'Teleporting assassin',admiral:'Three-phase commander'});
+BOSS_INTRO.admiral='A trident strikes the stone. The Drowned Admiral raises one rusted hand, and the crew turns with him.';
+const DROWNED_TYPES=new Set(['saltleecher','mariner','bellbound','brinewraith','admiral']);
+function drownedMark(m,ab,label){m.drownedIntent={x:S.P.x,y:S.P.y,radius:ab.radius||0,ability:ab.name,label};UI.fx('ring',{x:S.P.x,y:S.P.y,r:ab.radius||1});log(`${The(m)}: ${label}. Leave the marked ${ab.radius?'squares':'square'} before its next turn!`,'bad')}
+function drownedFlood(m,radius){let n=0;for(let dy=-radius;dy<=radius;dy++)for(let dx=-radius;dx<=radius;dx++){const x=m.x+dx,y=m.y+dy;if(!inb(x,y)||cheb(x,y,m.x,m.y)>radius)continue;const i=I(x,y);if([FLOOR,RUBBLE,BONES,GRASS].includes(tileAt(x,y))&&!S.L.objs.some(o=>o.x===x&&o.y===y)){S.L.map[i]=WATER;S.L.fire[i]=0;n++}}return n}
+function drownedPhase(m){const phase=m.stam<=m.max/3?3:m.stam<=m.max*2/3?2:1;if(phase>(m.drownedPhase||0)){m.drownedPhase=phase;const title=['','The Admiral’s Command','Rising Tide','The Last Bell'][phase];log(`${The(m)} — ${title}!`,'dread');UI.fx('float',{e:m,text:title,color:'#81dbce'});if(phase>=2)drownedFlood(m,phase+1)}return m.drownedPhase}
+function drownedSummon(m,type,cap=4){const living=S.L.mons.filter(o=>!o.dead&&o.minion!=null);if(living.filter(o=>o.minion===m.id).length>=cap||living.length>=8)return 0;const probe={type},cells=[];for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++){const x=m.x+dx,y=m.y+dy;if(!inb(x,y)||(!dx&&!dy)||occupied(x,y,null)||blockObjAt(x,y)||stepCost(tileAt(x,y),probe,I(x,y))===Infinity)continue;cells.push({x,y})}if(!cells.length)return 0;const p=pick(cells),o=spawnMon(type,p.x,p.y,{state:'alert',role:'hunter',inCombat:true,minion:m.id,lastKnown:{x:S.P.x,y:S.P.y}});UI.fx('splash',{x:o.x,y:o.y,r:0});return 1}
+async function drownedTurn(m){const P=S.P,M=MT(m);m.drownedTurn=(m.drownedTurn||0)+1;
+  if(hasC(m,'dazed')){m.drownedIntent=null;m.burrowed=false;log(`${The(m)} loses its rhythm. The marked attack breaks.`,'good');return}
+  if(m.type==='admiral')drownedPhase(m);
+  if(m.drownedIntent){const mark=m.drownedIntent;m.drownedIntent=null;m.burrowed=false;
+    if(m.type==='brinewraith'||m.type==='saltleecher'){
+      const spots=DIR8.map(([dx,dy])=>({x:mark.x+dx,y:mark.y+dy})).filter(p=>inb(p.x,p.y)&&!occupied(p.x,p.y,m)&&stepCost(tileAt(p.x,p.y),m,I(p.x,p.y))<Infinity&&!blockObjAt(p.x,p.y));
+      const p=spots.sort((a,b)=>cheb(a.x,a.y,m.x,m.y)-cheb(b.x,b.y,m.x,m.y))[0];
+      // Burrowing stays local; the spectral assassin may teleport through walls.
+      if(p&&(m.type==='brinewraith'||(cheb(m.x,m.y,p.x,p.y)<=speedOf(m)&&sees(m.x,m.y,p.x,p.y)))){UI.fx('splash',{x:m.x,y:m.y,r:0});m.x=m.rx=p.x;m.y=m.ry=p.y;faceTo(m,mark.x,mark.y);UI.fx('splash',{x:m.x,y:m.y,r:0})}
+      if(P.x===mark.x&&P.y===mark.y&&inReach(m,M.ab[0],m.x,m.y)){const before=P.stam;await monsterAttack(m,M.ab[0]);if(m.type==='saltleecher'&&!m.dead){const drain=Math.max(0,before-P.stam);m.stam=Math.min(m.max,m.stam+Math.ceil(drain/2))}}
+      else log(`${The(m)} tears through empty brine. You escaped the mark.`,'good');
+    }else{const ab=M.ab.find(a=>a.name===mark.ability);if(ab&&sees(m.x,m.y,mark.x,mark.y)&&cheb(m.x,m.y,mark.x,mark.y)<=ab.range)await monsterAttack(m,ab,mark);else log('The bell breaks against the intervening stone.','good')}
+    return;
+  }
+  if(m.type==='saltleecher'){if(cheb(m.x,m.y,P.x,P.y)>4){await approachFor(m,M.ab[0],false);if(m.dead||S.over||!S.C)return}m.burrowed=true;drownedMark(m,M.ab[0],'Brine ripples — emergence');return}
+  if(m.type==='brinewraith'){drownedMark(m,M.ab[0],'A spectral wake — ambush');return}
+  if(m.type==='bellbound'){
+    if(m.drownedTurn%4===1&&drownedSummon(m,'saltleecher',2)){m.attackT=HEADLESS?0:NOW;log('The Bellbound rings. A Saltleecher writhes out of the brine.','bad');UI.fx('ring',{x:m.x,y:m.y,r:3});return}
+    const allies=foesOf(m).filter(o=>DROWNED_TYPES.has(o.type)&&cheb(m.x,m.y,o.x,o.y)<=5&&sees(m.x,m.y,o.x,o.y));
+    if(m.drownedTurn%2===0&&allies.length){for(const o of allies){o.temp=Math.max(o.temp||0,4);UI.fx('float',{e:o,text:'bell ward +4',color:'#c6a462'})}m.attackT=HEADLESS?0:NOW;UI.fx('ring',{x:m.x,y:m.y,r:5});log('The funeral toll wards the Drowned. Daze the bell-ringer to stop its next toll.','bad');return}
+    if(cheb(m.x,m.y,P.x,P.y)<=2)await retreat(m,speedOf(m),true);if(!m.dead&&S.C&&!S.over)await basicTurn(m,false);return;
+  }
+  if(m.type==='admiral'){
+    const phase=m.drownedPhase;if(m.drownedTurn%4===1){const type=phase===3?'brinewraith':phase===2?'bellbound':'mariner';if(drownedSummon(m,type)){log('The Admiral commands: a drowned crewman answers.','bad');return}}
+    const ab=M.ab[phase===3?2:1];if(phase>=2||!inReach(m,M.ab[0],m.x,m.y)){if(cheb(m.x,m.y,P.x,P.y)>ab.range)await approachFor(m,ab,false);if(!m.dead&&S.C&&!S.over&&inReach(m,ab,m.x,m.y)){drownedMark(m,ab,phase===3?'The Last Bell tolls':'The tide gathers');return}}
+    if(!m.dead&&S.C&&!S.over)await basicTurn(m,false);
+  }
+}
+// One Admiral guards the seventh-depth descent; the Abbot remains the final encounter.
+{const g0=genLevel;genLevel=function(){g0();if(S.depth!==7||S.inSewer||S.L.town||S.L.mons.some(m=>m.type==='admiral'))return;const stairs=S.L.map.indexOf(STAIRS);if(stairs<0)return;const d=bfsDist(S.P.x,S.P.y,true),sx=stairs%W,sy=(stairs/W)|0,opts=[];for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++)if(d[I(x,y)]>=10&&cheb(x,y,sx,sy)<=5&&[FLOOR,WATER,RUBBLE,BONES].includes(tileAt(x,y))&&!occupied(x,y,null)&&!S.L.objs.some(o=>o.x===x&&o.y===y))opts.push({x,y});opts.sort((a,b)=>cheb(a.x,a.y,sx,sy)-cheb(b.x,b.y,sx,sy));if(opts.length)spawnMon('admiral',opts[0].x,opts[0].y)}}
+{const e0=endCombat;endCombat=function(){for(const m of S.L.mons){m.drownedIntent=null;m.burrowed=false}return e0()}}
+
 /* ================= export for tests ================= */
-if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,spawnMon:(...a)=>spawnMon(...a),startCombat:(...a)=>startCombat(...a),gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems,damage,killMon,heroAttack};return}
+if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,spawnMon:(...a)=>spawnMon(...a),startCombat:(...a)=>startCombat(...a),gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems,damage,killMon,heroAttack,drownedTurn,drownedPhase,drownedFlood,drownedSummon,monsterTurn,endCombat,POOL,hasC,addC};return}
 /* =====================================================================
    BROWSER: sprites, rendering, animation, UI
    ===================================================================== */
@@ -6875,7 +6931,7 @@ const FLOATERS=new Set(['wraith','bat','choir','harp']);
 const DEATHK={skeleton:'crumble',gaunt:'crumble',knight:'topple',wraith:'fade',choir:'fade',saint:'spore',shambler:'spore',host:'spore',deepone:'sink',eel:'sink',horror:'sink',harp:'sink',sailor:'sink',bat:'drop',rat:'drop',spider:'curl',abbot:'sink'};
 const DYING=[];
 {const k0=killMon;killMon=function(m,how,src){if(m.dead)return;const p=m.rx!=null?{x:m.rx*T+T/2,y:m.ry*T+T/2}:{x:m.x*T+T/2,y:m.y*T+T/2};const r=k0(m,how,src);
-  try{if(!REDUCE&&SPR[m.type]){const M=MT(m);DYING.push({img:SPR[m.type],x:p.x,y:p.y,k:({ice:'crumble',occult:'fade',slash:'sever',piercing:'sever',fire:'burn',water:'sink',spores:'spore',lightning:'shock'})[m.lastHit&&m.lastHit.kind]||DEATHK[m.type]||'topple',t0:NOW,sz:M.boss?T*1.5:T,dir:src&&src.x!=null&&src.x>m.x?-1:1,seed:Math.random()*6});if(DYING.length>24)DYING.splice(0,DYING.length-24)}}catch(e){}return r}}
+  try{if(!REDUCE&&SPR[m.type]){const M=MT(m);DYING.push({img:DROWNED_ART.frame(m,NOW,REDUCE)||SPR[m.type],x:p.x,y:p.y,k:({ice:'crumble',occult:'fade',slash:'sever',piercing:'sever',fire:'burn',water:'sink',spores:'spore',lightning:'shock'})[m.lastHit&&m.lastHit.kind]||DEATHK[m.type]||'topple',t0:NOW,sz:DROWNED_TYPES.has(m.type)?(m.type==='admiral'?72:48):M.boss?T*1.5:T,dir:src&&src.x!=null&&src.x>m.x?-1:1,seed:Math.random()*6});if(DYING.length>24)DYING.splice(0,DYING.length-24)}}catch(e){}return r}}
 {const a0=drawAnims;drawAnims=function(){a0();if(!DYING.length)return;try{for(let i=DYING.length-1;i>=0;i--){const d=DYING[i],dur=d.k==='fade'?900:d.k==='crumble'?700:620,t=(NOW-d.t0)/dur;if(t>1){DYING.splice(i,1);continue}if(t<0)continue;
   const sz=d.sz;let x=d.x,y=d.y;ctx.save();if(typeof ISO!=='undefined'){ctx.transform(.5,-.5,1,1,0,0);const p=ISO.project(x,y);x=p.x;y=p.y-T/2}ctx.globalCompositeOperation='source-over';
   switch(d.k){
@@ -7078,6 +7134,25 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
 };
 window.__iso={project:ISO.project,unproject:ISO.unproject,pick:(x,y)=>ISO.pick(x,y),screen:(x,y)=>ISO.screen(x,y),depth:ISO.depth,
   tileCenter:(x,y)=>ISO.screen((x+.5)*T,(y+.5)*T)};
+
+/* Drowned sprites remain upright inside the shared isometric actor pass. */
+for(const [type,base] of [['mariner','sailor'],['brinewraith','wraith'],['admiral','abbot']])SPR[type]=SPR[base];
+const DROWNED_ART=SaltmarrowDrownedSprites.create(document,(type,idle)=>{SPR[type]=idle;SPRW[type]=null});
+{const d0=drawSprite;drawSprite=function(img,imgW,e,size,alpha,flipOk){
+  const frame=DROWNED_ART.frame(e,NOW,REDUCE);if(!frame)return d0.apply(this,arguments);
+  const p=wpos(e),sz=e.type==='admiral'?72:48;let ox=0,oy=0;
+  if(!REDUCE&&e.lunge){const t=(NOW-e.lunge.t0)/200;if(t>=0&&t<1){const v=Math.round(Math.sin(t*Math.PI)*6);ox=e.lunge.dx*v;oy=e.lunge.dy*v}}
+  ctx.save();ctx.imageSmoothingEnabled=false;if(alpha!=null)ctx.globalAlpha*=alpha;if(e.burrowed)ctx.globalAlpha*=.35;
+  ctx.fillStyle='rgba(1,12,17,.45)';ctx.fillRect(Math.round(p.x-sz*.22),Math.round(p.y+T/2-3),Math.round(sz*.44),3);
+  ctx.drawImage(frame,Math.round(p.x-sz/2+ox),Math.round(p.y+T/2-sz+oy),sz,sz);ctx.restore();
+}}
+{const d0=drawOverlays;drawOverlays=function(){d0.apply(this,arguments);if(!S||!S.L)return;ctx.save();
+  for(const m of S.L.mons){const mark=m.drownedIntent;if(!mark||m.dead||!m.inCombat||!monVisible(m))continue;const r=mark.radius||0;
+    for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const x=mark.x+dx,y=mark.y+dy;if(!inb(x,y)||!S.L.seen[I(x,y)]||solid(tileAt(x,y)))continue;
+      ctx.fillStyle='rgba(37,182,178,.27)';ctx.fillRect(x*T+1,y*T+1,T-2,T-2);ctx.strokeStyle='#e1b967';ctx.lineWidth=2;ctx.strokeRect(x*T+2,y*T+2,T-4,T-4)}
+    ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.fillStyle='#fff0bf';const label=m.type==='saltleecher'?'EMERGE':m.type==='brinewraith'?'AMBUSH':mark.ability==='The Last Bell'?'LAST BELL':'TIDE';ctx.fillText(label,mark.x*T+T/2,mark.y*T+T/2+3);
+  }ctx.restore();
+}}
 
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
