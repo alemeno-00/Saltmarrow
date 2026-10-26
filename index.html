@@ -3918,6 +3918,33 @@ function draw(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio);ctx.setTransform(dp
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=I(x,y);if(!L.seen[i])continue;ctx.drawImage(tileImg(TS,L.map[i],x,y,wf),x*T,y*T,T,T);
     // Unified environmental finish: pores, salt bloom, chips, and wet specular pixels.
     {const tt=L.map[i],xx=x*T,yy=y*T,seed=(x*73856093^y*19349663)>>>0;if(tt===FLOOR||tt===RUBBLE||tt===WALL||tt===CRACK||tt===WATER){ctx.save();ctx.globalAlpha=tt===WATER?.2:.16;for(let k=0;k<6;k++){const n=(seed+k*83492791)>>>0,px=xx+3+(n%25),py=yy+3+((n>>>7)%25);ctx.fillStyle=tt===WATER?(k%2?'#9dd8d0':'#d9f3e8'):(k%3?'#d7c8a5':'#020707');ctx.fillRect(px,py,1+(k%2),1)}if(tt===FLOOR||tt===WALL||tt===CRACK){ctx.globalAlpha=.16;ctx.fillStyle='#d8c7a2';ctx.fillRect(xx+2,yy+2,T-4,1);ctx.fillStyle='#020606';ctx.fillRect(xx+2,yy+T-3,T-4,1);if(((seed>>>4)%5)===0){ctx.globalAlpha=.22;ctx.fillStyle='#c9b98e';ctx.fillRect(xx+5+(seed%13),yy+7,1,3);ctx.fillRect(xx+6+(seed%13),yy+9,2,1)}}if(tt===WATER){ctx.globalAlpha=.2;ctx.fillStyle='#d8f7ee';ctx.fillRect(xx+4+(seed%19),yy+6+(seed%13),4,1)}ctx.restore()}}}
+  // Living environment pass: slow water glints, damp floor sheen, and bioluminescent growth.
+  // Deterministic tile seeds keep the effect stable while the light moves; reduced-motion disables animation.
+  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+    const i=I(x,y),tt=L.map[i];if(!L.seen[i])continue;
+    const xx=x*T,yy=y*T,seed=(x*92837111^y*689287499)>>>0;
+    if(tt===WATER){
+      const phase=REDUCE?0:NOW/680+(seed%97)/15,rx=xx+4+((seed>>>3)%20),ry=yy+5+((seed>>>9)%20);
+      const shimmer=.12+.12*(.5+.5*Math.sin(phase));
+      ctx.save();ctx.globalAlpha=shimmer;ctx.fillStyle='#c5f6ec';
+      ctx.fillRect(xx+((rx-xx+Math.floor(phase*2))%Math.max(8,T-6)),ry,Math.max(3,T*.22),1);
+      if((seed%4)===0){ctx.globalAlpha=shimmer*.65;ctx.fillRect(rx,yy+T-7,2,1)}
+      ctx.restore();
+    }else if(tt===GRASS||tt===RUBBLE){
+      const fungal=L.bio==='fungal'||L.tset==='fungal';
+      const pulse=REDUCE?.12:(.08+.10*(.5+.5*Math.sin(NOW/720+(seed%31))));
+      if((seed%7===0)||(fungal&&seed%3===0)){
+        ctx.save();ctx.globalAlpha=fungal?pulse*1.8:pulse;ctx.fillStyle=fungal?'#b7e66b':'#8fc9b4';
+        const gx=xx+5+(seed%Math.max(1,T-10)),gy=yy+5+((seed>>>5)%Math.max(1,T-12));
+        ctx.fillRect(gx,gy,2,2);ctx.fillRect(gx-1,gy+2,4,1);
+        if(fungal){ctx.globalAlpha*=.35;ctx.fillRect(gx-2,gy-2,6,6)}
+        ctx.restore();
+      }
+    }else if(tt===CRACK&&((seed>>>4)%4===0)){
+      ctx.save();ctx.globalAlpha=.18;ctx.fillStyle='#d7b77b';
+      ctx.fillRect(xx+T*.42,yy+T*.32,1,Math.max(3,T*.18));ctx.fillRect(xx+T*.42,yy+T*.49,Math.max(3,T*.16),1);ctx.restore();
+    }
+  }
   // Battlefield residue: tiny, fading pixel pools sit on the floor beneath later action.
   for(const s of FX.stains){if(s.x<x0||s.x>x1||s.y<y0||s.y>y1||!L.seen[I(s.x,s.y)])continue;const fade=Math.max(0,1-(NOW-s.t0)/s.life);ctx.save();ctx.globalAlpha=fade*.72;ctx.fillStyle=s.c;const bx=s.x*T,by=s.y*T;ctx.fillRect(bx+T*.28,by+T*.55,T*.4,T*.18);ctx.fillRect(bx+T*.38,by+T*.48,T*.22,T*.12);if(s.seed%2===0)ctx.fillRect(bx+T*.18,by+T*.62,T*.12,T*.06);ctx.restore()}
   if(TS.face&&!L.town)drawDressing(L,TS,x0,x1,y0,y1);
