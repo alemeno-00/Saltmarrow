@@ -1707,7 +1707,7 @@ async function descend(fell){if(S.mode==='combat'&&!fell){log('You can\'t take t
 
 /* ================= damage, death, xp ================= */
 function damage(e,amt,src){if(amt<=0||e.dead||S.over)return;if(isP(e)&&amt>1){const ar=armorTotal();if(ar>0){const cut=Math.min(Math.floor(amt*0.3),Math.floor(ar/2)+((ar%2)&&Math.random()<0.5?1:0));if(cut>0){amt-=cut;e.lastBlock=cut}}}let a=amt;if(e.temp){const u=Math.min(e.temp,a);e.temp-=u;a-=u}
-  const wasW=winded(e);e.stam-=a;UI.fx('hit',{e,amt});
+  const wasW=winded(e);e.lastHit={kind:src?(isP(src)?'weapon':'claw'):'hazard',at:NOW,source:src&&src.type||null,amount:a};e.stam-=a;UI.fx('hit',{e,amt});
   if(isP(e)){const C=S.C;
     if(C&&S.cls==='riptide'){if(!C.flags.hurt){C.flags.hurt=1;e.res++}if(!wasW&&winded(e)&&!C.flags.wind){C.flags.wind=1;e.res++}}
     if(C&&S.cls==='flag'&&!C.flags.fhurt){C.flags.fhurt=1;e.res++}
@@ -1717,7 +1717,7 @@ function damage(e,amt,src){if(amt<=0||e.dead||S.over)return;if(isP(e)&&amt>1){co
   if(S.mode==='explore'&&!e.inCombat&&e.state!=='alert'){e.state='sus';e.inv=src&&!isP(src)?{x:e.x,y:e.y}:{x:S.P.x,y:S.P.y}}
   if(e.stam<=0)killMon(e,null,src)}
 function killMon(m,how,src){m.dead=true;const L=S.L;const i=L.mons.indexOf(m);if(i>=0)L.mons.splice(i,1);releaseGrabs(m);S.kills++;if(S.C)S.C.kills++;
-  UI.fx('death',{e:m});log(how||`${The(m)} is destroyed.`,'good');recordKill(m);
+  UI.fx('death',{e:m,hit:m.lastHit||null,source:src||null});log(how||`${The(m)} is destroyed.`,'good');recordKill(m);
   const M=MT(m);if(M.final){S.C=null;S.mode='explore';UI.ending();return}
   const drop=it=>{const x=m.x,y=m.y;if(tileAt(x,y)!==PIT)L.items.push(Object.assign(it,{x,y}))};
   if(m.uniq==='edric'){drop({kind:'quest',key:'ring'});log('As it dies it says, quite clearly, "Tell Mara I tried."','dread');addDread(2)}
@@ -3765,7 +3765,21 @@ UI.fx=(type,d)=>{
     case'hit':{d.e.flashT=NOW;const p=wpos(d.e);FX.floats.push({x:p.x,y:p.y-T*0.4,text:'-'+d.amt,c:isP(d.e)?'#ff8a70':'#fff4dc',t0:NOW,big:true});burst(p.x,p.y,6,isP(d.e)?['#c2533e','#ff8a70']:['#e8dcc4','#c2533e'],70,0.4,200,2);break}
     case'lunge':{const e=d.e;e.lunge={dx:Math.sign(d.tx-e.x),dy:Math.sign(d.ty-e.y),t0:NOW};break}
     case'bolt':{const a=wpos(d.from),b={x:d.to.x*T+T/2,y:d.to.y*T+T/2};FX.bolts.push({a,b,c:d.color,t0:NOW,dur:170});break}
-    case'death':{const p=wpos(d.e);burst(p.x,p.y,22,['#e8dcc4','#869690','#2a403b','#c2533e'],110,0.8,260,3);break}
+    case'death':{
+      const e=d.e,p=wpos(e),hit=d.hit||{},L=S.L,tile=tileAt(e.x,e.y);
+      const fire=L.fire&&L.fire[I(e.x,e.y)]>0,water=tile===WATER,spore=(L.spore&&L.spore[I(e.x,e.y)]>0)||MT(e).burst;
+      // Each death reads as a tiny pixel-art animation: impact flash, directional chunks, then settling motes.
+      const palette=fire?['#fff2b0','#ff9a3a','#c2533e','#28201b']:water?['#bff4ff','#7fd0d8','#23606f','#3a2528']:spore?['#c8d86a','#9aa84a','#e8f0a0','#542d3b']:['#c2533e','#8b2936','#e8dcc4','#869690','#2a403b'];
+      burst(p.x,p.y,fire?26:water?28:34,palette,fire?145:125,0.72,260,3);
+      // Dark red pixels and pale bone/armour fragments sell a hit without realistic detail.
+      if(!fire&&!water){burst(p.x,p.y,10,['#501b26','#7e2634','#c2533e'],100,0.95,290,2);burst(p.x,p.y,spore?3:7,['#e8dcc4','#c6bca4','#d4d8c8'],125,0.85,310,2)}
+      // A weapon kill throws fragments away from the attacker; environmental deaths bloom outward.
+      const src=d.source,dx=src?Math.sign(e.x-src.x):0,dy=src?Math.sign(e.y-src.y):0;
+      for(let k=0;k<5;k++){const a=(Math.PI*2*k/5)+(dx||dy?Math.atan2(dy,dx):0),v=55+Math.random()*75;
+        FX.parts.push({x:p.x,y:p.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-35,life:.42+Math.random()*.25,age:0,c:fire?['#ffb347','#ff7a2a','#332a25'][k%3]:water?['#7fd0d8','#23606f','#bff4ff'][k%3]:['#8b2936','#c2533e','#e8dcc4','#2a403b'][k%4],s:k%2?3:4,g:260})}
+      FX.rings.push({x:p.x,y:p.y,r:T*.48,t0:NOW,dur:260,c:fire?'#ff9a3a':water?'#7fd0d8':'#8b2936'});
+      if(fire)FX.lights.push({x:p.x,y:p.y,r:T*2,t0:NOW,dur:300,c:'#ff9a3a'});
+      break}
     case'explosion':{const x=d.x*T+T/2,y=d.y*T+T/2;burst(x,y,50,['#fff2b0','#ffb347','#ff7a2a','#c2533e','#3a3a3a'],260*(d.r||1)/1.5,0.9,120,3);burst(x,y,24,['#2a2a2a','#555','#3a5751'],120,1.6,-20,4);FX.lights.push({x,y,r:T*(d.r+3),t0:NOW,dur:600,c:'#ffb347'});break}
     case'debris':{const x=d.x*T+T/2,y=d.y*T+T/2;burst(x,y,26,d.c==='crystal'?['#f0c8e0','#ffffff','#c890b8']:['#6a625a','#3a342e','#8a8278','#5a3a1a'],140,0.8,300,3);if(d.c==='crystal')FX.lights.push({x,y,r:T*3,t0:NOW,dur:400,c:'#f0c8e0'});break}
     case'fire':{const x=d.x*T+T/2,y=d.y*T+T/2;burst(x,y,40,['#fff2b0','#f2b14a','#ff7a2a','#c2533e'],150,0.9,-60,3);FX.lights.push({x,y,r:T*4,t0:NOW,dur:700,c:'#ff9a3a'});break}
