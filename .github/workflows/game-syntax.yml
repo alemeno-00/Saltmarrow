@@ -1,0 +1,33 @@
+name: Game syntax check
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - '.github/workflows/game-syntax.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - '.github/workflows/game-syntax.yml'
+jobs:
+  inline-javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Extract and syntax-check inline scripts
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r'<script\b[^>]*>(.*?)</script\s*>', html, flags=re.I | re.S)
+          inline = [script for script in scripts if script.strip()]
+          if not inline:
+              raise SystemExit("No inline JavaScript blocks found")
+          Path("/tmp/saltmarrow-inline.js").write_text("\n;\n".join(inline), encoding="utf-8")
+          print(f"Extracted {len(inline)} inline script block(s)")
+          PY
+          node --check /tmp/saltmarrow-inline.js
