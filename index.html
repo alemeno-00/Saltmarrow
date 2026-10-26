@@ -268,20 +268,9 @@ body:has(#overlay:not([hidden])) #dock{visibility:hidden!important}
 #overlay:not([hidden]) .cls{background:rgba(8,19,22,.9);border-color:rgba(111,181,160,.3)}
 #overlay:not([hidden]) .cls:hover,#overlay:not([hidden]) .cls:focus-visible{border-color:#6fe5dc;box-shadow:0 0 18px rgba(66,220,213,.14)}
 #overlay:not([hidden]) .cls h3{color:#f0d49b}
-/* Use the actual cinematic title-art asset, not a generic gradient-only placeholder. */
-#overlay:not([hidden]){background-image:linear-gradient(90deg,rgba(2,8,11,.97) 0%,rgba(3,12,16,.86) 34%,rgba(3,12,16,.34) 66%,rgba(2,8,11,.16) 100%),url("assets/title-screen.svg")!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}
-#overlay:not([hidden]) .picker{margin-right:auto;max-width:900px;background:linear-gradient(120deg,rgba(2,8,11,.82),rgba(4,20,24,.68));border-color:rgba(125,222,205,.38);box-shadow:0 20px 80px rgba(0,0,0,.42),inset 0 0 50px rgba(57,190,180,.06)}
-#overlay:not([hidden]) .picker h2{color:#e8e4ce;text-align:left;font-size:clamp(42px,5.8vw,72px);letter-spacing:.06em;text-shadow:0 3px 0 #142326,0 0 26px rgba(93,221,206,.24)}
-#overlay:not([hidden]) .picker:before{content:"SALTMARROW";display:block;align-self:flex-start;font-family:var(--display);font-size:clamp(46px,7vw,88px);font-weight:700;letter-spacing:.07em;line-height:.88;color:#e8e4ce;text-shadow:0 3px 0 #142326,0 0 26px rgba(93,221,206,.24)}
-#overlay:not([hidden]) .picker h2:before{content:"—  D E E P  —";display:block;margin:0 0 10px;color:#d5b978;font-family:var(--display);letter-spacing:.28em;font-size:clamp(15px,2vw,22px)}
-#overlay:not([hidden]) .picker h2{font-size:clamp(25px,3vw,36px);color:#d5b978;letter-spacing:.03em}
+/* Modal backdrops remain quiet; only the home screen receives the title scene. */
+#overlay:not([hidden]){background:rgba(3,9,13,.94)!important}
 
-#overlay:not([hidden]) .picker>p{text-align:left;max-width:66ch}
-#overlay:not([hidden]) .classes{grid-template-columns:repeat(auto-fit,minmax(205px,1fr))}
-#overlay:not([hidden]) .cls{min-height:150px}
-@media(max-width:860px){#overlay:not([hidden]){background-image:linear-gradient(180deg,rgba(2,8,11,.8),rgba(2,8,11,.94)),url("assets/title-screen.svg")!important;background-position:center!important}#overlay:not([hidden]) .picker{margin:auto;background:rgba(2,10,13,.82)}}
-
-@media(max-width:860px){#overlay:not([hidden]){align-items:flex-start;background:linear-gradient(145deg,rgba(2,7,10,.98),rgba(3,22,27,.96),rgba(2,8,12,.99))!important}#overlay:not([hidden]) .picker{margin:auto 0}}
 
 /* overlays */
 .card{max-width:440px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
@@ -540,6 +529,7 @@ body.mob .mhead{display:none}
 <script src="drowned-sprites.js"></script>
 <script src="carrion-brood.js"></script>
 <script src="carrion-sprites.js"></script>
+<script src="isometric-art.js"></script>
 <script>
 (function(){
 'use strict';
@@ -6956,7 +6946,7 @@ const DYING=[];
 {const k0=killMon;killMon=function(m,how,src){if(m.dead)return;const p=m.rx!=null?{x:m.rx*T+T/2,y:m.ry*T+T/2}:{x:m.x*T+T/2,y:m.y*T+T/2};const r=k0(m,how,src);
   try{if(!REDUCE&&SPR[m.type]){const M=MT(m);DYING.push({img:DROWNED_ART.frame(m,NOW,REDUCE)||SPR[m.type],x:p.x,y:p.y,k:({ice:'crumble',occult:'fade',slash:'sever',piercing:'sever',fire:'burn',water:'sink',spores:'spore',lightning:'shock'})[m.lastHit&&m.lastHit.kind]||DEATHK[m.type]||'topple',t0:NOW,sz:DROWNED_TYPES.has(m.type)?(m.type==='admiral'?72:48):M.boss?T*1.5:T,dir:src&&src.x!=null&&src.x>m.x?-1:1,seed:Math.random()*6});if(DYING.length>24)DYING.splice(0,DYING.length-24)}}catch(e){}return r}}
 {const a0=drawAnims;drawAnims=function(){a0();if(!DYING.length)return;try{for(let i=DYING.length-1;i>=0;i--){const d=DYING[i],dur=d.k==='fade'?900:d.k==='crumble'?700:620,t=(NOW-d.t0)/dur;if(t>1){DYING.splice(i,1);continue}if(t<0)continue;
-  const sz=d.sz;let x=d.x,y=d.y;ctx.save();if(typeof ISO!=='undefined'){ctx.transform(.5,-.5,1,1,0,0);const p=ISO.project(x,y);x=p.x;y=p.y-T/2}ctx.globalCompositeOperation='source-over';
+  const sz=d.sz;let x=d.x,y=d.y;ctx.save();if(typeof ISO!=='undefined'){ctx.transform(.5,-.5,1/(2*ISO.rise),1/(2*ISO.rise),0,0);const p=ISO.project(x,y);x=p.x;y=p.y-T/2}ctx.globalCompositeOperation='source-over';
   switch(d.k){
     case'burn':{ctx.globalAlpha=1-t;ctx.filter='brightness('+Math.max(.08,1-t*2)+')';ctx.translate(x,y+sz*.3);ctx.scale(1-t*.35,1-t*.75);ctx.drawImage(d.img,-sz/2,-sz*.8,sz,sz);break}
     case'shock':{ctx.globalAlpha=1-t;ctx.filter='brightness('+(.3+Math.max(0,1-t*5)*1.7)+')';ctx.translate(x,y);ctx.rotate(d.dir*Math.min(1,t*2)*1.3);ctx.drawImage(d.img,-sz/2,-sz/2,sz,sz);break}
@@ -7051,8 +7041,9 @@ setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{buildTutorial:()
 
 /* ---------- semi-isometric presentation (simulation remains in grid coordinates) ---------- */
 const ISO={
-  project(x,y){return{x:x-y,y:(x+y)/2}},
-  unproject(x,y){return{x:y+x/2,y:y-x/2}},
+  rise:.65,
+  project(x,y){return{x:x-y,y:(x+y)*ISO.rise}},
+  unproject(x,y){const row=y/(2*ISO.rise);return{x:row+x/2,y:row-x/2}},
   depth(e){return(e.rx??e.x)+(e.ry??e.y)},
   camera:{x:0,y:0,ready:false},
   screen(x,y){const p=this.project(x,y);return{x:p.x-this.camera.x,y:p.y-this.camera.y}},
@@ -7068,18 +7059,19 @@ const isoAnimate=animate;animate=function(dt){if(ISO.level!==S.L){ISO.level=S.L;
   c.x=Math.round(c.x);c.y=Math.round(c.y)};
 tileFromEvent=function(ev){const r=cv.getBoundingClientRect();return ISO.pick((ev.clientX-r.left)*VW/r.width,(ev.clientY-r.top)*VH/r.height)};
 UI.inspectAt=(x,y)=>{const r=cv.getBoundingClientRect(),p=ISO.screen((x+.5)*T,(y+.5)*T);openInspect(x,y,r.left+p.x*r.width/VW,r.top+p.y*r.height/VH)};
-function isoGround(fn){ctx.save();ctx.transform(1,.5,-1,.5,0,0);fn();ctx.restore()}
+function isoGround(fn){ctx.save();ctx.transform(1,ISO.rise,-1,ISO.rise,0,0);fn();ctx.restore()}
 function isoUpright(e,fn){const p=wpos(e),q=ISO.project(p.x,p.y);ctx.save();ctx.translate(Math.round(q.x-p.x),Math.round(q.y-p.y-T/2));fn();ctx.restore()}
-function isoWall(TS,x,y,wf){const i=I(x,y),h=T*.65,im=tileImg(TS,S.L.map[i],x,y,wf);
+function isoWall(TS,x,y,wf){const i=I(x,y),h=T*(S.L.town ? .85 : 1.1),im=tileImg(TS,S.L.map[i],x,y,wf);
   // Two textured vertical faces and a diamond cap, all using the same tile art.
   const a=ISO.project(x*T,y*T),b=ISO.project((x+1)*T,y*T),c=ISO.project(x*T,(y+1)*T);
-  ctx.save();ctx.transform(1,.5,0,1,c.x,c.y-h);ctx.drawImage(im,0,0,T,h);ctx.fillStyle='rgba(2,8,12,.24)';ctx.fillRect(0,0,T,h);ctx.restore();
-  ctx.save();ctx.transform(-1,.5,0,1,b.x,b.y-h);ctx.drawImage(im,0,0,T,h);ctx.fillStyle='rgba(2,8,12,.48)';ctx.fillRect(0,0,T,h);ctx.restore();
-  ctx.save();ctx.translate(0,-h);isoGround(()=>ctx.drawImage(TS.top?TS.top[h4(x,y)]:im,x*T,y*T,T,T));ctx.restore();
+  ctx.save();ctx.transform(1,ISO.rise,0,1,c.x,c.y-h);ctx.drawImage(im,0,0,T,h);ctx.fillStyle='rgba(2,8,12,.24)';ctx.fillRect(0,0,T,h);ctx.restore();
+  ctx.save();ctx.transform(-1,ISO.rise,0,1,b.x,b.y-h);ctx.drawImage(im,0,0,T,h);ctx.fillStyle='rgba(2,8,12,.48)';ctx.fillRect(0,0,T,h);ctx.restore();
+  ctx.save();ctx.translate(0,-h);isoGround(()=>ctx.drawImage(ART?.tile('masonry',h4(x,y))||(TS.top?TS.top[h4(x,y)]:im),x*T,y*T,T,T));ctx.restore();
   ctx.strokeStyle='#60716c';ctx.globalAlpha*=.35;ctx.beginPath();ctx.moveTo(b.x,b.y-h);ctx.lineTo(a.x,a.y-h);ctx.lineTo(c.x,c.y-h);ctx.stroke();
 }
 const ISO_ART=new WeakMap();
 function isoFloorArt(img,t,x,y){
+  if(S.L.town&&!S.L.interior)return img;
   // Cache four native-pixel variants; no per-frame texture allocation.
   if(![FLOOR,RUBBLE,GRASS,WATER].includes(t))return img;
   let variants=ISO_ART.get(img);if(!variants){variants=[];ISO_ART.set(img,variants)}
@@ -7106,9 +7098,9 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
   ctx.setTransform(dpr,0,0,dpr,0,0);ctx.imageSmoothingEnabled=false;ctx.globalAlpha=1;ctx.fillStyle='#04090e';ctx.fillRect(0,0,VW,VH);
   let shakeX=0,shakeY=0;if(FX.shake.m){const t=(NOW-FX.shake.t)/350;if(t<1&&!REDUCE){shakeX=Math.round((Math.random()-.5)*FX.shake.m*(1-t));shakeY=Math.round((Math.random()-.5)*FX.shake.m*(1-t))}else FX.shake.m=0}
   ctx.save();ctx.translate(-c.x+shakeX,-c.y+shakeY);
-  const tiles=[],standing=[];
+  const tiles=[],standing=[],townPlan=townArtPlan(L);
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=I(x,y);if(!L.seen[i])continue;const q=ISO.project((x+.5)*T,(y+.5)*T);if(q.x<c.x-T*3||q.x>c.x+VW+T*3||q.y<c.y-T*3||q.y>c.y+VH+T*3)continue;tiles.push({x,y,i});
-    if(L.map[i]===WALL||L.map[i]===CRACK)standing.push({x,y,depth:x+y+1,wall:true})}
+    if((L.map[i]===WALL||L.map[i]===CRACK)&&!townPlan?.covered.has(i))standing.push({x,y,depth:x+y+1,wall:true})}
   isoGround(()=>{for(const{x,y,i}of tiles){ctx.globalAlpha=vis[i]?1:.45;ctx.drawImage(isoFloorArt(tileImg(TS,L.map[i],x,y,wf),L.map[i],x,y),x*T,y*T,T,T);
       // Exposed walkway edges give bridges and chasms visible thickness.
       if(OPENT(L.map[i])){ctx.fillStyle='#8d8064';ctx.globalAlpha*=.55;if(inb(x,y+1)&&L.map[I(x,y+1)]===PIT)ctx.fillRect(x*T,y*T+T-2,T,2);if(inb(x+1,y)&&L.map[I(x+1,y)]===PIT)ctx.fillRect(x*T+T-2,y*T,2,T)}
@@ -7123,9 +7115,10 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
   for(const o of L.objs)if(L.seen[I(o.x,o.y)]&&(o.type!=='charge'||vis[I(o.x,o.y)]))standing.push({e:o,depth:ISO.depth(o)+1,object:true});
   for(const m of L.mons)if(monVisible(m))standing.push({e:m,depth:ISO.depth(m)+1});
   for(const n of L.npcs||[])if(L.seen[I(n.x,n.y)])standing.push({e:n,depth:ISO.depth(n)+1,npc:true});
+  if(townPlan)for(const b of townPlan.entries)standing.push({building:b,depth:b.x+b.y+(b.w+b.h)*.6});
   standing.push({e:P,depth:ISO.depth(P)+1,hero:true});
   standing.sort((a,b)=>a.depth-b.depth||(a.wall?-1:1)-(b.wall?-1:1));
-  for(const entry of standing){ctx.save();if(entry.wall){ctx.globalAlpha=vis[I(entry.x,entry.y)]?1:.45;
+  for(const entry of standing){ctx.save();if(entry.building){drawArtBuilding(entry.building)}else if(entry.wall){ctx.globalAlpha=vis[I(entry.x,entry.y)]?1:.45;
       // Cut away nearby foreground masonry so the hero and target remain readable.
       if(entry.depth>P.x+P.y&&Math.abs(entry.x-P.x)<=2&&Math.abs(entry.y-P.y)<=2)ctx.globalAlpha*=.3;
       isoWall(TS,entry.x,entry.y,wf);
@@ -7151,7 +7144,7 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
   for(const o of L.objs){if(!vis[I(o.x,o.y)])continue;const warm=['lamp','forge','hearth','altar','desk','chandelier'].includes(o.type)||(o.type==='brazier'&&o.lit)||(o.type==='shrine'&&!o.used);const cool=['crystal','shroom'].includes(o.type);if(warm||cool)isoPixelLight((o.x+.5)*T,(o.y+.5)*T,T*2.5,cool?'#63bfc7':'#efaa51',.16)}
   for(const l of FX.lights)isoPixelLight(l.x,l.y,l.r,l.c,.22*Math.max(0,1-(NOW-l.t0)/l.dur));
   for(const f of FX.floats){const t=(NOW-f.t0)/1000;if(t<0)continue;const p=ISO.project(f.x,f.y);ctx.globalAlpha=Math.max(0,1-t);ctx.textAlign='center';ctx.font=`700 ${f.huge?24:f.big?17:11}px monospace`;ctx.fillStyle='#04090e';ctx.fillText(f.text,p.x+1,p.y-(REDUCE?0:t*26)+1);ctx.fillStyle=f.c;ctx.fillText(f.text,p.x,p.y-(REDUCE?0:t*26))}ctx.globalAlpha=1;ctx.textAlign='start';
-  if(L.town&&!L.interior)for(const b of BUILDINGS){const p=ISO.project((b.x+b.w/2)*T,b.y*T);tag(ctx,p.x,p.y-24,b.name,'#e3c890')}
+  if(L.town&&!L.interior)for(const b of BUILDINGS){const p=ISO.project((b.dx+.5)*T,(b.dy+1)*T);tag(ctx,p.x,p.y+12,b.name,'#e3c890')}
   ctx.restore();ctx.setTransform(dpr,0,0,dpr,0,0);drawAtmos(0,0);
   if(FX.flash){const t=(NOW-FX.flash.t0)/FX.flash.dur;if(t<1){ctx.fillStyle=`rgba(255,250,235,${.35*(1-t)})`;ctx.fillRect(0,0,VW,VH)}else FX.flash=null}
 };
@@ -7176,6 +7169,156 @@ const DROWNED_ART=SaltmarrowDrownedSprites.create(document,(type,idle)=>{SPR[typ
     ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.fillStyle='#fff0bf';const label=m.type==='saltleecher'?'EMERGE':m.type==='brinewraith'?'AMBUSH':mark.ability==='The Last Bell'?'LAST BELL':'TIDE';ctx.fillText(label,mark.x*T+T/2,mark.y*T+T/2+3);
   }ctx.restore();
 }}
+/* ---------- native pixel art pass ---------- */
+const ART=window.SaltmarrowArt;
+const TOWN_ART=new WeakMap();
+function townArtPlan(L){
+  if(!ART?.get('buildings','smith')||!L.town||L.interior)return null;
+  if(TOWN_ART.has(L))return TOWN_ART.get(L);
+  const entries=BUILDINGS.map(b=>{const door=L.objs.find(o=>o.type==='door'&&o.key===b.key);return{...b,entryX:door?.x??b.dx,entryY:door?.y??b.dy}});
+  for(const o of L.objs)if(o.type==='house')entries.push({key:'house',x:o.x-1,y:o.y-2,w:3,h:3,dx:o.x,dy:o.y,entryX:o.x,entryY:o.y,boarded:o.boarded});
+  entries.push({key:'lift',x:56,y:13,w:5,h:8,dx:58,dy:20,entryX:56,entryY:16,name:'The Lift Head'});
+  const covered=new Set();for(const b of entries)for(let y=b.y;y<b.y+b.h;y++)for(let x=b.x;x<b.x+b.w;x++)if(inb(x,y))covered.add(I(x,y));
+  const plan={entries,covered};TOWN_ART.set(L,plan);return plan;
+}
+function artBuildingPlacement(b){
+  const center=ISO.project((b.x+b.w/2)*T,(b.y+b.h/2)*T);
+  const width=Math.round((b.w+b.h)*T*(b.key==='lift'?.65:.88)),asset=ART.get(b.key==='lift'?'structures':'buildings',b.key);
+  const height=asset?Math.round(width*asset.image.height/asset.image.width*(b.key==='lift'?.84:.78)):width;
+  return {x:Math.round(center.x-width/2),y:Math.round(center.y+(b.key==='lift'?T:(b.w+b.h)*T*ISO.rise*.44)-height),w:width,h:height};
+}
+function drawArtBuilding(b){
+  const a=ART.get(b.key==='lift'?'structures':'buildings',b.key);if(!a){if(b.key==='lift')drawArtLift(b);return}
+  const r=artBuildingPlacement(b),hero=ISO.project((S.P.rx+.5)*T,(S.P.ry+.5)*T);
+  const behind=S.P.y<b.y+b.h&&S.P.x<b.x+b.w&&hero.x>r.x-12&&hero.x<r.x+r.w+12&&hero.y>r.y&&hero.y<r.y+r.h-12;
+  ctx.save();if(behind)ctx.globalAlpha*=.34;
+  if(b.key==='apoth'&&!flag('nellFreed'))ctx.filter='brightness(.55)';
+  ctx.drawImage(a.image,r.x,r.y,r.w,r.h);
+  ctx.restore();
+}
+function drawArtLift(b){
+  const a=ART.get('structures','lift');if(a){const p=ISO.project((b.x+b.w/2)*T,(b.y+b.h/2)*T),w=Math.round((b.w+b.h)*T*.65),h=Math.round(w*a.image.height/a.image.width);ctx.drawImage(a.image,Math.round(p.x-w/2),Math.round(p.y+T-h),w,h);return}
+  const p=ISO.project((b.x+b.w/2)*T,(b.y+b.h/2)*T),w=T*3.7,h=T*5;
+  ctx.save();ctx.translate(Math.round(p.x),Math.round(p.y));
+  const beam=(x,y,ww,hh)=>{ctx.fillStyle='#171b1d';ctx.fillRect(x-2,y-2,ww+4,hh+4);ctx.fillStyle='#59442d';ctx.fillRect(x,y,ww,hh);ctx.fillStyle='#88704a';ctx.fillRect(x,y,2,hh);for(let i=10;i<hh;i+=16){ctx.fillStyle='#242d30';ctx.fillRect(x,y+i,ww,3);ctx.fillStyle='#a2a293';ctx.fillRect(x+2,y+i,1,1)}};
+  beam(-w/2,-h,10,h+20);beam(w/2-10,-h,10,h+20);beam(-w/2,-h,w,11);beam(-w/2,-h*.75,w,7);
+  ctx.strokeStyle='#564a36';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(-w/2+8,-h*.72);ctx.lineTo(w/2-8,-h*.25);ctx.moveTo(w/2-8,-h*.72);ctx.lineTo(-w/2+8,-h*.25);ctx.stroke();
+  ctx.fillStyle='#0a1115';ctx.fillRect(-w*.25,-12,w*.5,30);ctx.strokeStyle='#a99b75';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-h);ctx.lineTo(0,15);ctx.stroke();
+  ctx.strokeStyle='#6e726c';ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,-h+14,17,0,Math.PI*2);ctx.stroke();for(let k=0;k<6;k++){const a=k*Math.PI/3;ctx.beginPath();ctx.moveTo(0,-h+14);ctx.lineTo(Math.cos(a)*16,-h+14+Math.sin(a)*16);ctx.stroke()}
+  const lamp=ART.get('props','lamp');if(lamp)ctx.drawImage(lamp.image,w/2-18,-h*.35,18,44);
+  ctx.restore();
+}
+const QUIET_TOWN_FALLBACK=new Map();
+function calmTownTile(v,surface='stone'){
+  if(ART?.townTile)return ART.townTile(v,surface);
+  // A previously cached art module can coexist briefly with a newer HTML page.
+  const key=surface+v;if(QUIET_TOWN_FALLBACK.has(key))return QUIET_TOWN_FALLBACK.get(key);
+  const c=document.createElement('canvas');c.width=c.height=32;const g=c.getContext('2d');
+  g.fillStyle=surface==='grass'?'#1a2928':'#19252c';g.fillRect(0,0,32,32);
+  g.fillStyle=surface==='grass'?'#20312d':'#253238';
+  for(let y=0;y<2;y++)for(let x=-1;x<3;x++)g.fillRect(x*16+(y%2?8:0)+1,y*16+1,15,15);
+  QUIET_TOWN_FALLBACK.set(key,c);return c;
+}
+const artTileBase=tileImg;
+tileImg=function(TS,t,x,y,wf){
+  const L=S.L,plan=townArtPlan(L),v=h4(x,y);
+  if(L.town&&!L.interior&&L.bart?.[I(x,y)]&&!plan)return artTileBase(TS,t,x,y,wf);
+  if(plan?.covered.has(I(x,y)))return calmTownTile(v);
+  if(L.town&&!L.interior&&[FLOOR,RUBBLE,GRASS].includes(t))return calmTownTile(v,t===GRASS?'grass':t===RUBBLE?'yard':'stone');
+  if(t===FLOOR){const key=L.interior?'planks':L.town?'town':L.bio==='fungal'?'fungal':L.bio==='drowned'||L.bio==='abbey'?'drowned':L.bio==='crypt'?'crypt':'mine';return ART?.tile(key,v)||artTileBase(TS,t,x,y,wf)}
+  if(t===WALL||t===CRACK)return ART?.tile('masonry',v)||artTileBase(TS,t,x,y,wf);
+  return artTileBase(TS,t,x,y,wf);
+};
+const artSpriteBase=drawSprite;
+drawSprite=function(img,imgW,e,size,alpha,flipOk){
+  if(DROWNED_TYPES.has(e.type))return artSpriteBase(img,imgW,e,size,alpha,flipOk);
+  const key=e===S.P?S.cls:e.key||e.type,asset=ART?.actor(key);
+  if(!asset)return artSpriteBase(img,imgW,e,size,alpha,flipOk);
+  const p=wpos(e),scale=(size||T)/T,im=asset.image,h=Math.round(im.height*scale),w=Math.round(im.width*scale);
+  let ox=0,oy=0,hop=0;
+  if(e.lunge){const t=(NOW-e.lunge.t0)/200;if(t<1){const k=Math.sin(t*Math.PI)*T*.3;ox+=e.lunge.dx*k;oy+=e.lunge.dy*k}else e.lunge=null}
+  if(e.kb){const t=(NOW-e.kb.t0)/240;if(t<1){const k=Math.sin(t*Math.PI)*T*.16;ox+=e.kb.dx*k;oy+=e.kb.dy*k}else e.kb=null}
+  if(e.windup){const t=(NOW-e.windup.t0)/e.windup.dur;if(t<1){const k=Math.sin(Math.min(1,t)*Math.PI/2)*T*.15;ox-=e.windup.dx*k;oy-=e.windup.dy*k}else e.windup=null}
+  if(e.hop){const t=(NOW-e.hop.t0)/e.hop.dur;if(t<1)hop=Math.sin(t*Math.PI)*e.hop.h;else e.hop=null}
+  const moving=Math.abs((e.rx??e.x)-e.x)+Math.abs((e.ry??e.y)-e.y)>.04;
+  const bob=REDUCE?0:Math.round(Math.sin(NOW/(moving?100:540)+(Number(e.id)||0))*(moving?1.3:.65));
+  const footX=Math.round(p.x+ox),footY=Math.round(p.y+T/2+oy);
+  ctx.save();if(alpha!=null)ctx.globalAlpha*=alpha;
+  ctx.fillStyle='rgba(0,5,9,.48)';ctx.fillRect(footX-Math.round(w*.3),footY-2,Math.round(w*.6),3);
+  ctx.translate(footX,footY+bob-hop);const motion=bodyMotion(e);if(motion){ctx.rotate(motion.tilt);ctx.scale(motion.sx,motion.sy)}
+  if(e.squash&&!REDUCE){const t=(NOW-e.squash.t0)/e.squash.dur;if(t>=0&&t<1){const k=Math.sin(t*Math.PI)*.18;ctx.scale(1+k,1-k)}else if(t>=1)e.squash=null}
+  ctx.scale(flipOk!==false&&e.fx<0?-1:1,1);ctx.drawImage(im,-Math.round(w/2),-h,w,h);
+  if(e.flashT&&NOW-e.flashT<140){ctx.globalAlpha*=.7;ctx.drawImage(ART.white(asset),-Math.round(w/2),-h,w,h)}ctx.restore();
+};
+const artObjBase=drawObj;
+drawObj=function(o){
+  const plan=townArtPlan(S.L);if(plan&&['door','house'].includes(o.type)&&plan.covered.has(I(o.x,o.y)))return;
+  let key=o.type;if(key==='chest'||key==='coffin')key+=o.open?'Open':'';if(key==='brazier'&&!o.lit)key='brazierCold';if(key==='lever'&&o.on)key='leverOn';
+  const a=ART?.get('props',key);if(!a)return artObjBase(o);
+  const p=wpos(o),h=key==='lamp'?T*2.1:['shrine','statue','shelf','bell','forge','altar'].includes(key)?T*1.45:T*.85,w=Math.round(h*a.image.width/a.image.height);
+  ctx.save();if(o.type==='shrine'&&o.used)ctx.filter='brightness(.5)';ctx.drawImage(a.image,Math.round(p.x-w/2),Math.round(p.y+T/2-h),w,Math.round(h));
+  if((o.type==='brazier'&&o.lit)||o.type==='forge')flame(p.x,p.y+T*.15,.6,o.id);
+  ctx.restore();
+};
+// Character previews keep the legacy equipment/mark preview when it is requested explicitly.
+const artHeroBase=makeHero;
+makeHero=function(key,o){if(o?.kit||o?.marks?.length)return artHeroBase(key,o);const c=ART?.square(key);return c||artHeroBase(key,o)};
+const artPortraitBase=drawPortrait;
+drawPortrait=function(g,state,now){const a=ART?.portrait(S.cls);if(!a)return artPortraitBase(g,state,now);g.clearRect(0,0,48,48);g.imageSmoothingEnabled=false;g.drawImage(a,0,0);if(state==='hurt'||S.P.stam<S.P.max*.3){g.fillStyle='rgba(105,22,25,.16)';g.fillRect(0,0,48,48)}};
+ART?.ready.then(()=>{
+  for(const key of Object.keys(MON)){if(DROWNED_TYPES.has(key))continue;const im=ART.square(key);if(im){SPR[key]=im;SPRW[key]=white(im);delete MICON[key]}}
+  for(const key of Object.keys(HERO_LOOK)){const im=ART.square(key);if(im){SPR[key]=im;SPRW[key]=white(im);ICON[key]=im.toDataURL()}}
+  HERO_CACHE.clear();if(S&&S.L)UI.render();
+});
+const artPickBase=tileFromEvent,ART_FACTION_MASKS=new WeakMap();
+tileFromEvent=function(ev){
+  if(!S?.L)return artPickBase(ev);
+  const grid=artPickBase(ev);if(inb(grid.x,grid.y)&&blockObjAt(grid.x,grid.y)?.type==='door')return grid;
+  const r=cv.getBoundingClientRect(),mx=(ev.clientX-r.left)*VW/r.width+ISO.camera.x,my=(ev.clientY-r.top)*VH/r.height+ISO.camera.y;
+  const plan=townArtPlan(S.L),candidates=[];
+  for(const e of [...S.L.mons,...(S.L.npcs||[])]){
+    if(e!==S.P&&(e.type?!monVisible(e):!S.L.seen[I(e.x,e.y)]))continue;
+    const carrion=CBA&&[...CBA.ids,'broodEgg','broodParasite'].includes(e.type);
+    const frame=carrion?CBA.frame(e,NOW,REDUCE):DROWNED_TYPES.has(e.type)?DROWNED_ART.frame(e,NOW,REDUCE):null;
+    let a=ART?.actor(e.key||e.type);if(frame){if(!ART_FACTION_MASKS.has(frame))ART_FACTION_MASKS.set(frame,{image:frame});a=ART_FACTION_MASKS.get(frame)}if(!a||!ART)continue;
+    const p=wpos(e),q=ISO.project(p.x,p.y),scale=e.type&&MT(e).boss?1.5:e.mut==='hulking'?1.2:1;
+    const w=frame?(carrion?(MT(e).boss?T*4:['broodEgg','broodParasite'].includes(e.type)?T*2:T*2.5):e.type==='admiral'?72:48):Math.round(a.image.width*scale),h=frame?w:Math.round(a.image.height*scale);
+    let u=(mx-(q.x-w/2))/w*a.image.width,v=(my-(q.y-h*(carrion?CBA.anchor[1]/CBA.cell:1)))/h*a.image.height;if(carrion&&e.fx<0)u=a.image.width-u;else if(!frame&&e.fx<0)u=a.image.width-1-u;
+    if(ART.hit(a,u,v))candidates.push({depth:ISO.depth(e)+1,x:e.x,y:e.y});
+  }
+  if(plan&&!SEL.id)for(const b of plan.entries){
+    const a=ART.get(b.key==='lift'?'structures':'buildings',b.key);if(!a)continue;const p=artBuildingPlacement(b),hero=ISO.project((S.P.rx+.5)*T,(S.P.ry+.5)*T);
+    if(S.P.y<b.y+b.h&&S.P.x<b.x+b.w&&hero.x>p.x-12&&hero.x<p.x+p.w+12&&hero.y>p.y&&hero.y<p.y+p.h-12)continue;
+    if(ART.hit(a,(mx-p.x)/p.w*a.image.width,(my-p.y)/p.h*a.image.height))candidates.push({depth:b.x+b.y+(b.w+b.h)*.6,x:b.entryX,y:b.entryY});
+  }
+  candidates.sort((a,b)=>b.depth-a.depth);return candidates[0]?{x:candidates[0].x,y:candidates[0].y}:artPickBase(ev);
+};
+window.__art={ready:ART?.ready,plan:()=>townArtPlan(S.L),placement:artBuildingPlacement,errors:ART?.errors};
+
+
+/* Home screen: one clear wordmark and a pixel-art scene, scoped away from dialogs. */
+{const st=document.createElement('style');st.textContent=`
+#overlay.ttov:not([hidden]):has(>.ttl){
+  background-image:linear-gradient(90deg,rgba(3,9,13,.30),rgba(3,9,13,.04) 72%),url('assets/art/home.webp')!important;
+  background-color:#061016!important;background-position:center!important;background-size:cover!important;background-repeat:no-repeat!important;
+  image-rendering:pixelated;justify-content:flex-start;align-items:center;isolation:isolate;
+}
+#boot[data-s="2"],#boot[data-s="2o"]{background:linear-gradient(90deg,rgba(3,9,13,.65),rgba(3,9,13,.3)),url('assets/art/home.webp') center/cover no-repeat!important;image-rendering:pixelated}
+#overlay.ttov:has(>.ttl)::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:-1;background:linear-gradient(0deg,rgba(2,7,10,.75),transparent 28%)}
+#overlay.ttov:has(>.ttl)>.ttl{width:min(430px,90vw);margin:0 0 0 clamp(28px,6vw,110px);padding:30px 16px;gap:28px;position:relative;z-index:1;image-rendering:auto}
+.ttl .tt1,#boot .b2 .tt1{font-size:clamp(44px,6vw,82px);line-height:1.04;letter-spacing:.025em;color:#e2e5d9;text-shadow:0 2px 0 #19272a,0 4px 12px #03090d}
+.ttl .tt2,#boot .b2 .tt2{margin:10px 0 0;font-family:var(--display);font-size:clamp(19px,2.1vw,26px);line-height:1.2;letter-spacing:.48em;padding-left:.48em;color:#b9c8c4;background:none;filter:none;-webkit-text-fill-color:currentColor;text-shadow:0 2px 0 #071117}
+.ttl .ttorn{margin-top:13px;color:#9b8f6d}.ttl .ttorn i{width:68px}
+.ttl .ttsub{max-width:28ch;margin:16px auto 0;font-size:16px;line-height:1.5;color:#aebfbd;text-wrap:balance}
+.ttl .gml{max-width:290px;gap:5px}.ttl .gmb{min-height:44px;padding:8px 12px;font-size:24px;text-shadow:0 2px 8px #02080b}
+.ttl .gmb small{color:#a9b9b5}.ttl .ttfoot{color:#879b98}.ttl .gmmsg:empty{display:none}
+@media(max-width:700px){
+  #overlay.ttov:not([hidden]):has(>.ttl){background-image:linear-gradient(0deg,rgba(3,9,13,.98) 0%,rgba(3,9,13,.87) 46%,rgba(3,9,13,.15) 100%),url('assets/art/home.webp')!important;background-position:68% center!important;justify-content:center;align-items:flex-end}
+  #overlay.ttov:has(>.ttl)>.ttl{margin:0 auto;padding:26px 14px max(24px,env(safe-area-inset-bottom));width:min(390px,94vw);gap:18px}
+  .ttl .tt1{font-size:clamp(38px,11.8vw,56px)}.ttl .tt2{font-size:19px;margin-top:7px}.ttl .ttsub{font-size:14px;margin-top:12px}.ttl .gml{gap:2px}.ttl .gmb{font-size:22px;min-height:44px}
+}
+@media(max-height:620px){#overlay.ttov:has(>.ttl)>.ttl{gap:12px;padding-top:12px;padding-bottom:12px}.ttl .ttsub{margin-top:9px}.ttl .ttorn{margin-top:8px}.ttl .tt1{font-size:44px}.ttl .tt2{font-size:18px}.ttl .gmb{padding:5px 10px}}
+`;document.head.appendChild(st)}
 /* Carrion drawing hooks use existing projected entity and floor layers. */
 const CBA=typeof SaltmarrowCarrionSprites==='undefined'?null:SaltmarrowCarrionSprites;
 const CBDEFEATS=[];
