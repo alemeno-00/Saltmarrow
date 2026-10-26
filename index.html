@@ -538,6 +538,8 @@ body.mob .mhead{display:none}
 
 <script src="death-effects.js"></script>
 <script src="drowned-sprites.js"></script>
+<script src="carrion-brood.js"></script>
+<script src="carrion-sprites.js"></script>
 <script>
 (function(){
 'use strict';
@@ -1778,8 +1780,8 @@ function killMon(m,how,src){if(m.dead)return;m.dead=true;const L=S.L;const i=L.m
   if(M.boss&&m.type!=='stalker'){easeDread(3,'The thing is dead. Your breathing slows.');drop({kind:'gear',item:rollGear(25)});{const rl=genRelic();if(rl)drop({kind:'gear',item:rl})}drop({kind:'gold',amt:40*S.depth})}
   if(m.type==='stalker'||m.type==='rival'){log(m.type==='rival'?'Silas Vane goes down without a word. His pack is heavy.':'It is dead. You do not believe it.','dread');drop({kind:'gear',item:genWeapon(S.depth,'eldritch')});const rl=genRelic();if(rl)drop({kind:'gear',item:rl})}
   if(m.mut){drop({kind:'gear',item:rollGear(12)});if(m.mut==='bloated'){log(`${The(m)} bursts!`,'gold');UI.fx('explosion',{x:m.x,y:m.y,r:1});for(const e of [S.P,...L.mons.slice()])if(cheb(e.x,e.y,m.x,m.y)<=1){damage(e,6,null);if(S.over)return}}}
-  else if(!M.boss&&Math.random()<0.1)drop(Math.random()<0.4?{kind:'gear',item:rollGear()}:rollLoot());
-  if(!how&&!M.fly&&tileAt(m.x,m.y)!==PIT&&tileAt(m.x,m.y)!==WATER)L.objs.push({type:'corpse',x:m.x,y:m.y,of:M.name,mt:m.type,id:S.nextId++});
+  else if(!M.boss&&!M.noLoot&&Math.random()<0.1)drop(Math.random()<0.4?{kind:'gear',item:rollGear()}:rollLoot());
+  if(!how&&!M.noCorpse&&!M.fly&&tileAt(m.x,m.y)!==PIT&&tileAt(m.x,m.y)!==WATER)L.objs.push({type:'corpse',x:m.x,y:m.y,of:M.name,mt:m.type,id:S.nextId++});
   if(M.burst){log(`${The(m)} bursts in a cloud of spores!`,'gold');sporeCloud(m.x,m.y,1,6)}
   if((isP(src)||src==null)&&gearSum('killHeal'))heal(gearSum('killHeal'));
   if(isP(src)||src==null){if(curse('dreadKill'))addDread(1,'The weapon drinks, and something in you goes quiet.');if(gearSum('resKill')&&S.C)S.P.res+=gearSum('resKill')}
@@ -2125,6 +2127,8 @@ async function monsterTurn(m){const M=MT(m),P=S.P;
   if(m.surprised)return;
   if(m.primed){const c=m.primed;m.primed=null;const ab=M.ab.find(a=>a.kind==='area');if(ab){faceTo(m,c.x,c.y);await monsterAttack(m,ab,c);if(!m.dead)endConds(m);checkCombatEnd();return}}
   if(hasC(m,'bleeding')){damage(m,rr(2,4),null);if(m.dead){checkCombatEnd();return}}
+  if(m.type==='broodEgg')return;
+  if(BROOD&&await BROOD.turn(m)){m.attackT=HEADLESS?0:NOW;if(!m.dead)endConds(m);checkCombatEnd();return}
   let see=combatSees(m);
   if(M.ai==='stalker'||m.mut==='eyes')see=true;
   if(see&&P.hidden){P.hidden=false;log(`${The(m)} finds you!`,'bad')}
@@ -3223,8 +3227,27 @@ async function drownedTurn(m){const P=S.P,M=MT(m);m.drownedTurn=(m.drownedTurn||
 {const g0=genLevel;genLevel=function(){g0();if(S.depth!==7||S.inSewer||S.L.town||S.L.mons.some(m=>m.type==='admiral'))return;const stairs=S.L.map.indexOf(STAIRS);if(stairs<0)return;const d=bfsDist(S.P.x,S.P.y,true),sx=stairs%W,sy=(stairs/W)|0,opts=[];for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++)if(d[I(x,y)]>=10&&cheb(x,y,sx,sy)<=5&&[FLOOR,WATER,RUBBLE,BONES].includes(tileAt(x,y))&&!occupied(x,y,null)&&!S.L.objs.some(o=>o.x===x&&o.y===y))opts.push({x,y});opts.sort((a,b)=>cheb(a.x,a.y,sx,sy)-cheb(b.x,b.y,sx,sy));if(opts.length)spawnMon('admiral',opts[0].x,opts[0].y)}}
 {const e0=endCombat;endCombat=function(){for(const m of S.L.mons){m.drownedIntent=null;m.burrowed=false}return e0()}}
 
+/* ================= Carrion Brood integration ================= */
+const CB=typeof SaltmarrowCarrion==='undefined'?null:SaltmarrowCarrion;
+const BROOD=CB&&CB.create({state:()=>S,log,dazed:m=>hasC(m,'dazed'),sees:m=>combatSees(m)||(m.type==='sinewStalker'&&cheb(m.x,m.y,S.P.x,S.P.y)<=4),
+ damage:(...args)=>damage(...args),poison:p=>addC(p,'weakened'),
+ dismiss:m=>{m.dead=true;S.L.mons=S.L.mons.filter(o=>o!==m)},
+ consumeEgg:id=>{const egg=S.L.mons.find(o=>o.id===id&&!o.dead);if(!egg)return false;egg.dead=true;S.L.mons=S.L.mons.filter(o=>o!==egg);return true},
+ egg:m=>{const pos=DIR8.map(([dx,dy])=>[m.x+dx,m.y+dy]).find(([x,y])=>freeFloor(x,y));if(!pos)return null;return spawnMon('broodEgg',...pos,{broodParent:m.id,inCombat:true,state:'alert'}).id},
+ summon:(m,type,n)=>{const old=new Set(S.L.mons.map(o=>o.id));bossMinion(m,type,n);for(const o of S.L.mons)if(!old.has(o.id))o.broodSummoned=true},
+ land:(m,a)=>{const pos=[[a.x,a.y],...DIR8.map(([dx,dy])=>[a.x+dx,a.y+dy])].find(([x,y])=>freeFloor(x,y));if(pos){m.x=pos[0];m.y=pos[1];m.rx=m.x;m.ry=m.y}},
+ climb:m=>{const p=S.P,opts=DIR8.flatMap(([dx,dy])=>{const x=m.x+dx,y=m.y+dy;if(inb(x,y)&&[WALL,CRACK].includes(tileAt(x,y)))return [[m.x+dx*2,m.y+dy*2]];return [[x,y]]}).filter(([x,y])=>freeFloor(x,y)&&DIR8.some(([dx,dy])=>inb(x+dx,y+dy)&&solid(tileAt(x+dx,y+dy))));opts.sort((a,b)=>cheb(a[0],a[1],p.x,p.y)-cheb(b[0],b[1],p.x,p.y));if(opts.length){m.x=opts[0][0];m.y=opts[0][1];}},
+ fx:a=>UI.fx('smokepuff',{x:a.x,y:a.y,r:a.radius})
+});
+if(CB){Object.assign(MON,CB.definitions);for(const k of [...CB.ids,'broodEgg','broodParasite'])FACTION[k]='carrion';
+ for(const [d,keys]of [[3,['marrowgnaw']],[4,['marrowgnaw','bloatcarrier']],[5,['sinewStalker','bloatcarrier']],[6,['broodShepherd','sinewStalker']],[7,['broodShepherd']]])for(const k of keys)POOL[d].push(k);
+ const kill0=killMon;killMon=function(m,...args){if(!m.dead)BROOD.death(m);return kill0(m,...args)};
+ const end0=endCombat;endCombat=function(){BROOD.cleanup();return end0()};
+ const gen0=genLevel;genLevel=function(){gen0();if(S.depth!==6||S.inSewer||S.L.town)return;const dm=bfsDist(S.P.x,S.P.y,false),cells=[];for(let i=0;i<W*H;i++)if(dm[i]>12&&dm[i]<Infinity&&S.L.map[i]===FLOOR&&freeFloor(i%W,(i/W)|0))cells.push(i);if(cells.length){const i=cells[Math.floor(cells.length/2)];spawnMon('carrionMatriarch',i%W,(i/W)|0);log('A hungry brood stirs deep in the feeding ground.','dread')}};
+}
+
 /* ================= export for tests ================= */
-if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,spawnMon:(...a)=>spawnMon(...a),startCombat:(...a)=>startCombat(...a),gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems,damage,killMon,heroAttack,drownedTurn,drownedPhase,drownedFlood,drownedSummon,monsterTurn,endCombat,POOL,hasC,addC};return}
+if(HEADLESS){globalThis.G={BROOD,CB,get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,spawnMon:(...a)=>spawnMon(...a),startCombat:(...a)=>startCombat(...a),gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems,damage,killMon,heroAttack,drownedTurn,drownedPhase,drownedFlood,drownedSummon,monsterTurn,endCombat,POOL,hasC,addC};return}
 /* =====================================================================
    BROWSER: sprites, rendering, animation, UI
    ===================================================================== */
@@ -7153,6 +7176,21 @@ const DROWNED_ART=SaltmarrowDrownedSprites.create(document,(type,idle)=>{SPR[typ
     ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.fillStyle='#fff0bf';const label=m.type==='saltleecher'?'EMERGE':m.type==='brinewraith'?'AMBUSH':mark.ability==='The Last Bell'?'LAST BELL':'TIDE';ctx.fillText(label,mark.x*T+T/2,mark.y*T+T/2+3);
   }ctx.restore();
 }}
+/* Carrion drawing hooks use existing projected entity and floor layers. */
+const CBA=typeof SaltmarrowCarrionSprites==='undefined'?null:SaltmarrowCarrionSprites;
+const CBDEFEATS=[];
+if(CBA){
+ const fx0=UI.fx;UI.fx=function(type,data){if(type==='death'&&[...CBA.ids,'broodEgg','broodParasite'].includes(data.e.type))return fx0('sporepuff',{x:data.e.x,y:data.e.y,r:1});return fx0(type,data)};
+ CBA.ready.then(()=>{for(const k of CBA.ids){SPR[k]=CBA.frames[k][0][0];SPRW[k]=null}SPR.broodEgg=CBA.frames.broodEgg[0][0];SPRW.broodEgg=null;SPR.broodParasite=CBA.frames.broodParasite[0][0];SPRW.broodParasite=null}).catch(console.error);
+ const sprite0=drawSprite;drawSprite=function(img,imgW,e,size,alpha,flipOk){
+  if(![...CBA.ids,'broodEgg','broodParasite'].includes(e.type))return sprite0(img,imgW,e,size,alpha,flipOk);
+  const frame=CBA.frame(e,NOW,REDUCE);if(!frame)return;const p=wpos(e),sz=MT(e).boss?T*3:T*2;
+  ctx.save();ctx.imageSmoothingEnabled=false;if(alpha!=null)ctx.globalAlpha*=alpha;ctx.translate(Math.round(p.x),Math.round(p.y+T/2));if(e.fx<0)ctx.scale(-1,1);ctx.drawImage(frame,Math.round(-sz/2),Math.round(-sz*70/80),sz,sz);ctx.restore();
+ };
+ const overlay0=drawOverlays;drawOverlays=function(...args){overlay0(...args);for(const m of S.L.mons){if(m.dead||!m.inCombat||!m.broodMark)continue;const a=m.broodMark;ctx.save();ctx.fillStyle=a.kind==='leap'?'#cc985a':'#abc95d';ctx.strokeStyle='#f6edc6';ctx.lineWidth=2;for(let dy=-a.radius;dy<=a.radius;dy++)for(let dx=-a.radius;dx<=a.radius;dx++){const x=a.x+dx,y=a.y+dy;if(!inb(x,y)||!S.L.seen[I(x,y)]||solid(tileAt(x,y)))continue;ctx.globalAlpha=.35;ctx.fillRect(x*T+2,y*T+2,T-4,T-4);ctx.globalAlpha=1;ctx.strokeRect(x*T+3,y*T+3,T-6,T-6);ctx.beginPath();ctx.moveTo(x*T+8,y*T+8);ctx.lineTo(x*T+24,y*T+24);ctx.moveTo(x*T+24,y*T+8);ctx.lineTo(x*T+8,y*T+24);ctx.stroke()}ctx.restore()}};
+ const kill0=killMon;killMon=function(m,...args){const fresh=!m.dead&&[...CBA.ids,'broodEgg','broodParasite'].includes(m.type);const r=kill0(m,...args);if(fresh){for(let i=DYING.length-1;i>=0;i--)if(DYING[i].img===SPR[m.type])DYING.splice(i,1);CBDEFEATS.push({m:{...m,broodDeathAt:NOW},level:S.L});if(CBDEFEATS.length>20)CBDEFEATS.shift()}return r};
+ const draw0=draw;draw=function(){draw0();ctx.save();ctx.translate(-ISO.camera.x,-ISO.camera.y);for(let i=CBDEFEATS.length-1;i>=0;i--){const d=CBDEFEATS[i];if(d.level!==S.L||NOW-d.m.broodDeathAt>650){CBDEFEATS.splice(i,1);continue}if(inb(d.m.x,d.m.y)&&vis[I(d.m.x,d.m.y)])isoUpright(d.m,()=>drawSprite(null,null,d.m));}ctx.restore()};
+}
 
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});

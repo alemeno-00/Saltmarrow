@@ -1,0 +1,35 @@
+{
+  "cell": 80,
+  "columns": 4,
+  "states": [
+    "idle",
+    "move",
+    "attack",
+    "hurt",
+    "defeat"
+  ],
+  "anchor": [
+    40,
+    70
+  ],
+  "palette": [
+    "#10131b",
+    "#302c39",
+    "#57444b",
+    "#826759",
+    "#b8a381",
+    "#e1d6ae",
+    "#354b3b",
+    "#65794a",
+    "#a8bb65",
+    "#d4e792",
+    "#874a66"
+  ],
+  "ids": [
+    "marrowgnaw",
+    "bloatcarrier",
+    "sinewStalker",
+    "broodShepherd",
+    "carrionMatriarch"
+  ]
+}
