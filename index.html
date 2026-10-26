@@ -1707,7 +1707,7 @@ async function descend(fell){if(S.mode==='combat'&&!fell){log('You can\'t take t
 
 /* ================= damage, death, xp ================= */
 function damage(e,amt,src){if(amt<=0||e.dead||S.over)return;if(isP(e)&&amt>1){const ar=armorTotal();if(ar>0){const cut=Math.min(Math.floor(amt*0.3),Math.floor(ar/2)+((ar%2)&&Math.random()<0.5?1:0));if(cut>0){amt-=cut;e.lastBlock=cut}}}let a=amt;if(e.temp){const u=Math.min(e.temp,a);e.temp-=u;a-=u}
-  const wasW=winded(e);e.lastHit={kind:src?(isP(src)?'weapon':'claw'):'hazard',at:NOW,source:src&&src.type||null,amount:a};e.stam-=a;UI.fx('hit',{e,amt});
+  const wasW=winded(e);e.lastHit={kind:src?(isP(src)?'weapon':'claw'):'hazard',at:NOW,source:src&&src.type||null,amount:a};e.hitT=NOW;e.stam-=a;UI.fx('hit',{e,amt});
   if(isP(e)){const C=S.C;
     if(C&&S.cls==='riptide'){if(!C.flags.hurt){C.flags.hurt=1;e.res++}if(!wasW&&winded(e)&&!C.flags.wind){C.flags.wind=1;e.res++}}
     if(C&&S.cls==='flag'&&!C.flags.fhurt){C.flags.fhurt=1;e.res++}
@@ -3754,7 +3754,7 @@ function envTiles(T,key){const bio=key.replace(/2$/,''),B=BPAL[key]||BPAL[bio];c
 const WALLISH=t=>t===WALL||t===CRACK||t===DOOR||t===OPEN||t===GATE||t===GATEOPEN;
 const OPENT=t=>!WALLISH(t);
 /* ---------- effects ---------- */
-const FX={floats:[],parts:[],rings:[],bolts:[],lights:[],amb:[],shake:{m:0,t:0}};
+const FX={floats:[],parts:[],rings:[],bolts:[],lights:[],amb:[],stains:[],shake:{m:0,t:0}};
 let NOW=0;
 const REDUCE=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function wpos(e){return{x:(e.rx!=null?e.rx:e.x)*T+T/2,y:(e.ry!=null?e.ry:e.y)*T+T/2}}
@@ -3777,7 +3777,7 @@ UI.fx=(type,d)=>{
       const src=d.source,dx=src?Math.sign(e.x-src.x):0,dy=src?Math.sign(e.y-src.y):0;
       for(let k=0;k<5;k++){const a=(Math.PI*2*k/5)+(dx||dy?Math.atan2(dy,dx):0),v=55+Math.random()*75;
         FX.parts.push({x:p.x,y:p.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-35,life:.42+Math.random()*.25,age:0,c:fire?['#ffb347','#ff7a2a','#332a25'][k%3]:water?['#7fd0d8','#23606f','#bff4ff'][k%3]:['#8b2936','#c2533e','#e8dcc4','#2a403b'][k%4],s:k%2?3:4,g:260})}
-      FX.rings.push({x:p.x,y:p.y,r:T*.48,t0:NOW,dur:260,c:fire?'#ff9a3a':water?'#7fd0d8':'#8b2936'});
+      FX.rings.push({x:p.x,y:p.y,r:T*.48,t0:NOW,dur:260,c:fire?'#ff9a3a':water?'#7fd0d8':'#8b2936'});if(!fire&&!water)FX.stains.push({x:e.x,y:e.y,t0:NOW,life:9000,c:spore?'#5e5630':'#57232b',seed:(e.x*31+e.y*17)%5});
       if(fire)FX.lights.push({x:p.x,y:p.y,r:T*2,t0:NOW,dur:300,c:'#ff9a3a'});
       break}
     case'explosion':{const x=d.x*T+T/2,y=d.y*T+T/2;burst(x,y,50,['#fff2b0','#ffb347','#ff7a2a','#c2533e','#3a3a3a'],260*(d.r||1)/1.5,0.9,120,3);burst(x,y,24,['#2a2a2a','#555','#3a5751'],120,1.6,-20,4);FX.lights.push({x,y,r:T*(d.r+3),t0:NOW,dur:600,c:'#ffb347'});break}
@@ -3813,7 +3813,7 @@ function animate(dt){const k=Math.min(1,dt*16);const ents=[S.P,...S.L.mons];for(
   for(const o of S.L.objs){if(o.rx==null){o.rx=o.x;o.ry=o.y}o.rx+=(o.x-o.rx)*k;o.ry+=(o.y-o.ry)*k}
   if(S.L.npcs)for(const n of S.L.npcs){if(n.rx==null){n.rx=n.x;n.ry=n.y}n.rx+=(n.x-n.rx)*k*0.5;n.ry+=(n.y-n.ry)*k*0.5}
   for(const p of FX.parts){p.age+=dt;p.vy+=p.g*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=0.97}FX.parts=FX.parts.filter(p=>p.age<p.life);
-  FX.floats=FX.floats.filter(f=>NOW-f.t0<1100);FX.rings=FX.rings.filter(r=>NOW-r.t0<r.dur);FX.bolts=FX.bolts.filter(b=>NOW-b.t0<b.dur+80);FX.lights=FX.lights.filter(l=>NOW-l.t0<l.dur);
+  FX.floats=FX.floats.filter(f=>NOW-f.t0<1100);FX.rings=FX.rings.filter(r=>NOW-r.t0<r.dur);FX.bolts=FX.bolts.filter(b=>NOW-b.t0<b.dur+80);FX.lights=FX.lights.filter(l=>NOW-l.t0<l.dur);FX.stains=FX.stains.filter(s=>NOW-s.t0<s.life);
   // ambient motes
   if(!REDUCE&&FX.amb.length<46&&Math.random()<0.5){const x=camX+Math.random()*VW,y=camY+Math.random()*VH,tx=Math.floor(x/T),ty=Math.floor(y/T);if(inb(tx,ty)&&vis[I(tx,ty)]&&!solid(tileAt(tx,ty))){const b=S.L.bio;
     FX.amb.push({x,y,vx:(Math.random()-.5)*6,vy:b==='drowned'?14+Math.random()*10:b==='fungal'?-4-Math.random()*5:(Math.random()-.5)*4,age:0,life:2+Math.random()*3,c:b==='fungal'?'#7fe8d0':b==='drowned'?'#7fb8c8':b==='crypt'?'#c8c0a8':'#e8d8c8',s:b==='drowned'?1:1.5})}}
@@ -3822,8 +3822,8 @@ function animate(dt){const k=Math.min(1,dt*16);const ents=[S.P,...S.L.mons];for(
   if(!camInit){camX=cx;camY=cy;camInit=true}else{camX+=(cx-camX)*Math.min(1,dt*8);camY+=(cy-camY)*Math.min(1,dt*8)}}
 function drawSprite(img,imgW,e,size,alpha,flipOk){const p=wpos(e);let ox=0,oy=0;
   if(e.lunge){const t=(NOW-e.lunge.t0)/200;if(t<1){const s=Math.sin(t*Math.PI)*T*0.32;ox=e.lunge.dx*s;oy=e.lunge.dy*s}else e.lunge=null}
-  const bob=REDUCE?0:Math.round(Math.sin(NOW/420+(e.id==='P'?0:e.id*1.7))*1.2);
-  const sz=size||T;const x=Math.round(p.x-sz/2+ox),y=Math.round(p.y+T/2-sz+oy+bob);
+  const moving=e.rx!=null&&(Math.abs((e.x||0)-e.rx)>.035||Math.abs((e.y||0)-e.ry)>.035);const bob=REDUCE?0:Math.round(Math.sin(NOW/(moving?105:420)+(e.id==='P'?0:e.id*1.7))*(moving?1.8:1.2));
+  const sz=size||T;let recoilX=0,recoilY=0,squashX=1,squashY=1;if(!REDUCE&&e.hitT&&NOW-e.hitT<190){const h=1-(NOW-e.hitT)/190;recoilX=(e.fx||1)*-Math.sin(h*Math.PI)*T*.12;squashX=1+h*.12;squashY=1-h*.1}const x=Math.round(p.x-sz/2+ox+recoilX),y=Math.round(p.y+T/2-sz+oy+bob+recoilY);
   ctx.save();if(alpha!=null)ctx.globalAlpha=alpha;
   ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(p.x+ox,p.y+T/2-3,sz*0.32,4,0,0,Math.PI*2);ctx.fill();
   if(flipOk!==false&&e.fx<0){ctx.translate(x+sz,y);ctx.scale(-1,1)}else ctx.translate(x,y);
@@ -3866,6 +3866,8 @@ function draw(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio);ctx.setTransform(dp
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=I(x,y);if(!L.seen[i])continue;ctx.drawImage(tileImg(TS,L.map[i],x,y,wf),x*T,y*T,T,T);
     // Unified environmental finish: pores, salt bloom, chips, and wet specular pixels.
     {const tt=L.map[i],xx=x*T,yy=y*T,seed=(x*73856093^y*19349663)>>>0;if(tt===FLOOR||tt===RUBBLE||tt===WALL||tt===CRACK||tt===WATER){ctx.save();ctx.globalAlpha=tt===WATER?.2:.16;for(let k=0;k<6;k++){const n=(seed+k*83492791)>>>0,px=xx+3+(n%25),py=yy+3+((n>>>7)%25);ctx.fillStyle=tt===WATER?(k%2?'#9dd8d0':'#d9f3e8'):(k%3?'#d7c8a5':'#020707');ctx.fillRect(px,py,1+(k%2),1)}if(tt===FLOOR||tt===WALL||tt===CRACK){ctx.globalAlpha=.16;ctx.fillStyle='#d8c7a2';ctx.fillRect(xx+2,yy+2,T-4,1);ctx.fillStyle='#020606';ctx.fillRect(xx+2,yy+T-3,T-4,1);if(((seed>>>4)%5)===0){ctx.globalAlpha=.22;ctx.fillStyle='#c9b98e';ctx.fillRect(xx+5+(seed%13),yy+7,1,3);ctx.fillRect(xx+6+(seed%13),yy+9,2,1)}}if(tt===WATER){ctx.globalAlpha=.2;ctx.fillStyle='#d8f7ee';ctx.fillRect(xx+4+(seed%19),yy+6+(seed%13),4,1)}ctx.restore()}}}
+  // Battlefield residue: tiny, fading pixel pools sit on the floor beneath later action.
+  for(const s of FX.stains){if(s.x<x0||s.x>x1||s.y<y0||s.y>y1||!L.seen[I(s.x,s.y)])continue;const fade=Math.max(0,1-(NOW-s.t0)/s.life);ctx.save();ctx.globalAlpha=fade*.72;ctx.fillStyle=s.c;const bx=s.x*T,by=s.y*T;ctx.fillRect(bx+T*.28,by+T*.55,T*.4,T*.18);ctx.fillRect(bx+T*.38,by+T*.48,T*.22,T*.12);if(s.seed%2===0)ctx.fillRect(bx+T*.18,by+T*.62,T*.12,T*.06);ctx.restore()}
   if(TS.face&&!L.town)drawDressing(L,TS,x0,x1,y0,y1);
   // fire
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=I(x,y);if(L.fire[i]>0&&L.seen[i]){ctx.fillStyle='rgba(255,120,40,.18)';ctx.fillRect(x*T,y*T,T,T);flame(x*T+10,y*T+T-4,1.6,i);flame(x*T+22,y*T+T-8,1.3,i+3)}}
