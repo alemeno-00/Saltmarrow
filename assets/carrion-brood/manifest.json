@@ -1,6 +1,7 @@
 {
-  "cell": 80,
+  "cell": 128,
   "columns": 4,
+  "rows": 5,
   "states": [
     "idle",
     "move",
@@ -9,81 +10,10 @@
     "defeat"
   ],
   "anchor": [
-    40,
-    70
+    64,
+    112
   ],
-  "palette": {
-    "bone": [
-      "#17181b",
-      "#30272a",
-      "#514039",
-      "#77614c",
-      "#a18b68",
-      "#c7b18b",
-      "#e1d0a5",
-      "#f5e7bf"
-    ],
-    "hide": [
-      "#0c131a",
-      "#211e2c",
-      "#362636",
-      "#503044",
-      "#704657",
-      "#906478",
-      "#b28d96",
-      "#d2b6b0"
-    ],
-    "chitin": [
-      "#0a141a",
-      "#15262b",
-      "#253b3d",
-      "#3c514a",
-      "#5d7060",
-      "#81927b",
-      "#a8b49b",
-      "#ced4b9"
-    ],
-    "cloth": [
-      "#0b1019",
-      "#1c2029",
-      "#2c2932",
-      "#42313b",
-      "#5c4045",
-      "#7a5655",
-      "#a17b6a",
-      "#c4a38b"
-    ],
-    "red": [
-      "#17141d",
-      "#2c1d2b",
-      "#462638",
-      "#613343",
-      "#814a50",
-      "#a36763",
-      "#c18b7c",
-      "#d4ad8e"
-    ],
-    "toxin": [
-      "#101c20",
-      "#20342d",
-      "#3b5037",
-      "#5b7548",
-      "#829e59",
-      "#a8bf72",
-      "#d1df98",
-      "#ecf5c2"
-    ],
-    "brass": [
-      "#17171c",
-      "#332d2c",
-      "#514539",
-      "#786345",
-      "#9e8356",
-      "#bda26e",
-      "#d8c38f",
-      "#f0e2b5"
-    ]
-  },
+  "alphaThreshold": 180,
   "ids": [
     "marrowgnaw",
     "bloatcarrier",
@@ -91,5 +21,3318 @@
     "broodShepherd",
     "carrionMatriarch"
   ],
-  "style": "Textured bone, sinew, corroded chitin; upper-left clustered highlights; semi-isometric anatomy"
+  "authoredFrames": 140,
+  "derivedAuxiliaryFrames": 40,
+  "atlases": [
+    {
+      "id": "marrowgnaw",
+      "file": "marrowgnaw.png",
+      "sourceHash": "26afe24f8c618d6fac10c1ef8511aa9965d70c93b11fff700c1ef5cd555d1641",
+      "scale": 0.32398753894080995,
+      "frames": [
+        {
+          "state": "idle",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 0,
+            "right": 304,
+            "bottom": 280
+          },
+          "bounds": [
+            20,
+            49,
+            113,
+            111
+          ],
+          "pixels": 3552,
+          "hash": "4f0e9aa4b3a76320f254b6c4923dc4d4927faf8c7643037d8993fe8700c12b70"
+        },
+        {
+          "state": "idle",
+          "frame": 1,
+          "source": {
+            "left": 304,
+            "top": 0,
+            "right": 570,
+            "bottom": 280
+          },
+          "bounds": [
+            21,
+            52,
+            107,
+            111
+          ],
+          "pixels": 3160,
+          "hash": "444fcf0287884b1099268cd64537ac837813e2ee29202ee1acb13e888ed73c48"
+        },
+        {
+          "state": "idle",
+          "frame": 2,
+          "source": {
+            "left": 570,
+            "top": 0,
+            "right": 841,
+            "bottom": 280
+          },
+          "bounds": [
+            24,
+            49,
+            107,
+            111
+          ],
+          "pixels": 3219,
+          "hash": "2be64986027d35db3ea7bf77055d7b6d9350452e70f971ad29bd02b92ba61528"
+        },
+        {
+          "state": "idle",
+          "frame": 3,
+          "source": {
+            "left": 841,
+            "top": 0,
+            "right": 1122,
+            "bottom": 280
+          },
+          "bounds": [
+            21,
+            51,
+            106,
+            111
+          ],
+          "pixels": 3308,
+          "hash": "c5bae0dbbb0e7049940bfb65a2a094074c4027bd8aad09c0c12a16b95452a763"
+        },
+        {
+          "state": "move",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 280,
+            "right": 304,
+            "bottom": 561
+          },
+          "bounds": [
+            22,
+            48,
+            113,
+            111
+          ],
+          "pixels": 3790,
+          "hash": "843fb6d2f35da21dd0645fd0ad17a86b1fe1a644d508fbc799901cd188cae9ad"
+        },
+        {
+          "state": "move",
+          "frame": 1,
+          "source": {
+            "left": 304,
+            "top": 280,
+            "right": 577,
+            "bottom": 561
+          },
+          "bounds": [
+            20,
+            49,
+            108,
+            111
+          ],
+          "pixels": 3586,
+          "hash": "350c308280fe08c060eec26ef00e4e56238085849a196a56cdeed02184178b42"
+        },
+        {
+          "state": "move",
+          "frame": 2,
+          "source": {
+            "left": 577,
+            "top": 280,
+            "right": 852,
+            "bottom": 561
+          },
+          "bounds": [
+            20,
+            51,
+            108,
+            111
+          ],
+          "pixels": 3350,
+          "hash": "bb7a0327e90f9fd0250bfce55c85a6e745c654588f8df5d5bb8b34c967f07dfd"
+        },
+        {
+          "state": "move",
+          "frame": 3,
+          "source": {
+            "left": 852,
+            "top": 280,
+            "right": 1122,
+            "bottom": 561
+          },
+          "bounds": [
+            21,
+            47,
+            105,
+            111
+          ],
+          "pixels": 3281,
+          "hash": "2655b6ca2b6e182cd3c54f53b5e96748a1d13918a887b0299d59982302003603"
+        },
+        {
+          "state": "attack",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 561,
+            "right": 298,
+            "bottom": 836
+          },
+          "bounds": [
+            22,
+            55,
+            112,
+            111
+          ],
+          "pixels": 3278,
+          "hash": "6806e8ec48f793fb638dd54152a8b72b0aaedeaedb306ed9ef33af71ba092816"
+        },
+        {
+          "state": "attack",
+          "frame": 1,
+          "source": {
+            "left": 298,
+            "top": 561,
+            "right": 543,
+            "bottom": 836
+          },
+          "bounds": [
+            25,
+            47,
+            100,
+            111
+          ],
+          "pixels": 3127,
+          "hash": "f85cc7b4482e19dc86e3faefe291aec3440695766a19e4e57ca002b1d1123074"
+        },
+        {
+          "state": "attack",
+          "frame": 2,
+          "source": {
+            "left": 543,
+            "top": 561,
+            "right": 865,
+            "bottom": 836
+          },
+          "bounds": [
+            13,
+            51,
+            116,
+            111
+          ],
+          "pixels": 3608,
+          "hash": "d240ab646d932d84db9cd0fea20b8f0bbf35ed78cd8011c3a650025a74a674a4"
+        },
+        {
+          "state": "attack",
+          "frame": 3,
+          "source": {
+            "left": 865,
+            "top": 561,
+            "right": 1122,
+            "bottom": 836
+          },
+          "bounds": [
+            23,
+            55,
+            104,
+            111
+          ],
+          "pixels": 3047,
+          "hash": "988e48a62efecd937b1447bf0877513b21d3264c43dcc4240bf5d12342de0109"
+        },
+        {
+          "state": "hurt",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 836,
+            "right": 295,
+            "bottom": 1122
+          },
+          "bounds": [
+            21,
+            40,
+            111,
+            111
+          ],
+          "pixels": 3393,
+          "hash": "0e76e3c12697ba001ec9da711fb05f27ab3caa1464e534ef75cbe7d75fdae389"
+        },
+        {
+          "state": "hurt",
+          "frame": 1,
+          "source": {
+            "left": 295,
+            "top": 836,
+            "right": 573,
+            "bottom": 1122
+          },
+          "bounds": [
+            19,
+            43,
+            109,
+            111
+          ],
+          "pixels": 3281,
+          "hash": "41971c468fea6cb1b12b82de92a74b364d78ce1e79c8cac21709ad5a6d8b064b"
+        },
+        {
+          "state": "hurt",
+          "frame": 2,
+          "source": {
+            "left": 573,
+            "top": 836,
+            "right": 839,
+            "bottom": 1122
+          },
+          "bounds": [
+            21,
+            41,
+            107,
+            111
+          ],
+          "pixels": 3099,
+          "hash": "1f1cf1470794b7ebc59e6d74ff7603b7dbc65b29b27c2682d3be7a35e5d7f7fd"
+        },
+        {
+          "state": "hurt",
+          "frame": 3,
+          "source": {
+            "left": 839,
+            "top": 836,
+            "right": 1122,
+            "bottom": 1122
+          },
+          "bounds": [
+            19,
+            51,
+            103,
+            111
+          ],
+          "pixels": 3155,
+          "hash": "0b92d933d8c2221fc6341ac75765fd03d611ebc896e3d3d6b6b4591408d6e257"
+        },
+        {
+          "state": "defeat",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 1122,
+            "right": 292,
+            "bottom": 1402
+          },
+          "bounds": [
+            22,
+            48,
+            111,
+            111
+          ],
+          "pixels": 3627,
+          "hash": "13f6cfe7de8e8be759ef166b22ac5ef528fc4a7e1a4940c6168073e86bab7af3"
+        },
+        {
+          "state": "defeat",
+          "frame": 1,
+          "source": {
+            "left": 292,
+            "top": 1122,
+            "right": 561,
+            "bottom": 1402
+          },
+          "bounds": [
+            23,
+            54,
+            106,
+            111
+          ],
+          "pixels": 3005,
+          "hash": "e00baf9d54c25585670a92768cc3289d4d516224fd5b0afd76e99a424728b987"
+        },
+        {
+          "state": "defeat",
+          "frame": 2,
+          "source": {
+            "left": 561,
+            "top": 1122,
+            "right": 826,
+            "bottom": 1402
+          },
+          "bounds": [
+            23,
+            49,
+            106,
+            111
+          ],
+          "pixels": 2954,
+          "hash": "6ff08cf239154355f2147cd8c825081c12b55ebf798e938f03cfb235ce9e6514"
+        },
+        {
+          "state": "defeat",
+          "frame": 3,
+          "source": {
+            "left": 826,
+            "top": 1122,
+            "right": 1122,
+            "bottom": 1402
+          },
+          "bounds": [
+            17,
+            47,
+            107,
+            111
+          ],
+          "pixels": 2653,
+          "hash": "7dfc6461754fd1b026b150788770cbaf86d6c791f08603218f6eff7ecff74fa8"
+        }
+      ]
+    },
+    {
+      "id": "bloatcarrier",
+      "file": "bloatcarrier.png",
+      "sourceHash": "8dee41ea0006598fee4044fdb026185ccc3e6bcc658babeb35b6abb7215158d7",
+      "scale": 0.348993288590604,
+      "frames": [
+        {
+          "state": "idle",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 0,
+            "right": 280,
+            "bottom": 285
+          },
+          "bounds": [
+            21,
+            27,
+            111,
+            111
+          ],
+          "pixels": 5511,
+          "hash": "84abf25a2504ddd1afad54ac6eb2baffb99fa6e3e8231d928f9be768c7d15d01"
+        },
+        {
+          "state": "idle",
+          "frame": 1,
+          "source": {
+            "left": 280,
+            "top": 0,
+            "right": 561,
+            "bottom": 285
+          },
+          "bounds": [
+            21,
+            25,
+            110,
+            111
+          ],
+          "pixels": 5428,
+          "hash": "b4ecfd9937ab63dce0bebacfb71c4ca7226597af4601599ff2bb658dbebef690"
+        },
+        {
+          "state": "idle",
+          "frame": 2,
+          "source": {
+            "left": 561,
+            "top": 0,
+            "right": 841,
+            "bottom": 285
+          },
+          "bounds": [
+            17,
+            26,
+            109,
+            111
+          ],
+          "pixels": 5468,
+          "hash": "b82e7735f4aa92d2d93ab4c506c77d8cbc5a387f145e85b79156c2008a2303f4"
+        },
+        {
+          "state": "idle",
+          "frame": 3,
+          "source": {
+            "left": 841,
+            "top": 0,
+            "right": 1122,
+            "bottom": 285
+          },
+          "bounds": [
+            20,
+            27,
+            108,
+            111
+          ],
+          "pixels": 5355,
+          "hash": "29e3c9ef80061ba62e3f7fa2f0f0d64b46f0130c0f8c2a7d89290248b38c93f9"
+        },
+        {
+          "state": "move",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 285,
+            "right": 292,
+            "bottom": 561
+          },
+          "bounds": [
+            18,
+            27,
+            114,
+            111
+          ],
+          "pixels": 5472,
+          "hash": "8ed72aeb1aab6cc63aa28673c21aa7416b2504690aecb5d7f73cb669c68bd247"
+        },
+        {
+          "state": "move",
+          "frame": 1,
+          "source": {
+            "left": 292,
+            "top": 285,
+            "right": 561,
+            "bottom": 561
+          },
+          "bounds": [
+            22,
+            30,
+            107,
+            111
+          ],
+          "pixels": 5173,
+          "hash": "15a05de4dfcbecae58b96d4b89650c858731e195c29674b9bb2449df86199729"
+        },
+        {
+          "state": "move",
+          "frame": 2,
+          "source": {
+            "left": 561,
+            "top": 285,
+            "right": 841,
+            "bottom": 561
+          },
+          "bounds": [
+            21,
+            29,
+            108,
+            111
+          ],
+          "pixels": 5155,
+          "hash": "e6bba7147a6a3df87041c1e03b478e0426451ca5cadbfd1a83fa1d976a1fb774"
+        },
+        {
+          "state": "move",
+          "frame": 3,
+          "source": {
+            "left": 841,
+            "top": 285,
+            "right": 1122,
+            "bottom": 561
+          },
+          "bounds": [
+            18,
+            26,
+            108,
+            111
+          ],
+          "pixels": 5425,
+          "hash": "67cc1b9af7aae961a0e659c51d90fa7047616929359d843feda3e9b022fcb5cf"
+        },
+        {
+          "state": "attack",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 561,
+            "right": 292,
+            "bottom": 827
+          },
+          "bounds": [
+            19,
+            27,
+            114,
+            111
+          ],
+          "pixels": 5511,
+          "hash": "79f799be93f9a3c23b88902f7da4749e0645c2048b67688383fd59e3e313fcc0"
+        },
+        {
+          "state": "attack",
+          "frame": 1,
+          "source": {
+            "left": 292,
+            "top": 561,
+            "right": 561,
+            "bottom": 827
+          },
+          "bounds": [
+            20,
+            27,
+            109,
+            111
+          ],
+          "pixels": 5165,
+          "hash": "9c43e1b1ce60934db65e63a2a788f8ff952c3e5db6c8f7c4c181bcfd9457336f"
+        },
+        {
+          "state": "attack",
+          "frame": 2,
+          "source": {
+            "left": 561,
+            "top": 561,
+            "right": 865,
+            "bottom": 827
+          },
+          "bounds": [
+            14,
+            26,
+            117,
+            111
+          ],
+          "pixels": 6070,
+          "hash": "7c1148f9a7d1b2e3c5c9504a9effff02f24e7b98d0984aa78f8d4e3c0d436114"
+        },
+        {
+          "state": "attack",
+          "frame": 3,
+          "source": {
+            "left": 865,
+            "top": 561,
+            "right": 1122,
+            "bottom": 827
+          },
+          "bounds": [
+            20,
+            35,
+            103,
+            111
+          ],
+          "pixels": 4281,
+          "hash": "565d7e1eed3e56447c3e31d105a87cc16029e7d417ed516e9af270e6b959e8ff"
+        },
+        {
+          "state": "hurt",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 827,
+            "right": 284,
+            "bottom": 1107
+          },
+          "bounds": [
+            23,
+            25,
+            113,
+            111
+          ],
+          "pixels": 5377,
+          "hash": "09345db9e40e6ab6d00e9f24cd740f4e3789b7b5cd61e0579fa0c0615e198a2d"
+        },
+        {
+          "state": "hurt",
+          "frame": 1,
+          "source": {
+            "left": 284,
+            "top": 827,
+            "right": 561,
+            "bottom": 1107
+          },
+          "bounds": [
+            24,
+            24,
+            111,
+            111
+          ],
+          "pixels": 4999,
+          "hash": "e098127b0991cf29f137c4b706e0c95ae7779387afc2629183413b4c0fb34749"
+        },
+        {
+          "state": "hurt",
+          "frame": 2,
+          "source": {
+            "left": 561,
+            "top": 827,
+            "right": 841,
+            "bottom": 1107
+          },
+          "bounds": [
+            25,
+            26,
+            109,
+            111
+          ],
+          "pixels": 5031,
+          "hash": "ab112a746419edc5017c25bdd57b3abfaa158aff809f799fdfba5262bfe2b2c1"
+        },
+        {
+          "state": "hurt",
+          "frame": 3,
+          "source": {
+            "left": 841,
+            "top": 827,
+            "right": 1122,
+            "bottom": 1107
+          },
+          "bounds": [
+            21,
+            28,
+            107,
+            111
+          ],
+          "pixels": 4790,
+          "hash": "e44f023e23487c12967b2ae7b2a1e770a8b68dee3406e39242c9bb1e30984483"
+        },
+        {
+          "state": "defeat",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 1107,
+            "right": 280,
+            "bottom": 1402
+          },
+          "bounds": [
+            22,
+            24,
+            112,
+            111
+          ],
+          "pixels": 5308,
+          "hash": "8e0edcdeddad790916722e3a94425e78c830da776f850c36f957d3e19ce03614"
+        },
+        {
+          "state": "defeat",
+          "frame": 1,
+          "source": {
+            "left": 280,
+            "top": 1107,
+            "right": 550,
+            "bottom": 1402
+          },
+          "bounds": [
+            23,
+            34,
+            111,
+            111
+          ],
+          "pixels": 5212,
+          "hash": "0856731ba7874ba85cc5a93a522cfa2f4045c7bcc66be92dd34806f73ca258ed"
+        },
+        {
+          "state": "defeat",
+          "frame": 2,
+          "source": {
+            "left": 550,
+            "top": 1107,
+            "right": 839,
+            "bottom": 1402
+          },
+          "bounds": [
+            14,
+            49,
+            114,
+            111
+          ],
+          "pixels": 4550,
+          "hash": "976d147a0c4624a845d0b2ea4cfc8148ec5b8e7c4e5ccf10570b45c5fc163e79"
+        },
+        {
+          "state": "defeat",
+          "frame": 3,
+          "source": {
+            "left": 839,
+            "top": 1107,
+            "right": 1122,
+            "bottom": 1402
+          },
+          "bounds": [
+            15,
+            28,
+            109,
+            111
+          ],
+          "pixels": 4200,
+          "hash": "a0bb0f01aacc0864c220a744de320738fbfc6323b2df4ee1e898f42f1543734b"
+        }
+      ]
+    },
+    {
+      "id": "sinewStalker",
+      "file": "sinewStalker.png",
+      "sourceHash": "25a0fcade43bbd5b1f85331b9646bcaca5be5318e1629b97521f4f76a0a56e2c",
+      "scale": 0.3525423728813559,
+      "frames": [
+        {
+          "state": "idle",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 0,
+            "right": 283,
+            "bottom": 274
+          },
+          "bounds": [
+            18,
+            28,
+            113,
+            111
+          ],
+          "pixels": 4079,
+          "hash": "e5989de8a37a6fef3301984ba883e661556c271838f5271bcb88564fa5878e4b"
+        },
+        {
+          "state": "idle",
+          "frame": 1,
+          "source": {
+            "left": 283,
+            "top": 0,
+            "right": 561,
+            "bottom": 274
+          },
+          "bounds": [
+            25,
+            29,
+            111,
+            111
+          ],
+          "pixels": 3806,
+          "hash": "8c64d61c8d8120932d40cedca6ce8d84d9526e1b00d7ac2f3a811b0450fb9c50"
+        },
+        {
+          "state": "idle",
+          "frame": 2,
+          "source": {
+            "left": 561,
+            "top": 0,
+            "right": 841,
+            "bottom": 274
+          },
+          "bounds": [
+            21,
+            32,
+            110,
+            111
+          ],
+          "pixels": 3761,
+          "hash": "e3282e203f11da73bd68cf152ca2416814752bae5fa23ae014c5f51eccd77ed0"
+        },
+        {
+          "state": "idle",
+          "frame": 3,
+          "source": {
+            "left": 841,
+            "top": 0,
+            "right": 1122,
+            "bottom": 274
+          },
+          "bounds": [
+            19,
+            34,
+            111,
+            111
+          ],
+          "pixels": 3670,
+          "hash": "88834fc84df8ac1353f69d0e53ac2f9d8331664f8b9d6de58572964c3544b2ba"
+        },
+        {
+          "state": "move",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 274,
+            "right": 280,
+            "bottom": 533
+          },
+          "bounds": [
+            18,
+            29,
+            111,
+            111
+          ],
+          "pixels": 3972,
+          "hash": "6e34efacba7d3774f7bb73caf2ed1bb61c1d315b4ebc04649f614e4c442de039"
+        },
+        {
+          "state": "move",
+          "frame": 1,
+          "source": {
+            "left": 280,
+            "top": 274,
+            "right": 561,
+            "bottom": 533
+          },
+          "bounds": [
+            21,
+            27,
+            111,
+            111
+          ],
+          "pixels": 3804,
+          "hash": "6989986131c9821f3c8e65b2c926a81cea0a451edcfaac38c83e8581c6a2d7cb"
+        },
+        {
+          "state": "move",
+          "frame": 2,
+          "source": {
+            "left": 561,
+            "top": 274,
+            "right": 843,
+            "bottom": 533
+          },
+          "bounds": [
+            18,
+            30,
+            113,
+            111
+          ],
+          "pixels": 3760,
+          "hash": "aebf7c06fc36d06a1b2de5931ddfd231a56494590ecbbfe97dd8e91deca3be30"
+        },
+        {
+          "state": "move",
+          "frame": 3,
+          "source": {
+            "left": 843,
+            "top": 274,
+            "right": 1122,
+            "bottom": 533
+          },
+          "bounds": [
+            21,
+            32,
+            111,
+            111
+          ],
+          "pixels": 3709,
+          "hash": "e2ab1b00eda0f77e692835d0dcb703bcbd62814581fe7a809ba146cecd1d0820"
+        },
+        {
+          "state": "attack",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 533,
+            "right": 280,
+            "bottom": 829
+          },
+          "bounds": [
+            19,
+            45,
+            111,
+            111
+          ],
+          "pixels": 3432,
+          "hash": "40df3dd1a5258ba3ef7b2fe3934bdc7ad58514dff7138887134bccbdbb12a964"
+        },
+        {
+          "state": "attack",
+          "frame": 1,
+          "source": {
+            "left": 280,
+            "top": 533,
+            "right": 561,
+            "bottom": 829
+          },
+          "bounds": [
+            23,
+            16,
+            112,
+            111
+          ],
+          "pixels": 3993,
+          "hash": "c035efc83143a435720dee44296e749bf1850726d33dce2e34219b3ec486905f"
+        },
+        {
+          "state": "attack",
+          "frame": 2,
+          "source": {
+            "left": 561,
+            "top": 533,
+            "right": 821,
+            "bottom": 829
+          },
+          "bounds": [
+            20,
+            30,
+            109,
+            104
+          ],
+          "pixels": 2975,
+          "hash": "1824922c50386e599bae1c1cb7c8b6f2869c0544035cd2ac8e75147c01493116"
+        },
+        {
+          "state": "attack",
+          "frame": 3,
+          "source": {
+            "left": 821,
+            "top": 533,
+            "right": 1122,
+            "bottom": 829
+          },
+          "bounds": [
+            11,
+            43,
+            114,
+            111
+          ],
+          "pixels": 3547,
+          "hash": "917b47212c1b6bcaf1bd70fc48894688365f22ef1b3aa602719acd67034a093a"
+        },
+        {
+          "state": "hurt",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 829,
+            "right": 297,
+            "bottom": 1096
+          },
+          "bounds": [
+            20,
+            29,
+            116,
+            111
+          ],
+          "pixels": 3482,
+          "hash": "6b7b3d8ca5076189c456db0ad7bbb120bbd68c47a1c87c7ba0ed9391c9c2f01f"
+        },
+        {
+          "state": "hurt",
+          "frame": 1,
+          "source": {
+            "left": 297,
+            "top": 829,
+            "right": 562,
+            "bottom": 1096
+          },
+          "bounds": [
+            20,
+            32,
+            110,
+            111
+          ],
+          "pixels": 3438,
+          "hash": "cba8a89e4a48a5784eb23630d92f3c61b49d0352725bdd0d3150cb78bd7e8654"
+        },
+        {
+          "state": "hurt",
+          "frame": 2,
+          "source": {
+            "left": 562,
+            "top": 829,
+            "right": 841,
+            "bottom": 1096
+          },
+          "bounds": [
+            21,
+            37,
+            108,
+            111
+          ],
+          "pixels": 3440,
+          "hash": "b19491ab2493b4d83b7fa0083fe51dad9eeb15d8adeb94a14d1f0ec88de002ac"
+        },
+        {
+          "state": "hurt",
+          "frame": 3,
+          "source": {
+            "left": 841,
+            "top": 829,
+            "right": 1122,
+            "bottom": 1096
+          },
+          "bounds": [
+            21,
+            33,
+            110,
+            111
+          ],
+          "pixels": 3577,
+          "hash": "ee3207463c83b70faeb46d6a0a68c9ca29732a42fa1a8933ca9d6d9ac3c73480"
+        },
+        {
+          "state": "defeat",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 1096,
+            "right": 282,
+            "bottom": 1402
+          },
+          "bounds": [
+            21,
+            19,
+            113,
+            111
+          ],
+          "pixels": 4436,
+          "hash": "a8f4f7273f22419b81e6b7fc4087eceb38af9f528646b86cc7daec07960ac119"
+        },
+        {
+          "state": "defeat",
+          "frame": 1,
+          "source": {
+            "left": 282,
+            "top": 1096,
+            "right": 561,
+            "bottom": 1402
+          },
+          "bounds": [
+            20,
+            42,
+            111,
+            111
+          ],
+          "pixels": 3420,
+          "hash": "9a59916e8110cd3973dd81f22ff91119f70db514b2e500cb91c13c6aaf99951f"
+        },
+        {
+          "state": "defeat",
+          "frame": 2,
+          "source": {
+            "left": 561,
+            "top": 1096,
+            "right": 841,
+            "bottom": 1402
+          },
+          "bounds": [
+            18,
+            60,
+            113,
+            111
+          ],
+          "pixels": 3193,
+          "hash": "6bd4ae4c9be4d5ea0a72e3f63912dc555aa488c30e20a8ef1852cc0a2aa10d20"
+        },
+        {
+          "state": "defeat",
+          "frame": 3,
+          "source": {
+            "left": 841,
+            "top": 1096,
+            "right": 1122,
+            "bottom": 1402
+          },
+          "bounds": [
+            18,
+            34,
+            111,
+            111
+          ],
+          "pixels": 3239,
+          "hash": "ffcc11f4ea099a7322716910e296feb6e810d2620dc22a8c3af928079461c5b3"
+        }
+      ]
+    },
+    {
+      "id": "broodShepherd",
+      "file": "broodShepherd.png",
+      "sourceHash": "cb2b6fcb4ddcacd85cb12fc32df2f63e2338c04c90ceca0db1285a078218a343",
+      "scale": 0.35738831615120276,
+      "frames": [
+        {
+          "state": "idle",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 0,
+            "right": 280,
+            "bottom": 285
+          },
+          "bounds": [
+            21,
+            27,
+            108,
+            111
+          ],
+          "pixels": 4331,
+          "hash": "4883de7abeea139f21f313280b3ff79264009f483b0550582940941b2dd97393"
+        },
+        {
+          "state": "idle",
+          "frame": 1,
+          "source": {
+            "left": 280,
+            "top": 0,
+            "right": 561,
+            "bottom": 285
+          },
+          "bounds": [
+            23,
+            26,
+            101,
+            111
+          ],
+          "pixels": 4042,
+          "hash": "b246e7a99a45012350fabdbd3696bef3e3a1835bd7218389d638571d568b2c1e"
+        },
+        {
+          "state": "idle",
+          "frame": 2,
+          "source": {
+            "left": 561,
+            "top": 0,
+            "right": 841,
+            "bottom": 285
+          },
+          "bounds": [
+            19,
+            29,
+            105,
+            111
+          ],
+          "pixels": 4092,
+          "hash": "a96642b7616c7a69b6634648a35656d10370ad6f71b43c0fa11e2ac01b9f47fb"
+        },
+        {
+          "state": "idle",
+          "frame": 3,
+          "source": {
+            "left": 841,
+            "top": 0,
+            "right": 1122,
+            "bottom": 285
+          },
+          "bounds": [
+            18,
+            27,
+            103,
+            111
+          ],
+          "pixels": 3980,
+          "hash": "23d306c7b135226036ff0e0f7446a914d23bb203daf6e9796430e9abd7936c75"
+        },
+        {
+          "state": "move",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 285,
+            "right": 286,
+            "bottom": 551
+          },
+          "bounds": [
+            21,
+            33,
+            115,
+            111
+          ],
+          "pixels": 4255,
+          "hash": "6c661425ef7e3554b014956ce01d2e6996a3d6a16a4965cacab6186cf07da308"
+        },
+        {
+          "state": "move",
+          "frame": 1,
+          "source": {
+            "left": 286,
+            "top": 285,
+            "right": 561,
+            "bottom": 551
+          },
+          "bounds": [
+            18,
+            34,
+            110,
+            111
+          ],
+          "pixels": 3795,
+          "hash": "e11d3f9f471d08e19031c0b5b15bb8b368a36187cfb4a231d68b616134d73673"
+        },
+        {
+          "state": "move",
+          "frame": 2,
+          "source": {
+            "left": 561,
+            "top": 285,
+            "right": 841,
+            "bottom": 551
+          },
+          "bounds": [
+            17,
+            32,
+            108,
+            111
+          ],
+          "pixels": 4041,
+          "hash": "86462719585e18522beca45d64128b1324c4fa6b987ed76cd84ff17c76d6ac6f"
+        },
+        {
+          "state": "move",
+          "frame": 3,
+          "source": {
+            "left": 841,
+            "top": 285,
+            "right": 1122,
+            "bottom": 551
+          },
+          "bounds": [
+            16,
+            29,
+            102,
+            111
+          ],
+          "pixels": 4178,
+          "hash": "109053fd48514d33725c6da1dc7eb24bfeebda44374811778efbe5b4fc4025f9"
+        },
+        {
+          "state": "attack",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 551,
+            "right": 287,
+            "bottom": 841
+          },
+          "bounds": [
+            22,
+            35,
+            115,
+            111
+          ],
+          "pixels": 4010,
+          "hash": "72fd81f152af8a366ca7268831042ae8611d0a2f0abcf5606be27a80892dc81a"
+        },
+        {
+          "state": "attack",
+          "frame": 1,
+          "source": {
+            "left": 287,
+            "top": 551,
+            "right": 558,
+            "bottom": 841
+          },
+          "bounds": [
+            19,
+            19,
+            108,
+            111
+          ],
+          "pixels": 4615,
+          "hash": "e73d124ea9c39dffa000d423c4ebc5d02a6c74a724bc0a04eba9189581900fc6"
+        },
+        {
+          "state": "attack",
+          "frame": 2,
+          "source": {
+            "left": 558,
+            "top": 551,
+            "right": 822,
+            "bottom": 841
+          },
+          "bounds": [
+            18,
+            12,
+            111,
+            111
+          ],
+          "pixels": 5257,
+          "hash": "073a711b9e9711d684a9fd9af3c983ad2775a4a4146f78f7fd4a20c0fc596f21"
+        },
+        {
+          "state": "attack",
+          "frame": 3,
+          "source": {
+            "left": 822,
+            "top": 551,
+            "right": 1122,
+            "bottom": 841
+          },
+          "bounds": [
+            11,
+            21,
+            112,
+            111
+          ],
+          "pixels": 4453,
+          "hash": "336a7942ed12d050d4eae7ad04436e14bb08c4b3fb7b01a84489ec715d086e89"
+        },
+        {
+          "state": "hurt",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 841,
+            "right": 285,
+            "bottom": 1122
+          },
+          "bounds": [
+            24,
+            34,
+            114,
+            111
+          ],
+          "pixels": 3950,
+          "hash": "c8159f2d9df2b58145cf71bbe2e85ed974f321d2ab707bd0125ff813b865e614"
+        },
+        {
+          "state": "hurt",
+          "frame": 1,
+          "source": {
+            "left": 285,
+            "top": 841,
+            "right": 561,
+            "bottom": 1122
+          },
+          "bounds": [
+            23,
+            34,
+            107,
+            111
+          ],
+          "pixels": 3827,
+          "hash": "72c221cd8711c89406a934bcb019c403acde3073c07a47b39ef585e0b528d9a8"
+        },
+        {
+          "state": "hurt",
+          "frame": 2,
+          "source": {
+            "left": 561,
+            "top": 841,
+            "right": 841,
+            "bottom": 1122
+          },
+          "bounds": [
+            21,
+            36,
+            104,
+            111
+          ],
+          "pixels": 3980,
+          "hash": "4348a8f176c56d72de339102b3733b9f8c24de0ac3eb551d9332274ca34dda07"
+        },
+        {
+          "state": "hurt",
+          "frame": 3,
+          "source": {
+            "left": 841,
+            "top": 841,
+            "right": 1122,
+            "bottom": 1122
+          },
+          "bounds": [
+            21,
+            31,
+            98,
+            111
+          ],
+          "pixels": 3664,
+          "hash": "585bb98a107b09a462a632476013c803924196cae4d7c69a657dba362d3312e4"
+        },
+        {
+          "state": "defeat",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 1122,
+            "right": 261,
+            "bottom": 1402
+          },
+          "bounds": [
+            29,
+            31,
+            107,
+            111
+          ],
+          "pixels": 3687,
+          "hash": "9233c490e525bbe2508ebd8c345706146a6d7149fccf40bc6d36281f2c3fc53a"
+        },
+        {
+          "state": "defeat",
+          "frame": 1,
+          "source": {
+            "left": 261,
+            "top": 1122,
+            "right": 542,
+            "bottom": 1402
+          },
+          "bounds": [
+            15,
+            39,
+            111,
+            111
+          ],
+          "pixels": 3638,
+          "hash": "a5b26314b91aa5cbbd476b9d3a4e0d59d7ea2cafeede283ca0845409b7e05acd"
+        },
+        {
+          "state": "defeat",
+          "frame": 2,
+          "source": {
+            "left": 542,
+            "top": 1122,
+            "right": 841,
+            "bottom": 1402
+          },
+          "bounds": [
+            12,
+            63,
+            114,
+            111
+          ],
+          "pixels": 2927,
+          "hash": "fd82fb5401ed27433830592adff79fe1b5578e2957551fca452a44703658911d"
+        },
+        {
+          "state": "defeat",
+          "frame": 3,
+          "source": {
+            "left": 841,
+            "top": 1122,
+            "right": 1122,
+            "bottom": 1402
+          },
+          "bounds": [
+            15,
+            33,
+            108,
+            111
+          ],
+          "pixels": 2614,
+          "hash": "280b4b1c6066ea3ad97ce3f12e244c619ebb87c0c08d3fb1081394a051f48546"
+        }
+      ]
+    },
+    {
+      "id": "carrionMatriarch",
+      "file": "carrionMatriarch.png",
+      "sourceHash": "0fc8541566ff498d9d045e6bbf61b0a5af33178b7608c3bdd8fd614e65e34507",
+      "scale": 0.34782608695652173,
+      "frames": [
+        {
+          "state": "idle",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 0,
+            "right": 296,
+            "bottom": 290
+          },
+          "bounds": [
+            19,
+            24,
+            115,
+            111
+          ],
+          "pixels": 5248,
+          "hash": "3fbb8f284ef1cc9ccd1d13fac5a3d8919c6b723b6bb0e5c535483b05e05b3ecd"
+        },
+        {
+          "state": "idle",
+          "frame": 1,
+          "source": {
+            "left": 296,
+            "top": 0,
+            "right": 573,
+            "bottom": 290
+          },
+          "bounds": [
+            21,
+            25,
+            112,
+            111
+          ],
+          "pixels": 5085,
+          "hash": "19f59670cf298dd6941ac50fca9b522885fcf4d08ddfed4b68d517334cfdeb32"
+        },
+        {
+          "state": "idle",
+          "frame": 2,
+          "source": {
+            "left": 573,
+            "top": 0,
+            "right": 848,
+            "bottom": 290
+          },
+          "bounds": [
+            23,
+            24,
+            111,
+            111
+          ],
+          "pixels": 4970,
+          "hash": "73afd28e3382e18fb5af66c83d55fabfd3ae4ff3a76a10c5da30fb995e4b76b3"
+        },
+        {
+          "state": "idle",
+          "frame": 3,
+          "source": {
+            "left": 848,
+            "top": 0,
+            "right": 1122,
+            "bottom": 290
+          },
+          "bounds": [
+            22,
+            26,
+            108,
+            111
+          ],
+          "pixels": 4745,
+          "hash": "c9f5dfea81796750139f43570a92171542ccf44d350b4bfa24fdb24faf5ee955"
+        },
+        {
+          "state": "move",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 290,
+            "right": 299,
+            "bottom": 561
+          },
+          "bounds": [
+            17,
+            24,
+            115,
+            111
+          ],
+          "pixels": 5355,
+          "hash": "03f3b1b262521bfc064f610d6a80829b544525cf672b0cdc2db98acadfae7421"
+        },
+        {
+          "state": "move",
+          "frame": 1,
+          "source": {
+            "left": 299,
+            "top": 290,
+            "right": 584,
+            "bottom": 561
+          },
+          "bounds": [
+            17,
+            24,
+            113,
+            111
+          ],
+          "pixels": 5255,
+          "hash": "0120c81256398ce4aac2a4f004f3bac198786ae417a958fb7009db1271dcc7a9"
+        },
+        {
+          "state": "move",
+          "frame": 2,
+          "source": {
+            "left": 584,
+            "top": 290,
+            "right": 861,
+            "bottom": 561
+          },
+          "bounds": [
+            16,
+            25,
+            112,
+            111
+          ],
+          "pixels": 4895,
+          "hash": "8598f5542fa01508a82c49ff6e4dc57b490748e4d27c7f14cbc93719efb650fd"
+        },
+        {
+          "state": "move",
+          "frame": 3,
+          "source": {
+            "left": 861,
+            "top": 290,
+            "right": 1122,
+            "bottom": 561
+          },
+          "bounds": [
+            24,
+            26,
+            107,
+            111
+          ],
+          "pixels": 4514,
+          "hash": "a4cd02362a8b942ee8d430b39151a711be7d0ad9f99ff8028b430b5a1ebf38e3"
+        },
+        {
+          "state": "attack",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 561,
+            "right": 290,
+            "bottom": 829
+          },
+          "bounds": [
+            18,
+            26,
+            114,
+            111
+          ],
+          "pixels": 5210,
+          "hash": "a4a9e5da36d60752e6c6a85481aad890e4df28a959506a3ee15715a5a1fa91f0"
+        },
+        {
+          "state": "attack",
+          "frame": 1,
+          "source": {
+            "left": 290,
+            "top": 561,
+            "right": 572,
+            "bottom": 829
+          },
+          "bounds": [
+            20,
+            26,
+            113,
+            111
+          ],
+          "pixels": 5107,
+          "hash": "e0dc902abb86d088696dd8ac223cd1114d5c22eb45d341135d839ea63d952697"
+        },
+        {
+          "state": "attack",
+          "frame": 2,
+          "source": {
+            "left": 572,
+            "top": 561,
+            "right": 837,
+            "bottom": 829
+          },
+          "bounds": [
+            18,
+            25,
+            110,
+            111
+          ],
+          "pixels": 5232,
+          "hash": "304da4893aee00597f7f92275621e4474992df2ec0a31e86f53399454b00538b"
+        },
+        {
+          "state": "attack",
+          "frame": 3,
+          "source": {
+            "left": 837,
+            "top": 561,
+            "right": 1122,
+            "bottom": 829
+          },
+          "bounds": [
+            15,
+            26,
+            112,
+            111
+          ],
+          "pixels": 4959,
+          "hash": "d76080722329189f4beaca94e6c7b3c7b4d379c1fc36bdfa69c32ea29c0b1817"
+        },
+        {
+          "state": "hurt",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 829,
+            "right": 284,
+            "bottom": 1094
+          },
+          "bounds": [
+            23,
+            29,
+            113,
+            111
+          ],
+          "pixels": 4973,
+          "hash": "d1215b6b9426cfc4b5ddf51a19e8feb1c04c8fa7d8c02f881a61fecda3c80fa4"
+        },
+        {
+          "state": "hurt",
+          "frame": 1,
+          "source": {
+            "left": 284,
+            "top": 829,
+            "right": 566,
+            "bottom": 1094
+          },
+          "bounds": [
+            22,
+            31,
+            113,
+            111
+          ],
+          "pixels": 4758,
+          "hash": "627a7a8f0c6078de1f6aa342ea03eecd112ae7068fb677d17a9f81d3db986718"
+        },
+        {
+          "state": "hurt",
+          "frame": 2,
+          "source": {
+            "left": 566,
+            "top": 829,
+            "right": 844,
+            "bottom": 1094
+          },
+          "bounds": [
+            19,
+            27,
+            112,
+            111
+          ],
+          "pixels": 5054,
+          "hash": "f32415c8648f56ef9e9e4cc7a70913de29c23d189c791f84c8b57cff839f012a"
+        },
+        {
+          "state": "hurt",
+          "frame": 3,
+          "source": {
+            "left": 844,
+            "top": 829,
+            "right": 1122,
+            "bottom": 1094
+          },
+          "bounds": [
+            19,
+            31,
+            107,
+            111
+          ],
+          "pixels": 4459,
+          "hash": "f59f86ab00805d639f142b77a2097307d2d1296e33b4f81ee001f06941245c6e"
+        },
+        {
+          "state": "defeat",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 1094,
+            "right": 284,
+            "bottom": 1402
+          },
+          "bounds": [
+            21,
+            19,
+            113,
+            111
+          ],
+          "pixels": 5508,
+          "hash": "3a53427016d06113dbfaeb50549a6c5fe158619c90670cd6e501b00c80ca34c7"
+        },
+        {
+          "state": "defeat",
+          "frame": 1,
+          "source": {
+            "left": 284,
+            "top": 1094,
+            "right": 556,
+            "bottom": 1402
+          },
+          "bounds": [
+            17,
+            38,
+            111,
+            111
+          ],
+          "pixels": 4524,
+          "hash": "d2d13b13c0ab604e2c52b66bbcb7d7142031a1ec1d22c8abeb32dac5d610c289"
+        },
+        {
+          "state": "defeat",
+          "frame": 2,
+          "source": {
+            "left": 556,
+            "top": 1094,
+            "right": 855,
+            "bottom": 1402
+          },
+          "bounds": [
+            12,
+            48,
+            115,
+            111
+          ],
+          "pixels": 4066,
+          "hash": "f20db5663281fc098d8031fd5b71b11d9b7000ea9d74535459db6cdd09b76598"
+        },
+        {
+          "state": "defeat",
+          "frame": 3,
+          "source": {
+            "left": 855,
+            "top": 1094,
+            "right": 1122,
+            "bottom": 1402
+          },
+          "bounds": [
+            20,
+            32,
+            105,
+            111
+          ],
+          "pixels": 2670,
+          "hash": "675901857370af25d2f2d1f398f00e574424f682987cdb7688c60d6b36d6b91c"
+        }
+      ]
+    },
+    {
+      "id": "carrionMatriarch-phase2",
+      "file": "carrionMatriarch-phase2.png",
+      "sourceHash": "0b5e83e8dd05e1c73985cbc5a81babcee4a604ae28817188e0445bd0819063bf",
+      "scale": 0.3607142857142857,
+      "frames": [
+        {
+          "state": "idle",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 0,
+            "right": 281,
+            "bottom": 280
+          },
+          "bounds": [
+            19,
+            18,
+            114,
+            111
+          ],
+          "pixels": 5772,
+          "hash": "c1be0db1b814c43db0ecdb2f05c57c0ebf6ce2bf58fd861233f6f949b5f4b18d"
+        },
+        {
+          "state": "idle",
+          "frame": 1,
+          "source": {
+            "left": 281,
+            "top": 0,
+            "right": 555,
+            "bottom": 280
+          },
+          "bounds": [
+            18,
+            19,
+            110,
+            111
+          ],
+          "pixels": 5330,
+          "hash": "47f3cb65771e6efa65277aeda00b9f3066e7f9b027eeec520739d8db230acea6"
+        },
+        {
+          "state": "idle",
+          "frame": 2,
+          "source": {
+            "left": 555,
+            "top": 0,
+            "right": 834,
+            "bottom": 280
+          },
+          "bounds": [
+            15,
+            20,
+            111,
+            111
+          ],
+          "pixels": 5566,
+          "hash": "a1479b8dbbef917577dce407b671ce48bf3525e3d57a8fbafd914a09e02d6f4a"
+        },
+        {
+          "state": "idle",
+          "frame": 3,
+          "source": {
+            "left": 834,
+            "top": 0,
+            "right": 1122,
+            "bottom": 280
+          },
+          "bounds": [
+            13,
+            21,
+            107,
+            111
+          ],
+          "pixels": 5505,
+          "hash": "839e1170f192bb87d8046a6a20311294cec60ddd06cd0c7cac6b494e9ff83cde"
+        },
+        {
+          "state": "move",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 280,
+            "right": 276,
+            "bottom": 540
+          },
+          "bounds": [
+            19,
+            20,
+            113,
+            111
+          ],
+          "pixels": 5351,
+          "hash": "1f7b1dafdf70fd8738066c156f7ad7ab40b2e7f8c3136b77a65956307ff6d547"
+        },
+        {
+          "state": "move",
+          "frame": 1,
+          "source": {
+            "left": 276,
+            "top": 280,
+            "right": 555,
+            "bottom": 540
+          },
+          "bounds": [
+            15,
+            24,
+            110,
+            111
+          ],
+          "pixels": 4837,
+          "hash": "2c05215c92ce529e204cee3c3d0dd6cf7abe3a87f9aa0d3eb15c087f21e21679"
+        },
+        {
+          "state": "move",
+          "frame": 2,
+          "source": {
+            "left": 555,
+            "top": 280,
+            "right": 833,
+            "bottom": 540
+          },
+          "bounds": [
+            15,
+            21,
+            113,
+            111
+          ],
+          "pixels": 5113,
+          "hash": "e511c3e034d437eca9bc377c9b178fbf1a0b008b7e559722a72bb34d4d9aec23"
+        },
+        {
+          "state": "move",
+          "frame": 3,
+          "source": {
+            "left": 833,
+            "top": 280,
+            "right": 1122,
+            "bottom": 540
+          },
+          "bounds": [
+            13,
+            24,
+            107,
+            111
+          ],
+          "pixels": 4997,
+          "hash": "cafdda4c43ccb1c3c31113612dc4c1d672bd82969cb43a1c12848d44a1ddc112"
+        },
+        {
+          "state": "attack",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 540,
+            "right": 282,
+            "bottom": 824
+          },
+          "bounds": [
+            19,
+            28,
+            114,
+            111
+          ],
+          "pixels": 5288,
+          "hash": "106e4e1126eaf6af664764157320c59af7febd274c417262e577f9dfe82a6026"
+        },
+        {
+          "state": "attack",
+          "frame": 1,
+          "source": {
+            "left": 282,
+            "top": 540,
+            "right": 556,
+            "bottom": 824
+          },
+          "bounds": [
+            17,
+            11,
+            113,
+            111
+          ],
+          "pixels": 5238,
+          "hash": "aa64216c70e5758457ddaf88ec618cc491d9755c2f10138af9ba18371c642570"
+        },
+        {
+          "state": "attack",
+          "frame": 2,
+          "source": {
+            "left": 556,
+            "top": 540,
+            "right": 826,
+            "bottom": 824
+          },
+          "bounds": [
+            16,
+            12,
+            112,
+            111
+          ],
+          "pixels": 4444,
+          "hash": "b33448adf16f271084146dfc690bc9863b2e74d6675ff5dca33dfc835e0ae271"
+        },
+        {
+          "state": "attack",
+          "frame": 3,
+          "source": {
+            "left": 826,
+            "top": 540,
+            "right": 1122,
+            "bottom": 824
+          },
+          "bounds": [
+            11,
+            32,
+            112,
+            111
+          ],
+          "pixels": 5328,
+          "hash": "d98195326294b4f32b9fef900f604762752b99ec0176f1e1b9349674644de7ac"
+        },
+        {
+          "state": "hurt",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 824,
+            "right": 283,
+            "bottom": 1097
+          },
+          "bounds": [
+            18,
+            22,
+            115,
+            111
+          ],
+          "pixels": 5342,
+          "hash": "3346c3161025a2ea3742b2a2b07e0ab39995ade559bce79150def61a2c0bd2fc"
+        },
+        {
+          "state": "hurt",
+          "frame": 1,
+          "source": {
+            "left": 283,
+            "top": 824,
+            "right": 556,
+            "bottom": 1097
+          },
+          "bounds": [
+            18,
+            19,
+            112,
+            111
+          ],
+          "pixels": 5443,
+          "hash": "ff97f38d16fdc3e72d130ce5af113c05eeadf56fabb1f8dea90d096e54895e1e"
+        },
+        {
+          "state": "hurt",
+          "frame": 2,
+          "source": {
+            "left": 556,
+            "top": 824,
+            "right": 832,
+            "bottom": 1097
+          },
+          "bounds": [
+            15,
+            22,
+            113,
+            111
+          ],
+          "pixels": 5289,
+          "hash": "a472ceb7dfbcea89c5f5f96d23bd5ef54432484dc859f7e791e56b18f62d0e2c"
+        },
+        {
+          "state": "hurt",
+          "frame": 3,
+          "source": {
+            "left": 832,
+            "top": 824,
+            "right": 1122,
+            "bottom": 1097
+          },
+          "bounds": [
+            12,
+            25,
+            109,
+            111
+          ],
+          "pixels": 5229,
+          "hash": "7539f5ab7e012eb28e9f4f792096d622bdca1efce1cbb98fa0f72af3decccd95"
+        },
+        {
+          "state": "defeat",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 1097,
+            "right": 280,
+            "bottom": 1402
+          },
+          "bounds": [
+            17,
+            18,
+            113,
+            111
+          ],
+          "pixels": 5782,
+          "hash": "79c7f45b8d09b5f92943039fdc85a06f4fdab422db10640de3fe413c80739fbd"
+        },
+        {
+          "state": "defeat",
+          "frame": 1,
+          "source": {
+            "left": 280,
+            "top": 1097,
+            "right": 557,
+            "bottom": 1402
+          },
+          "bounds": [
+            18,
+            34,
+            111,
+            111
+          ],
+          "pixels": 5175,
+          "hash": "49b77f619568b6de1a5ec02560b378e117a87dfb65baba45a526130e3c44ff2d"
+        },
+        {
+          "state": "defeat",
+          "frame": 2,
+          "source": {
+            "left": 557,
+            "top": 1097,
+            "right": 838,
+            "bottom": 1402
+          },
+          "bounds": [
+            14,
+            53,
+            113,
+            111
+          ],
+          "pixels": 4156,
+          "hash": "3be40255caa7a1dc3621432a3f4f74bb03f738660b9ab7ad2ca819e04ddc149a"
+        },
+        {
+          "state": "defeat",
+          "frame": 3,
+          "source": {
+            "left": 838,
+            "top": 1097,
+            "right": 1122,
+            "bottom": 1402
+          },
+          "bounds": [
+            14,
+            21,
+            113,
+            111
+          ],
+          "pixels": 4712,
+          "hash": "ff47f7875d236d1736d28164a472b0c8ef8b74064125d0a272f177823d9f2a6f"
+        }
+      ]
+    },
+    {
+      "id": "carrionMatriarch-phase3",
+      "file": "carrionMatriarch-phase3.png",
+      "sourceHash": "cdd970592b866e7704a64d6367ccef8618504432cbb409a61ebeed125915d2e7",
+      "scale": 0.3674911660777385,
+      "frames": [
+        {
+          "state": "idle",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 0,
+            "right": 295,
+            "bottom": 280
+          },
+          "bounds": [
+            18,
+            15,
+            118,
+            111
+          ],
+          "pixels": 6016,
+          "hash": "c75d8080d1ca4cba62d9a5c1b5cc99647e0215848fb7eda036545c34568b0d32"
+        },
+        {
+          "state": "idle",
+          "frame": 1,
+          "source": {
+            "left": 295,
+            "top": 0,
+            "right": 561,
+            "bottom": 280
+          },
+          "bounds": [
+            19,
+            16,
+            111,
+            111
+          ],
+          "pixels": 5561,
+          "hash": "7d60668faf2f98303b8cc4a38695c8b2f807199edf16d6fbf658283c8505786b"
+        },
+        {
+          "state": "idle",
+          "frame": 2,
+          "source": {
+            "left": 561,
+            "top": 0,
+            "right": 841,
+            "bottom": 280
+          },
+          "bounds": [
+            16,
+            18,
+            109,
+            111
+          ],
+          "pixels": 5556,
+          "hash": "11125661fb6b43a4206fa2664a9eaf04159ac89b1175dbecd6a4b4a9d6c360b4"
+        },
+        {
+          "state": "idle",
+          "frame": 3,
+          "source": {
+            "left": 841,
+            "top": 0,
+            "right": 1122,
+            "bottom": 280
+          },
+          "bounds": [
+            13,
+            15,
+            107,
+            111
+          ],
+          "pixels": 5754,
+          "hash": "952d5e9d64dedc9c0e2b60e76104fc27daef01a7130fddf3fe86d204fda85a68"
+        },
+        {
+          "state": "move",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 280,
+            "right": 289,
+            "bottom": 556
+          },
+          "bounds": [
+            19,
+            15,
+            117,
+            111
+          ],
+          "pixels": 5908,
+          "hash": "18737b1e7edc397d060b48daf25ecf159ce9faa51a5b57e971faa4d6158f0546"
+        },
+        {
+          "state": "move",
+          "frame": 1,
+          "source": {
+            "left": 289,
+            "top": 280,
+            "right": 565,
+            "bottom": 556
+          },
+          "bounds": [
+            19,
+            13,
+            114,
+            111
+          ],
+          "pixels": 5745,
+          "hash": "476e25c89d6248c884242a7750dc20c52422017fb1dd2768a6d267637af5502f"
+        },
+        {
+          "state": "move",
+          "frame": 2,
+          "source": {
+            "left": 565,
+            "top": 280,
+            "right": 841,
+            "bottom": 556
+          },
+          "bounds": [
+            18,
+            18,
+            112,
+            111
+          ],
+          "pixels": 5431,
+          "hash": "1acb15e2b50483ffc8ff29df5bf0335f696701c4fc38b4f9af3952fc120385e6"
+        },
+        {
+          "state": "move",
+          "frame": 3,
+          "source": {
+            "left": 841,
+            "top": 280,
+            "right": 1122,
+            "bottom": 556
+          },
+          "bounds": [
+            15,
+            21,
+            113,
+            111
+          ],
+          "pixels": 5524,
+          "hash": "8ddf75b28877417b81f41219d9bfce1757276cd8c85ff72a2636658eae85c410"
+        },
+        {
+          "state": "attack",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 556,
+            "right": 280,
+            "bottom": 827
+          },
+          "bounds": [
+            19,
+            26,
+            114,
+            111
+          ],
+          "pixels": 5131,
+          "hash": "2f84136d49414ad809e553527cc80dfb8c787fcc2afacd67add0260594e9bee9"
+        },
+        {
+          "state": "attack",
+          "frame": 1,
+          "source": {
+            "left": 280,
+            "top": 556,
+            "right": 562,
+            "bottom": 827
+          },
+          "bounds": [
+            16,
+            16,
+            115,
+            111
+          ],
+          "pixels": 6077,
+          "hash": "7cfe5dcd17dd9aedeaa3fb331d008b1cbf14c709e7332f8b97fcd229f8eb95ec"
+        },
+        {
+          "state": "attack",
+          "frame": 2,
+          "source": {
+            "left": 562,
+            "top": 556,
+            "right": 845,
+            "bottom": 827
+          },
+          "bounds": [
+            12,
+            23,
+            115,
+            111
+          ],
+          "pixels": 6012,
+          "hash": "891eff69353101be9a761f983dda8cdeebee008b22565e7b49f0630e6e595e2a"
+        },
+        {
+          "state": "attack",
+          "frame": 3,
+          "source": {
+            "left": 845,
+            "top": 556,
+            "right": 1122,
+            "bottom": 827
+          },
+          "bounds": [
+            14,
+            18,
+            113,
+            111
+          ],
+          "pixels": 5424,
+          "hash": "36d9ebe4ff5903fbf24fb8282bf0bdda4ec7de5321e1fa719f8eb723af2c955c"
+        },
+        {
+          "state": "hurt",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 827,
+            "right": 289,
+            "bottom": 1114
+          },
+          "bounds": [
+            18,
+            17,
+            117,
+            111
+          ],
+          "pixels": 6006,
+          "hash": "60931d9241b9055b7443fa952d800202302fdac65421748d4778f3e53137d9bd"
+        },
+        {
+          "state": "hurt",
+          "frame": 1,
+          "source": {
+            "left": 289,
+            "top": 827,
+            "right": 565,
+            "bottom": 1114
+          },
+          "bounds": [
+            18,
+            18,
+            114,
+            111
+          ],
+          "pixels": 5396,
+          "hash": "8fca75061bfb7721765e36a190834fe685f0993d42313db4c0f6531c2d0e3d6a"
+        },
+        {
+          "state": "hurt",
+          "frame": 2,
+          "source": {
+            "left": 565,
+            "top": 827,
+            "right": 841,
+            "bottom": 1114
+          },
+          "bounds": [
+            15,
+            27,
+            109,
+            111
+          ],
+          "pixels": 5025,
+          "hash": "621289a2831f7aa071ba618ff1e7f60e7f6cae16a3141a78cf0643746f4b0eba"
+        },
+        {
+          "state": "hurt",
+          "frame": 3,
+          "source": {
+            "left": 841,
+            "top": 827,
+            "right": 1122,
+            "bottom": 1114
+          },
+          "bounds": [
+            16,
+            26,
+            109,
+            111
+          ],
+          "pixels": 4876,
+          "hash": "098b6ebd2851fdfc4d9dd06006b8afeb8082b88dff902245c9ee2c91587e9b1d"
+        },
+        {
+          "state": "defeat",
+          "frame": 0,
+          "source": {
+            "left": 0,
+            "top": 1114,
+            "right": 285,
+            "bottom": 1402
+          },
+          "bounds": [
+            17,
+            17,
+            115,
+            111
+          ],
+          "pixels": 5821,
+          "hash": "99a865a57d3729f4c608e082b929c40227e9583dc813de8407f36cb49d708e61"
+        },
+        {
+          "state": "defeat",
+          "frame": 1,
+          "source": {
+            "left": 285,
+            "top": 1114,
+            "right": 562,
+            "bottom": 1402
+          },
+          "bounds": [
+            14,
+            29,
+            114,
+            111
+          ],
+          "pixels": 5167,
+          "hash": "ce31d97a6afdf8ad13547c0d58100a500d6e1c46b81402c2e43edf82ed5064af"
+        },
+        {
+          "state": "defeat",
+          "frame": 2,
+          "source": {
+            "left": 562,
+            "top": 1114,
+            "right": 841,
+            "bottom": 1402
+          },
+          "bounds": [
+            15,
+            36,
+            114,
+            111
+          ],
+          "pixels": 4719,
+          "hash": "d144320ad167e7035076acbc09703d114101fe6cbd675c6aa3a3d1249d56d43e"
+        },
+        {
+          "state": "defeat",
+          "frame": 3,
+          "source": {
+            "left": 841,
+            "top": 1114,
+            "right": 1122,
+            "bottom": 1402
+          },
+          "bounds": [
+            15,
+            24,
+            111,
+            111
+          ],
+          "pixels": 4784,
+          "hash": "040301d7433f119c67cc4782cccb5073caf269888375caaa6d9efbc5dd97d17c"
+        }
+      ]
+    },
+    {
+      "id": "broodEgg",
+      "file": "broodEgg.png",
+      "derived": true,
+      "frames": [
+        {
+          "state": "idle",
+          "frame": 0,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            42,
+            78,
+            83,
+            111
+          ],
+          "pixels": 929,
+          "hash": "22d9f1934c6fa9a8f38230e976f6b2cdf0e635db711d024a1777b48f4b810d1f"
+        },
+        {
+          "state": "idle",
+          "frame": 1,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            43,
+            77,
+            84,
+            110
+          ],
+          "pixels": 929,
+          "hash": "f20a0091982cafde6c8ec847ddcd0fb5a8e6640ce7c062e2cc5a2f84eaf9ff30"
+        },
+        {
+          "state": "idle",
+          "frame": 2,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            44,
+            78,
+            85,
+            111
+          ],
+          "pixels": 929,
+          "hash": "da3bd5de6426d09ee8d917393f2c94cb4ec5cbf03a6d91acc20a7dba1a9d5cc8"
+        },
+        {
+          "state": "idle",
+          "frame": 3,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            43,
+            79,
+            84,
+            112
+          ],
+          "pixels": 929,
+          "hash": "054da8c0d907865c3483b175fa761de07a862592a55039fb6b02d22822532ab0"
+        },
+        {
+          "state": "move",
+          "frame": 0,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            42,
+            78,
+            83,
+            111
+          ],
+          "pixels": 929,
+          "hash": "22d9f1934c6fa9a8f38230e976f6b2cdf0e635db711d024a1777b48f4b810d1f"
+        },
+        {
+          "state": "move",
+          "frame": 1,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            43,
+            78,
+            84,
+            111
+          ],
+          "pixels": 929,
+          "hash": "f3c0e155f70a6b455c23c9949365b7244acc8fe714c9944ba4ca0450fb06d91d"
+        },
+        {
+          "state": "move",
+          "frame": 2,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            44,
+            78,
+            85,
+            111
+          ],
+          "pixels": 929,
+          "hash": "da3bd5de6426d09ee8d917393f2c94cb4ec5cbf03a6d91acc20a7dba1a9d5cc8"
+        },
+        {
+          "state": "move",
+          "frame": 3,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            43,
+            78,
+            84,
+            111
+          ],
+          "pixels": 929,
+          "hash": "f3c0e155f70a6b455c23c9949365b7244acc8fe714c9944ba4ca0450fb06d91d"
+        },
+        {
+          "state": "attack",
+          "frame": 0,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            42,
+            78,
+            83,
+            111
+          ],
+          "pixels": 929,
+          "hash": "22d9f1934c6fa9a8f38230e976f6b2cdf0e635db711d024a1777b48f4b810d1f"
+        },
+        {
+          "state": "attack",
+          "frame": 1,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            43,
+            78,
+            84,
+            111
+          ],
+          "pixels": 929,
+          "hash": "f3c0e155f70a6b455c23c9949365b7244acc8fe714c9944ba4ca0450fb06d91d"
+        },
+        {
+          "state": "attack",
+          "frame": 2,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            44,
+            78,
+            85,
+            111
+          ],
+          "pixels": 929,
+          "hash": "da3bd5de6426d09ee8d917393f2c94cb4ec5cbf03a6d91acc20a7dba1a9d5cc8"
+        },
+        {
+          "state": "attack",
+          "frame": 3,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            43,
+            78,
+            84,
+            111
+          ],
+          "pixels": 929,
+          "hash": "f3c0e155f70a6b455c23c9949365b7244acc8fe714c9944ba4ca0450fb06d91d"
+        },
+        {
+          "state": "hurt",
+          "frame": 0,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            42,
+            78,
+            83,
+            111
+          ],
+          "pixels": 929,
+          "hash": "22d9f1934c6fa9a8f38230e976f6b2cdf0e635db711d024a1777b48f4b810d1f"
+        },
+        {
+          "state": "hurt",
+          "frame": 1,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            43,
+            78,
+            84,
+            111
+          ],
+          "pixels": 929,
+          "hash": "f3c0e155f70a6b455c23c9949365b7244acc8fe714c9944ba4ca0450fb06d91d"
+        },
+        {
+          "state": "hurt",
+          "frame": 2,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            44,
+            78,
+            85,
+            111
+          ],
+          "pixels": 929,
+          "hash": "da3bd5de6426d09ee8d917393f2c94cb4ec5cbf03a6d91acc20a7dba1a9d5cc8"
+        },
+        {
+          "state": "hurt",
+          "frame": 3,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            43,
+            78,
+            84,
+            111
+          ],
+          "pixels": 929,
+          "hash": "f3c0e155f70a6b455c23c9949365b7244acc8fe714c9944ba4ca0450fb06d91d"
+        },
+        {
+          "state": "defeat",
+          "frame": 0,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            42,
+            78,
+            83,
+            111
+          ],
+          "pixels": 929,
+          "hash": "22d9f1934c6fa9a8f38230e976f6b2cdf0e635db711d024a1777b48f4b810d1f"
+        },
+        {
+          "state": "defeat",
+          "frame": 1,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            43,
+            85,
+            84,
+            111
+          ],
+          "pixels": 747,
+          "hash": "11f9248c1759871491c86853db3cad5b00d2a1390d68f0d58800be75848a4258"
+        },
+        {
+          "state": "defeat",
+          "frame": 2,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            44,
+            97,
+            85,
+            111
+          ],
+          "pixels": 424,
+          "hash": "7b2bd7cd8a1b8d9c4ca3a3461879396bdb52e4e8e3bd10f6f6a1b67922bbd296"
+        },
+        {
+          "state": "defeat",
+          "frame": 3,
+          "source": {
+            "left": 789,
+            "top": 1058,
+            "right": 1000,
+            "bottom": 1234
+          },
+          "bounds": [
+            43,
+            106,
+            84,
+            111
+          ],
+          "pixels": 179,
+          "hash": "281eb2243200fdcf717794a18b4495b44f3849c8cecce2629ad1d923489c80f7"
+        }
+      ]
+    },
+    {
+      "id": "broodParasite",
+      "file": "broodParasite.png",
+      "derived": true,
+      "frames": [
+        {
+          "state": "idle",
+          "frame": 0,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            40,
+            73,
+            86,
+            111
+          ],
+          "pixels": 827,
+          "hash": "b124bf6860d5d5b7d63c079fc433e32527e2bd006e8adb45557d60eb8465bafd"
+        },
+        {
+          "state": "idle",
+          "frame": 1,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            41,
+            72,
+            87,
+            110
+          ],
+          "pixels": 827,
+          "hash": "84a3be15ec23e1469c865eb50a69fc1ee5a959841d1807b5109914b476cfa10f"
+        },
+        {
+          "state": "idle",
+          "frame": 2,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            42,
+            73,
+            88,
+            111
+          ],
+          "pixels": 827,
+          "hash": "0804db5cbe03c9c84ec02887ff257a881ed7fe281a5fea78a7cde77cc981977b"
+        },
+        {
+          "state": "idle",
+          "frame": 3,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            41,
+            74,
+            87,
+            112
+          ],
+          "pixels": 827,
+          "hash": "0d15f9e93632e8e5990ad5896474926f4a46658f15d590dd2d26089d786b052f"
+        },
+        {
+          "state": "move",
+          "frame": 0,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            40,
+            73,
+            86,
+            111
+          ],
+          "pixels": 827,
+          "hash": "b124bf6860d5d5b7d63c079fc433e32527e2bd006e8adb45557d60eb8465bafd"
+        },
+        {
+          "state": "move",
+          "frame": 1,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            41,
+            73,
+            87,
+            111
+          ],
+          "pixels": 827,
+          "hash": "2ddb7bbb05e188ffe0cd97231b17faa51c606516655ae4c4592c6570d744db21"
+        },
+        {
+          "state": "move",
+          "frame": 2,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            42,
+            73,
+            88,
+            111
+          ],
+          "pixels": 827,
+          "hash": "0804db5cbe03c9c84ec02887ff257a881ed7fe281a5fea78a7cde77cc981977b"
+        },
+        {
+          "state": "move",
+          "frame": 3,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            41,
+            73,
+            87,
+            111
+          ],
+          "pixels": 827,
+          "hash": "2ddb7bbb05e188ffe0cd97231b17faa51c606516655ae4c4592c6570d744db21"
+        },
+        {
+          "state": "attack",
+          "frame": 0,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            40,
+            73,
+            86,
+            111
+          ],
+          "pixels": 827,
+          "hash": "b124bf6860d5d5b7d63c079fc433e32527e2bd006e8adb45557d60eb8465bafd"
+        },
+        {
+          "state": "attack",
+          "frame": 1,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            41,
+            73,
+            87,
+            111
+          ],
+          "pixels": 827,
+          "hash": "2ddb7bbb05e188ffe0cd97231b17faa51c606516655ae4c4592c6570d744db21"
+        },
+        {
+          "state": "attack",
+          "frame": 2,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            42,
+            73,
+            88,
+            111
+          ],
+          "pixels": 827,
+          "hash": "0804db5cbe03c9c84ec02887ff257a881ed7fe281a5fea78a7cde77cc981977b"
+        },
+        {
+          "state": "attack",
+          "frame": 3,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            41,
+            73,
+            87,
+            111
+          ],
+          "pixels": 827,
+          "hash": "2ddb7bbb05e188ffe0cd97231b17faa51c606516655ae4c4592c6570d744db21"
+        },
+        {
+          "state": "hurt",
+          "frame": 0,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            40,
+            73,
+            86,
+            111
+          ],
+          "pixels": 827,
+          "hash": "b124bf6860d5d5b7d63c079fc433e32527e2bd006e8adb45557d60eb8465bafd"
+        },
+        {
+          "state": "hurt",
+          "frame": 1,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            41,
+            73,
+            87,
+            111
+          ],
+          "pixels": 827,
+          "hash": "2ddb7bbb05e188ffe0cd97231b17faa51c606516655ae4c4592c6570d744db21"
+        },
+        {
+          "state": "hurt",
+          "frame": 2,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            42,
+            73,
+            88,
+            111
+          ],
+          "pixels": 827,
+          "hash": "0804db5cbe03c9c84ec02887ff257a881ed7fe281a5fea78a7cde77cc981977b"
+        },
+        {
+          "state": "hurt",
+          "frame": 3,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            41,
+            73,
+            87,
+            111
+          ],
+          "pixels": 827,
+          "hash": "2ddb7bbb05e188ffe0cd97231b17faa51c606516655ae4c4592c6570d744db21"
+        },
+        {
+          "state": "defeat",
+          "frame": 0,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            40,
+            73,
+            86,
+            111
+          ],
+          "pixels": 827,
+          "hash": "b124bf6860d5d5b7d63c079fc433e32527e2bd006e8adb45557d60eb8465bafd"
+        },
+        {
+          "state": "defeat",
+          "frame": 1,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            41,
+            81,
+            87,
+            111
+          ],
+          "pixels": 659,
+          "hash": "1bb1de510f0f2e1cf2e0ccb1b089210e0de00da19eda377a377ce7b2c9fa5860"
+        },
+        {
+          "state": "defeat",
+          "frame": 2,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            43,
+            95,
+            88,
+            111
+          ],
+          "pixels": 385,
+          "hash": "87b295474a6c39fc5847c13b8f68bcf4703b58414e0c98b43b07f97d066311cf"
+        },
+        {
+          "state": "defeat",
+          "frame": 3,
+          "source": {
+            "left": 1015,
+            "top": 1092,
+            "right": 1178,
+            "bottom": 1225
+          },
+          "bounds": [
+            42,
+            105,
+            87,
+            111
+          ],
+          "pixels": 163,
+          "hash": "66ab98db3a34841e1e74544ec7f238576b9e1fbb5bb43dbfb43761eeaa5b5bf4"
+        }
+      ]
+    }
+  ]
 }
