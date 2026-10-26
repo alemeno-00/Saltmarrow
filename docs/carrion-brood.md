@@ -1,6 +1,6 @@
 # Carrion Brood
 
-Directly authored pixel art: no image generation or concept-sheet crops. Source: `tools/draw-carrion.cjs` (requires Sharp to regenerate). Nine transparent PNG atlases contain 180 frames, each on an 80×80 cell with a fixed [40,70] foot anchor. Rows: idle, movement, attack, hurt, defeat; four frames per state. East/west facing uses horizontal mirroring in the shared semi-isometric actor pass. The fixed thirteen-color palette and binary alpha preserve hard edges. Boss phases have separate shell/crown art. Defeat dissolves into stylized shell fragments and spores; anatomical effects are bypassed for this faction.
+Directly authored pixel art: no image generation or concept-sheet crops. Source: `tools/draw-carrion.cjs` (requires Sharp to regenerate). Nine transparent PNG atlases contain 180 frames, each on an 80×80 cell with a fixed [40,70] foot anchor. Rows: idle, movement, attack, hurt, defeat; four frames per state. East/west facing uses horizontal mirroring in the shared semi-isometric actor pass. Seven eight-tone material ramps and binary alpha preserve hard edges. Organic silhouettes, violet sinew, corroded green chitin, ivory ridges and upper-left clustered lighting match the material treatment of the existing faction sprites. Boss phases have separate shell/crown art. Defeat dissolves into stylized shell fragments and spores; anatomical effects are bypassed for this faction.
 
 | Creature | Mechanic and counterplay |
 |---|---|
