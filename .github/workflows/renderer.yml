@@ -23,6 +23,9 @@ jobs:
             npx playwright install --with-deps chromium --only-shell
           fi
       - run: npm test
+      - run: node tests/home-browser.cjs
+        env:
+          SCREENSHOT_DIR: test-results
       - run: node tests/art-browser.cjs
         env:
           SCREENSHOT_DIR: test-results

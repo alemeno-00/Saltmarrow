@@ -15,6 +15,11 @@ test('picking uses camera offset and floors at diamond boundaries',()=>{
     }
   }
 });
+test('higher camera retains upright wall and effect alignment',()=>{
+  assert.ok(ISO.rise>.5&&ISO.rise<.8);
+  const a=1,b=ISO.rise,c=-1,d=ISO.rise,ia=.5,ib=-.5,ic=1/(2*ISO.rise),id=ic;
+  assert.ok(Math.abs(a*ia+c*ib-1)<1e-10);assert.ok(Math.abs(b*ic+d*id-1)<1e-10);assert.ok(Math.abs(a*ic+c*id)<1e-10);assert.ok(Math.abs(b*ia+d*ib)<1e-10);
+});
 test('depth follows interpolated diagonal feet rather than grid row',()=>{
   assert.ok(ISO.depth({x:10,y:2})>ISO.depth({x:1,y:9}));
   assert.equal(ISO.depth({x:3,y:7,rx:2.5,ry:6.5}),9);
