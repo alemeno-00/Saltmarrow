@@ -45,6 +45,22 @@ h1 span{color:var(--lantern)}
 @media (max-width:860px){.game{grid-template-columns:minmax(0,1fr)}}
 .left{display:flex;flex-direction:column;gap:8px;min-width:0}
 .stage{position:relative;min-width:0;background:#040a0b;border:1px solid var(--line);border-radius:8px;overflow:hidden;user-select:none;-webkit-user-select:none}
+/* Saltmarrow art-direction pass: deep vignette, mineral edgework, candlelit accents, and a unified carved-frame UI. */
+.stage{isolation:isolate;box-shadow:inset 0 0 0 1px rgba(111,181,160,.08),0 8px 26px rgba(0,0,0,.28)}
+.stage:after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at 50% 43%,transparent 42%,rgba(1,7,9,.18) 72%,rgba(1,5,7,.58) 100%),linear-gradient(180deg,rgba(8,17,20,.14),transparent 24%,transparent 78%,rgba(1,7,8,.22));box-shadow:inset 0 0 0 1px rgba(190,213,188,.04)}
+.stage canvas{position:relative;z-index:0}
+.stage .hud-tl,.stage .tracker,.stage .toast,.stage .tip,.stage .inspect{z-index:2}
+.panel,.card,.sheet,.side-panel{box-shadow:inset 0 1px 0 rgba(205,221,194,.035),0 5px 16px rgba(0,0,0,.16)}
+.panel,.card,.sheet{border-color:#304247}
+.btn{background:linear-gradient(180deg,#1b292c,#11191c);border-color:#34474a;box-shadow:inset 0 1px 0 rgba(225,230,207,.045)}
+.btn:hover:not(:disabled){background:linear-gradient(180deg,#263a3a,#152124);box-shadow:0 0 0 1px rgba(111,181,160,.08),inset 0 1px 0 rgba(225,230,207,.07)}
+.btn.primary{background:linear-gradient(180deg,#302719,#1b1913);border-color:#8e6a32;text-shadow:0 0 12px rgba(227,165,72,.12)}
+h1,h2,h3,.panel-title,.section-title{ text-shadow:0 1px 0 #000,0 0 18px rgba(111,181,160,.08)}
+.chip,.tok,.tip{backdrop-filter:blur(3px);box-shadow:0 2px 7px rgba(0,0,0,.22)}
+.tok{border-color:#34464a}
+.inspect{background:linear-gradient(145deg,rgba(20,31,33,.98),rgba(8,14,16,.98));border-color:#a47b3d;box-shadow:0 10px 34px rgba(0,0,0,.72),inset 0 1px 0 rgba(240,218,165,.08)}
+canvas{image-rendering:pixelated}
+@media(prefers-reduced-transparency:reduce){.stage:after{background:rgba(1,7,9,.08)}}
 canvas{display:block;width:100%;touch-action:manipulation;image-rendering:pixelated;cursor:default}
 /* HUD on the map */
 .hud-tl{position:absolute;top:8px;left:8px;pointer-events:none;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
