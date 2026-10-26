@@ -3767,18 +3767,34 @@ UI.fx=(type,d)=>{
     case'bolt':{const a=wpos(d.from),b={x:d.to.x*T+T/2,y:d.to.y*T+T/2};FX.bolts.push({a,b,c:d.color,t0:NOW,dur:170});break}
     case'death':{
       const e=d.e,p=wpos(e),hit=d.hit||{},L=S.L,tile=tileAt(e.x,e.y);
-      const fire=L.fire&&L.fire[I(e.x,e.y)]>0,water=tile===WATER,spore=(L.spore&&L.spore[I(e.x,e.y)]>0)||MT(e).burst;
-      // Each death reads as a tiny pixel-art animation: impact flash, directional chunks, then settling motes.
-      const palette=fire?['#fff2b0','#ff9a3a','#c2533e','#28201b']:water?['#bff4ff','#7fd0d8','#23606f','#3a2528']:spore?['#c8d86a','#9aa84a','#e8f0a0','#542d3b']:['#c2533e','#8b2936','#e8dcc4','#869690','#2a403b'];
-      burst(p.x,p.y,fire?26:water?28:34,palette,fire?145:125,0.72,260,3);
-      // Dark red pixels and pale bone/armour fragments sell a hit without realistic detail.
-      if(!fire&&!water){burst(p.x,p.y,10,['#501b26','#7e2634','#c2533e'],100,0.95,290,2);burst(p.x,p.y,spore?3:7,['#e8dcc4','#c6bca4','#d4d8c8'],125,0.85,310,2)}
-      // A weapon kill throws fragments away from the attacker; environmental deaths bloom outward.
-      const src=d.source,dx=src?Math.sign(e.x-src.x):0,dy=src?Math.sign(e.y-src.y):0;
-      for(let k=0;k<5;k++){const a=(Math.PI*2*k/5)+(dx||dy?Math.atan2(dy,dx):0),v=55+Math.random()*75;
-        FX.parts.push({x:p.x,y:p.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-35,life:.42+Math.random()*.25,age:0,c:fire?['#ffb347','#ff7a2a','#332a25'][k%3]:water?['#7fd0d8','#23606f','#bff4ff'][k%3]:['#8b2936','#c2533e','#e8dcc4','#2a403b'][k%4],s:k%2?3:4,g:260})}
-      FX.rings.push({x:p.x,y:p.y,r:T*.48,t0:NOW,dur:260,c:fire?'#ff9a3a':water?'#7fd0d8':'#8b2936'});if(!fire&&!water)FX.stains.push({x:e.x,y:e.y,t0:NOW,life:9000,c:spore?'#5e5630':'#57232b',seed:(e.x*31+e.y*17)%5});
-      if(fire)FX.lights.push({x:p.x,y:p.y,r:T*2,t0:NOW,dur:300,c:'#ff9a3a'});
+      const fire=!!(L.fire&&L.fire[I(e.x,e.y)]>0),water=tile===WATER,spore=!!((L.spore&&L.spore[I(e.x,e.y)]>0)||MT(e).burst);
+      const source=d.source,kind=hit.kind||'hazard';
+      // Readable, stylised pixel-VFX: the damage source changes colour, motion and aftermath.
+      const palette=fire?['#fff2b0','#ff9a3a','#c2533e','#28201b']:water?['#e6ffff','#78dce8','#287e9b','#1a3548']:spore?['#eaff8b','#a6ce43','#5f8e37','#342c4d']:kind==='weapon'?['#f1d8b5','#c2533e','#8b2936','#57232b','#2a403b']:['#d7e5dd','#8b2936','#c2533e','#526e70'];
+      burst(p.x,p.y,fire?34:water?34:spore?38:kind==='weapon'?42:30,palette,fire?180:145,0.8,fire?300:340,3);
+      if(spore){
+        burst(p.x,p.y,22,['#efff9a','#b5dc4e','#77a843','#4b6a35'],95,1.15,520,4);
+        FX.lights.push({x:p.x,y:p.y,r:T*1.45,t0:NOW,dur:460,c:'#a8cf52'});
+      }else if(water){
+        burst(p.x,p.y,18,['#efffff','#8be5f0','#3188a5'],125,1.05,380,3);
+        FX.rings.push({x:p.x,y:p.y,r:T*.3,t0:NOW,dur:420,c:'#79dbe9'});
+      }else if(fire){
+        burst(p.x,p.y,18,['#fff2b0','#ffbd4a','#ff6a28','#40251e'],165,1.25,360,3);
+        FX.lights.push({x:p.x,y:p.y,r:T*2.5,t0:NOW,dur:420,c:'#ff8b35'});
+      }else if(kind==='weapon'){
+        burst(p.x,p.y,15,['#501b26','#8b2936','#c2533e'],110,1.05,360,2);
+        burst(p.x,p.y,10,['#f0e5ce','#c6bca4','#a9b9b2'],130,.95,420,2);
+      }
+      // Fragments kick away from the attacker; elemental deaths rise, drift or scatter differently.
+      const src=source,dx=src?Math.sign(e.x-src.x):0,dy=src?Math.sign(e.y-src.y):0;
+      const count=fire?9:water?8:spore?12:kind==='weapon'?10:6;
+      for(let k=0;k<count;k++){
+        const a=(Math.PI*2*k/count)+(dx||dy?Math.atan2(dy,dx):0),v=48+Math.random()*(fire?110:90);
+        const c=fire?['#ffb347','#ff7a2a','#fff2b0','#332a25'][k%4]:water?['#7fd0d8','#23606f','#bff4ff'][k%3]:spore?['#c8d86a','#9aa84a','#e8f0a0','#542d3b'][k%4]:['#8b2936','#c2533e','#e8dcc4','#2a403b'][k%4];
+        FX.parts.push({x:p.x,y:p.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-(spore?65:fire?45:25),life:.48+Math.random()*.34,age:0,c,s:k%3?3:4,g:spore?-35:fire?190:water?90:260});
+      }
+      FX.rings.push({x:p.x,y:p.y,r:T*(fire?.62:water?.58:spore?.7:.48),t0:NOW,dur:fire?360:spore?460:320,c:fire?'#ff9a3a':water?'#7fd0d8':spore?'#b5dc4e':'#8b2936'});
+      if(!fire&&!water)FX.stains.push({x:e.x,y:e.y,t0:NOW,life:spore?14000:12000,c:spore?'#5e5630':'#57232b',seed:(e.x*31+e.y*17)%5});
       break}
     case'explosion':{const x=d.x*T+T/2,y=d.y*T+T/2;burst(x,y,50,['#fff2b0','#ffb347','#ff7a2a','#c2533e','#3a3a3a'],260*(d.r||1)/1.5,0.9,120,3);burst(x,y,24,['#2a2a2a','#555','#3a5751'],120,1.6,-20,4);FX.lights.push({x,y,r:T*(d.r+3),t0:NOW,dur:600,c:'#ffb347'});break}
     case'debris':{const x=d.x*T+T/2,y=d.y*T+T/2;burst(x,y,26,d.c==='crystal'?['#f0c8e0','#ffffff','#c890b8']:['#6a625a','#3a342e','#8a8278','#5a3a1a'],140,0.8,300,3);if(d.c==='crystal')FX.lights.push({x,y,r:T*3,t0:NOW,dur:400,c:'#f0c8e0'});break}
