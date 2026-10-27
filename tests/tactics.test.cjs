@@ -2,7 +2,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 require('../death-effects.js');
 require('../drowned-sprites.js');
 const html=fs.readFileSync('index.html','utf8'),script=html.match(/<script>\s*\(function\(\)\{([\s\S]*?)<\/script>/)[0].replace(/^<script>/,'').replace(/<\/script>$/,'');
-function game(){const c={console,Math,SaltmarrowDeaths:global.SaltmarrowDeaths,setTimeout,clearTimeout};vm.createContext(c);vm.runInContext(script,c);const g=c.G;g.newGame('riptide',7);g.S.L.mons=[];g.S.L.objs=[];g.S.L.items=[];g.S.P.x=g.S.P.rx=15;g.S.P.y=g.S.P.ry=15;g.S.P.stam=g.S.P.max=500;for(let y=5;y<30;y++)for(let x=5;x<30;x++){g.S.L.map[g.I(x,y)]=1;g.S.L.fire[g.I(x,y)]=0}g.computeFov();return g}
+function game(){const c={console,Math,SaltmarrowDeaths:global.SaltmarrowDeaths,setTimeout,clearTimeout};vm.createContext(c);vm.runInContext(script,c);const g=c.G;g.newGame('riptide',7);g.S.L.mons=[];g.S.L.objs=[];g.S.L.items=[];g.S.L.traps=[];g.S.L.opq.fill(0);g.S.L.smoke.fill(0);g.S.L.spore.fill(0);g.S.L.weak.fill(0);g.S.P.x=g.S.P.rx=15;g.S.P.y=g.S.P.ry=15;g.S.P.stam=g.S.P.max=500;for(let y=5;y<30;y++)for(let x=5;x<30;x++){g.S.L.map[g.I(x,y)]=1;g.S.L.fire[g.I(x,y)]=0}g.computeFov();return g}
 async function fight(g,type,x=17,y=15){const m=g.spawnMon(type,x,y);await g.startCombat('ambush',m);m.surprised=false;return m}
 test('sapper bombs commit a tile, allow a full hero turn, and cannot gain instant extra blasts',async()=>{
   for(const extra of [false,true]){const g=game(),m=await fight(g,'sapper',19,15);if(extra)m.mut='frenzied';m.extra=extra;
