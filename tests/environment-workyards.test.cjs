@@ -5,7 +5,7 @@ const html=fs.readFileSync('index.html','utf8'),script=html.match(/<script>\s*\(
 const types={wall:0,floor:1},buildings=[{key:'smith',x:10,y:9,w:7,h:5,dx:13,dy:14}];
 test('town materials follow street and work-area use, with a clear paved smith entrance',()=>{
  assert.equal(surfaces.district(13,16,buildings),'road');assert.equal(surfaces.district(13,14,buildings),'paving');assert.equal(surfaces.district(10,14,buildings),'cinders');assert.equal(surfaces.district(36,9,buildings),'grass');assert.equal(surfaces.district(45,25,buildings),'earth');
- const L={town:true,interior:'smith'};assert.equal(surfaces.material(L,10,10,64,buildings),null);assert.equal(surfaces.material({bio:'crypt'},10,10,64),null);
+ const L={town:true,interior:'smith'};assert.equal(surfaces.material(L,10,10,64,buildings),null);assert.equal(surfaces.material({bio:'crypt'},10,10,64),'crypt-stone');
 });
 test('mining floors distinguish working bays, scree rims, compacted ground and bedrock',()=>{
  const L={bio:'mine',rooms:[{x:2,y:2,w:9,h:7,theme:'rails'}]};assert.equal(surfaces.material(L,2,4,20),'scree');assert.equal(surfaces.material(L,4,4,20),'workfloor');const kinds=new Set();for(let y=12;y<25;y++)for(let x=12;x<25;x++)kinds.add(surfaces.material(L,x,y,30));assert.deepEqual([...kinds].sort(),['bedrock','mine-earth','scree']);

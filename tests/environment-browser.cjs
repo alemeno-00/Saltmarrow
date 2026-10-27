@@ -17,9 +17,9 @@ const server=http.createServer((req,res)=>{const name=decodeURIComponent(req.url
    const pixels=[];
    for(const phase of ['before','after']){
     pixels.push(await page.evaluate(phase=>{
-     const E=SaltmarrowEnvironment,draw=E.draw,wall=E.drawWall,U=SaltmarrowSurfaces,get=U.get,rock=U.wall,C=SaltmarrowScenes,scene=C.draw,lights=C.lights;
-     try{if(phase==='before'){E.draw=()=>{};E.drawWall=()=>{};U.get=()=>null;U.wall=()=>false;C.draw=()=>{};C.lights=()=>[]}window.__environment.render();return document.getElementById('cv').toDataURL()}
-     finally{E.draw=draw;E.drawWall=wall;U.get=get;U.wall=rock;C.draw=scene;C.lights=lights}
+     const E=SaltmarrowEnvironment,draw=E.draw,wall=E.drawWall,U=SaltmarrowSurfaces,get=U.get,rock=U.wall,C=SaltmarrowScenes,scene=C.draw,lights=C.lights,lighting=window.SaltmarrowLighting;
+     try{if(phase==='before'){E.draw=()=>{};E.drawWall=()=>{};U.get=()=>null;U.wall=()=>false;C.draw=()=>{};C.lights=()=>[];window.SaltmarrowLighting=null}window.__environment.render();return document.getElementById('cv').toDataURL()}
+     finally{E.draw=draw;E.drawWall=wall;U.get=get;U.wall=rock;C.draw=scene;C.lights=lights;window.SaltmarrowLighting=lighting}
     },phase));
     if(process.env.SCREENSHOT_DIR){fs.mkdirSync(process.env.SCREENSHOT_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.SCREENSHOT_DIR,`${bio}-${phase}.png`)})}
    }

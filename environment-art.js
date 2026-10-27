@@ -88,7 +88,7 @@ function draw(g,L,tiles,options){
   // Moving actors and live effects always have a clear tile; deposits remain background art.
   if((L.objs||[]).some(o=>o.x===d.x&&o.y===d.y)||(L.items||[]).some(o=>o.x===d.x&&o.y===d.y)||L.fire?.[d.i]||L.spore?.[d.i])continue;
   g.globalAlpha=visible[d.i]?.92:.35;g.drawImage(sprite(d.kind,d.variant),d.x*32,d.y*32);
-  if(d.kind==='fungal'&&visible[d.i]){g.globalAlpha=reduced?.16:.16+Math.floor((Math.sin(now/1400+d.seed%29)+1)*2)/30;rect(d.x*32+4,d.y*32+3,24,12,'#628f75')}
+  if(d.kind==='fungal'&&visible[d.i]){g.globalAlpha=reduced?.16:.16+Math.floor((Math.sin(now/1400+d.seed%29)+1)*2)/30;for(const [x,y]of[[5,5],[14,8],[24,4]])rect(d.x*32+x,d.y*32+y,2,1,'#82b79a')}
  }
  g.restore();
 }

@@ -9,7 +9,8 @@
     "test:art": "node tests/art-browser.cjs",
     "test:hollow": "node tests/hollow-browser.cjs",
     "test:weapons": "node tests/weapons-browser.cjs",
-    "test:environment": "node tests/environment-browser.cjs"
+    "test:environment": "node tests/environment-browser.cjs",
+    "test:lighting": "node tests/lighting-browser.cjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"

@@ -21,6 +21,9 @@ function material(L,x,y,w,buildings=[]){
   if(x>=29&&x<=34&&y<=14)return 'grass';
   return b?'earth':'grass';
  }
+ if(L.bio==='fungal')return hash(Math.floor(x/3),Math.floor(y/3),37)%3===0?'moss':'fungal-earth';
+ if(L.bio==='crypt'||L.bio==='abbey')return 'crypt-stone';
+ if(L.bio==='drowned'||L.bio==='sewer')return [y*w+x-1,y*w+x+1,(y-1)*w+x,(y+1)*w+x].some(i=>L.map?.[i]===4)?'silt':'drowned-stone';
  if(L.bio!=='mine')return null;
  const r=(L.rooms||[]).find(r=>x>=r.x&&x<r.x+r.w&&y>=r.y&&y<r.y+r.h);
  const n=hash(Math.floor(x/3),Math.floor(y/3),31)%7;
@@ -33,9 +36,18 @@ function tile(kind,v=0,edges=0){
  const r=(x,y,w,h,col)=>{g.fillStyle=col;g.fillRect(x,y,w,h)};
  const rand=(x,y)=>hash(x,y,v*91+kind.length*57);
  const earth=['earth','verge','cinders','mine-earth','workfloor','scree'].includes(kind);
- const base=kind==='grass'?'#25332c':kind==='bedrock'?'#343a3a':kind==='road'?'#48463c':kind==='paving'?'#41443f':kind==='cinders'?'#302d2b':kind==='workfloor'?'#3c362e':kind==='mine-earth'?'#393832':kind==='scree'?'#343633':'#3b3a30';
+ const base=kind==='fungal-earth'?'#29392f':kind==='moss'?'#2e4438':kind==='crypt-stone'?'#343b3d':kind==='drowned-stone'?'#293e44':kind==='silt'?'#344440':kind==='grass'?'#25332c':kind==='bedrock'?'#343a3a':kind==='road'?'#48463c':kind==='paving'?'#41443f':kind==='cinders'?'#302d2b':kind==='workfloor'?'#3c362e':kind==='mine-earth'?'#393832':kind==='scree'?'#343633':'#3b3a30';
  r(0,0,32,32,base);
- if(kind==='road'||kind==='paving'){
+ if(kind==='fungal-earth'||kind==='moss'){
+  // Rounded stepped mats and branching hyphae replace flat coloured floor squares.
+  for(let j=0;j<3;j++){const n=rand(j,21),x=2+n%13,y=2+(n>>>5)%18,col=kind==='moss'?'#3b5240':'#344436';r(x+3,y,10,2,col);r(x,y+2,17,5,col);r(x+2,y+7,12,3,col);r(x+6,y+10,5,1,col)}
+  for(let j=0;j<4;j++){const n=rand(j,11),x=3+n%22,y=4+(n>>>5)%21;r(x,y,5,1,'#506448');r(x+4,y-2,1,3,'#506448');r(x+1,y+1,2,1,'#243b32')}
+ }else if(kind==='crypt-stone'||kind==='drowned-stone'||kind==='silt'){
+  const wet=kind!=='crypt-stone';
+  for(const[x,y,w,h]of[[0,1,15,14],[17,0,15,18],[1,17,12,15],[15,20,17,12]]){r(x+1,y+1,w-2,h-2,wet?'#344c4e':'#414947');r(x+3,y+1,w-6,1,wet?'#506566':'#62665b');r(x+w-3,y+4,2,h-5,wet?'#21383c':'#2b3736')}
+  const x=3+v*2;r(x,9,1,11,wet?'#1f3437':'#273331');r(x,19,5,1,wet?'#1f3437':'#273331');
+  if(kind==='silt'){r(0,23,32,4,'#3b4e42');r(3,22,23,1,'#5f7060');r(10,27,18,2,'#2d413c')}
+ }else if(kind==='road'||kind==='paving'){
   // Uneven small stones, with broad worn wheel tracks across the street.
   for(let y=0;y<32;y+=7)for(let x=-8;x<32;x+=11){const dx=x+(Math.floor(y/7)%2?5:0),n=rand(x,y);const cols=kind==='road'?['#505044','#555448','#46483f']:['#50544b','#494e47','#5a5b50'];r(dx+1,y+1,9,5,cols[n%3]);r(dx+2,y+1,6,1,'#626354');if(n%4===0)r(dx+7,y+4,2,1,base)}
   if(kind==='road')r(2+v*3,14,11,2,'#555347')

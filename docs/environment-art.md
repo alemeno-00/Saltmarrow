@@ -1,5 +1,7 @@
 # Flat environment density pass
 
+[Soft biome lighting and richer floor detail](biome-lighting.md) replaces blocky light pools and abrupt visibility brightness, with five lighting-only comparisons and normal-visibility views.
+
 The latest update also [tightens town proportions and upgrades existing town saves](town-layout.md).
 
 The current version includes the [smithy street and mining benchmark](environment-workyards.md), with a material kit, four original workyard sprites and refreshed screenshots. See that document for current validation and asset provenance.
