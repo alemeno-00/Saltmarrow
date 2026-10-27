@@ -71,9 +71,10 @@ function draw(g,L,tiles,options){
   const patch=hash(Math.floor(x/3),Math.floor(y/3),p.seed);
   if(patch%4===0&&n%3===0){g.globalAlpha*=.4;rect(xx+4+n%5,yy+21,15,2,pal[0]);rect(xx+8,yy+23,10,1,pal[1])}
   if(L.bio==='town'&&!L.interior&&(y===16||y===17)){g.globalAlpha=visible[i]?.3:.15;rect(xx,yy+(y===16?7:22),32,3,'#252c28');rect(xx,yy+(y===16?10:25),32,1,'#6b6752')}
-  if(L.bio==='town'&&!L.interior&&y>=15&&y<=18){
+  const streetTop=L.townLayout?.streetTop??15,streetBottom=L.townLayout?.streetBottom??18;
+  if(L.bio==='town'&&!L.interior&&y>=streetTop&&y<=streetBottom){
    // A worn main street: continuous gutters and inset center paving, no new obstacles.
-   if(y===15||y===18){rect(xx,yy+(y===15?2:28),32,2,'#50554c');rect(xx,yy+(y===15?4:27),32,1,'#111e23');if(x%4===0)for(let k=0;k<4;k++)rect(xx+9+k*3,yy+(y===15?0:29),1,3,'#111a20')}
+   if(y===streetTop||y===streetBottom){rect(xx,yy+(y===streetTop?2:28),32,2,'#50554c');rect(xx,yy+(y===streetTop?4:27),32,1,'#111e23');if(x%4===0)for(let k=0;k<4;k++)rect(xx+9+k*3,yy+(y===streetTop?0:29),1,3,'#111a20')}
   }
  }
  if(L.town&&!L.interior)for(const b of buildings){

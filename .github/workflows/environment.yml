@@ -1,10 +1,10 @@
 name: Desktop environment art
 on:
   pull_request:
-    paths: ['index.html', 'environment-*.js', 'assets/flat/workyards.webp', 'sw.js', 'tests/environment*', '.github/workflows/environment.yml']
+    paths: ['index.html', 'environment-*.js', 'assets/flat/workyards.webp', 'sw.js', 'tests/environment*', 'tests/town-layout*', '.github/workflows/environment.yml']
   push:
     branches: [main]
-    paths: ['index.html', 'environment-*.js', 'assets/flat/workyards.webp', 'sw.js', 'tests/environment*', '.github/workflows/environment.yml']
+    paths: ['index.html', 'environment-*.js', 'assets/flat/workyards.webp', 'sw.js', 'tests/environment*', 'tests/town-layout*', '.github/workflows/environment.yml']
 jobs:
   environment:
     runs-on: ubuntu-latest
@@ -15,7 +15,7 @@ jobs:
           node-version: '22'
       - run: npm ci --ignore-scripts
       - run: npx playwright install --with-deps chromium --only-shell
-      - run: node --test tests/environment*.test.cjs
+      - run: node --test tests/environment*.test.cjs tests/town-layout.test.cjs
       - run: node tests/environment-browser.cjs
         env:
           SCREENSHOT_DIR: artifacts/environment

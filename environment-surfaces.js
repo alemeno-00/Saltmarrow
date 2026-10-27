@@ -12,7 +12,15 @@ function district(x,y,buildings){
 }
 function material(L,x,y,w,buildings=[]){
  if(L.interior)return null;
- if(L.town)return district(x,y,buildings);
+ if(L.town){
+  if(!L.townLayout)return district(x,y,buildings);
+  const lane=L.townLanes?.[y*w+x];if(lane===1)return 'road';
+  const b=buildings.find(b=>x>=b.x-1&&x<=b.x+b.w&&y>=b.y+b.h&&y<=b.y+b.h+1);
+  if(b?.key==='smith'&&x!==b.dx)return 'cinders';
+  if(lane===2||lane===3)return 'paving';
+  if(x>=29&&x<=34&&y<=14)return 'grass';
+  return b?'earth':'grass';
+ }
  if(L.bio!=='mine')return null;
  const r=(L.rooms||[]).find(r=>x>=r.x&&x<r.x+r.w&&y>=r.y&&y<r.y+r.h);
  const n=hash(Math.floor(x/3),Math.floor(y/3),31)%7;

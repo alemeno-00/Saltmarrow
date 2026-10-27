@@ -1,5 +1,7 @@
 # Flat environment density pass
 
+The latest update also [tightens town proportions and upgrades existing town saves](town-layout.md).
+
 The current version includes the [smithy street and mining benchmark](environment-workyards.md), with a material kit, four original workyard sprites and refreshed screenshots. See that document for current validation and asset provenance.
 
 This pass adds native canvas pixel art around the existing flat atlas assets. The square projection, actor/weapon renderer, turn resolution, collision map, object interactions, procedural gameplay RNG and navigation are unchanged. No mobile changes are included.

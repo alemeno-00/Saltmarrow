@@ -1420,35 +1420,39 @@ function dressLevel(L,rooms,inRoom){const DC=L.decal,map=L.map,bio=L.bio,seed=rn
   for(const o of L.objs)if(o.type==='corpse')for(const[dx,dy]of DIR8){const j=I(o.x+dx,o.y+dy);if(map[j]===FLOOR&&!DC[j]&&Math.random()<0.35)DC[j]=D.blood}}
 /* ================= the town of Saltmarrow ================= */
 const BUILDINGS=[
-  {key:'smith',name:'The Smithy',npc:'tobias',x:10,y:9,w:7,h:5,door:'s'},
-  {key:'chapel',name:'Chapel of Saint Hollis',npc:'agathe',x:21,y:7,w:9,h:7,door:'s'},
-  {key:'hall',name:'Town Hall',npc:'hale',x:38,y:8,w:8,h:6,door:'s'},
-  {key:'tavern',name:'The Drowned Lamb',npc:'bram',x:11,y:20,w:8,h:5,door:'s'},
-  {key:'archive',name:'The Old Archive',npc:null,x:23,y:20,w:6,h:5,door:'s'},
-  {key:'cottage',name:'Your Cottage',npc:null,x:32,y:20,w:5,h:4,door:'s'},
-  {key:'apoth',name:'Thorn Apothecary',npc:'nell',x:40,y:20,w:6,h:4,door:'s'},
+  {key:'smith',name:'The Smithy',npc:'tobias',x:10,y:10,w:7,h:5,door:'s'},
+  {key:'chapel',name:'Chapel of Saint Hollis',npc:'agathe',x:19,y:8,w:9,h:7,door:'s'},
+  {key:'hall',name:'Town Hall',npc:'hale',x:36,y:9,w:8,h:6,door:'s'},
+  {key:'tavern',name:'The Drowned Lamb',npc:'bram',x:10,y:19,w:8,h:5,door:'s'},
+  {key:'archive',name:'The Old Archive',npc:null,x:20,y:19,w:6,h:5,door:'s'},
+  {key:'cottage',name:'Your Cottage',npc:null,x:28,y:19,w:5,h:4,door:'s'},
+  {key:'apoth',name:'Thorn Apothecary',npc:'nell',x:35,y:19,w:6,h:4,door:'s'},
 ];
+const TOWN_LAYOUT={version:2,left:8,right:55,top:8,bottom:25,streetTop:16,streetBottom:17,northVerge:15,southVerge:18,backLane:24};
 function genTown(){const map=new Array(W*H).fill(WALL);
   const L=S.L={map,bio:'town',town:true,seen:new Array(W*H).fill(0),smoke:new Array(W*H).fill(0),spore:new Array(W*H).fill(0),fire:new Array(W*H).fill(0),light:new Uint8Array(W*H),opq:new Uint8Array(W*H),items:[],mons:[],objs:[],npcs:[],deco:new Uint8Array(W*H)};
-  for(let y=6;y<=27;y++)for(let x=7;x<=55;x++){const edge=y===6||y===27||x===7||x===55;map[I(x,y)]=edge?(Math.random()<0.5?RUBBLE:GRASS):FLOOR}
-  for(let y=15;y<=18;y++)for(let x=7;x<=58;x++)map[I(x,y)]=FLOOR;
-  for(let x=8;x<=54;x++)if(Math.random()<0.25)map[I(x,Math.random()<0.5?6:27)]=WALL;
+  L.townLayout={...TOWN_LAYOUT};L.townLanes=new Uint8Array(W*H);
+  const path=(x,y,w,h,kind=2)=>{for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++){map[I(xx,yy)]=FLOOR;L.townLanes[I(xx,yy)]=kind}};
+  for(let y=TOWN_LAYOUT.top;y<=TOWN_LAYOUT.bottom;y++)for(let x=TOWN_LAYOUT.left;x<=TOWN_LAYOUT.right;x++)map[I(x,y)]=FLOOR;
+  path(8,16,49,2,1); // two-tile carriageway; row 16 remains clear all the way to the lift
+  path(9,15,47,1);path(9,18,44,1);path(9,24,45,2);
+  for(const x of[8,17,26,33,42,53])path(x,9,2,17);
   const obj=(type,x,y,ex)=>{const o=Object.assign({type,x,y,id:S.nextId++},ex||{});L.objs.push(o);return o};
   L.bld=new Uint8Array(W*H);
-  for(const b of BUILDINGS){for(let y=b.y;y<b.y+b.h;y++)for(let x=b.x;x<b.x+b.w;x++){map[I(x,y)]=WALL;L.bld[I(x,y)]=1}
+  for(const b of BUILDINGS){for(let y=b.y;y<b.y+b.h;y++)for(let x=b.x;x<b.x+b.w;x++){map[I(x,y)]=WALL;L.bld[I(x,y)]=1;L.townLanes[I(x,y)]=0}
     const dx=b.x+(b.w>>1),dy=b.door==='s'?b.y+b.h-1:b.y;map[I(dx,dy)]=FLOOR;const open=b.key!=='apoth'||flag('nellFreed');
-    obj('door',dx,dy,{key:b.key,bname:b.name,closed:!open,desc:open?`${b.name}. Walk in to enter.`:`${b.name}. Boarded up since the herbalist went below.`});b.dx=dx;b.dy=dy+(b.door==='s'?1:-1)}
+    obj('door',dx,dy,{key:b.key,bname:b.name,closed:!open,desc:open?`${b.name}. Walk in to enter.`:`${b.name}. Boarded up since the herbalist went below.`});b.dx=dx;b.dy=dy+(b.door==='s'?1:-1);path(dx,b.dy,1,b.dy>=23?25-b.dy:1,3)}
   // graveyard behind the chapel, the lift head at the east end of the street
-  for(let k=0;k<9;k++)obj('grave',31+(k%3)*2,8+Math.floor(k/3)*2);
+  for(let k=0;k<9;k++)obj('grave',29+(k%3)*2,9+Math.floor(k/3)*2);
   for(let y=13;y<=20;y++)for(let x=56;x<=60;x++){map[I(x,y)]=WALL;L.bld[I(x,y)]=1}map[I(56,16)]=FLOOR;obj('liftgate',56,16);
   for(let y=13;y<=20;y++)map[I(55,y)]=FLOOR;
-  for(const[x,y]of[[9,15],[19,18],[29,15],[36,18],[47,15],[53,18],[24,14],[14,19]])obj('lamp',x,y);
-  obj('gibbet',31,17);
-  for(let k=0;k<14;k++){const x=rr(8,54),y=pick([14,19,26,7]);if(map[I(x,y)]===FLOOR&&!L.objs.some(o=>o.x===x&&o.y===y))map[I(x,y)]=Math.random()<0.5?GRASS:RUBBLE}
+  for(const[x,y]of[[9,15],[18,18],[28,15],[34,18],[44,15],[53,18],[24,15],[18,24]])obj('lamp',x,y);
+  obj('gibbet',31,18);
+  for(let k=0;k<14;k++){const x=rr(9,54),y=pick([9,14,23,25]);if(!L.townLanes[I(x,y)]&&map[I(x,y)]===FLOOR&&!L.objs.some(o=>o.x===x&&o.y===y))map[I(x,y)]=Math.random()<0.5?GRASS:RUBBLE}
   const npc=(key,x,y,r)=>L.npcs.push({key,x,y,rx:x,ry:y,home:{x,y},r:r||2,fx:Math.random()<0.5?1:-1,fy:0,id:S.nextId++});
   for(const b of BUILDINGS)if(b.npc&&(b.npc!=='nell'||flag('nellFreed')))npc(b.npc,b.dx,b.dy,1);
   npc('mara',54,17,1);if(flag('pipFreed'))npc('pip',15,15,0);
-  for(let k=0;k<4;k++)npc('folk',rr(12,50),rr(15,18),5);
+  for(let k=0;k<4;k++){let x,y;do{x=rr(12,50);y=rr(16,17)}while(L.objs.some(o=>o.x===x&&o.y===y)||L.npcs.some(n=>n.x===x&&n.y===y));npc('folk',x,y,5)}
   for(let i=0;i<W*H;i++){L.seen[i]=map[i]!==WALL||DIR8.some(([dx,dy])=>{const x=i%W+dx,y=((i/W)|0)+dy;return inb(x,y)&&map[I(x,y)]!==WALL})?1:0;L.deco[i]=rnd(256)}
   rebuildOpq();computeLight()}
 const npcAt=(x,y)=>S.L.npcs&&S.L.npcs.find(n=>n.x===x&&n.y===y);
@@ -1510,13 +1514,24 @@ function exitInterior(){const key=S.L.interior;genTown();const b=BUILDINGS.find(
 FEAT.liftgate.desc=()=>['The winch house over the shaft. Every delve begins here.','The winch house. The cables are wet higher up than they used to be.','The winch house. Black water stands in the bottom of the shaft now, and it is rising.','The winch house. Seawater laps at the lowest rungs of the ladder. The village has a season, perhaps less.'][act()-1];
 const _genTown=genTown;
 genTown=function(){_genTown();const L=S.L,a=act();const o=(type,x,y,ex)=>L.objs.push(Object.assign({type,x,y,id:S.nextId++},ex||{}));
-  let boarded=(a-1)+(flag('bribed')?1:0);const houses=[[48,9,'s'],[51,9,'s'],[48,21,'s'],[51,21,'s']];
-  for(const[hx,hy,dr]of houses){for(let y=hy;y<hy+3;y++)for(let x=hx;x<hx+3;x++){L.map[I(x,y)]=WALL;L.bld[I(x,y)]=1}const dx=hx+1,dy=dr==='s'?hy+2:hy;L.map[I(dx,dy)]=FLOOR;L.bld[I(dx,dy)]=0;o('house',dx,dy,{boarded:boarded-->0})}
-  o('lotbox',33,17);
+  let boarded=(a-1)+(flag('bribed')?1:0);const houses=[[45,11,'s'],[49,11,'s'],[44,20,'s'],[48,20,'s']];
+  for(const[hx,hy,dr]of houses){for(let y=hy;y<hy+3;y++)for(let x=hx;x<hx+3;x++){L.map[I(x,y)]=WALL;L.bld[I(x,y)]=1;L.townLanes[I(x,y)]=0}const dx=hx+1,dy=dr==='s'?hy+2:hy;L.map[I(dx,dy)]=FLOOR;L.bld[I(dx,dy)]=0;o('house',dx,dy,{boarded:boarded-->0});for(let y=dy+1;y<=(hy<16?15:24);y++){L.map[I(dx,y)]=FLOOR;L.townLanes[I(dx,y)]=3}}
+  o('lotbox',33,18);
   let cut=(a-1)+(flag('bribed')?1:0);L.npcs=L.npcs.filter(n=>n.key!=='folk'||cut--<=0||L.npcs.filter(m=>m.key==='folk').length<=1);
-  if(a>=3)for(let k=0;k<8;k++){const x=rr(8,54),y=pick([7,14,19,26]);if(L.map[I(x,y)]===FLOOR&&!L.objs.some(q=>q.x===x&&q.y===y))o('shroom',x,y)}
-  if(a>=4)for(let k=0;k<14;k++){const x=rr(9,54),y=rr(15,18);if(L.map[I(x,y)]===FLOOR&&!L.objs.some(q=>q.x===x&&q.y===y)&&!L.npcs.some(n=>n.x===x&&n.y===y))L.map[I(x,y)]=WATER}
+  if(a>=3)for(let k=0;k<8;k++){const x=rr(9,54),y=pick([9,14,23,25]);if(!L.townLanes[I(x,y)]&&L.map[I(x,y)]===FLOOR&&!L.objs.some(q=>q.x===x&&q.y===y))o('shroom',x,y)}
+  if(a>=4)for(let k=0;k<14;k++){const x=rr(9,54),y=pick([15,18]);if(L.townLanes[I(x,y)]!==3&&L.map[I(x,y)]===FLOOR&&!L.objs.some(q=>q.x===x&&q.y===y)&&!L.npcs.some(n=>n.x===x&&n.y===y))L.map[I(x,y)]=WATER}
   for(let i=0;i<W*H;i++)if(L.map[i]!==WALL)L.seen[i]=1;rebuildOpq();computeLight()};
+function migrateTownLayout(){
+  const old=S.L;if(!old.town||old.interior||old.townLayout?.version===TOWN_LAYOUT.version)return false;
+  const px=S.P.x,py=S.P.y,near=old.objs.filter(o=>o.type==='door'&&cheb(px,py,o.x,o.y)<=2).sort((a,b)=>cheb(px,py,a.x,a.y)-cheb(px,py,b.x,b.y))[0];
+  genTown();const L=S.L,reach=bfsDist(53,16,false);
+  const free=(x,y)=>inb(x,y)&&L.map[I(x,y)]===FLOOR&&!blockObjAt(x,y)&&!L.npcs.some(n=>n.x===x&&n.y===y)&&reach[I(x,y)]>=0;
+  const nearest=(x,y)=>{let best={x:53,y:16},dist=Infinity;for(let yy=8;yy<=25;yy++)for(let xx=8;xx<=55;xx++)if(free(xx,yy)){const d=Math.abs(xx-x)+Math.abs(yy-y);if(d<dist){best={x:xx,y:yy};dist=d}}return best};
+  const b=near&&BUILDINGS.find(b=>b.key===near.key),at=b?free(b.dx,b.dy)?{x:b.dx,y:b.dy}:nearest(b.dx,b.dy):free(px,py)?{x:px,y:py}:nearest(px,py);
+  Object.assign(S.P,{x:at.x,y:at.y,rx:at.x,ry:at.y});
+  for(const item of old.items||[]){const at=free(item.x,item.y)?item:nearest(item.x,item.y);L.items.push({...item,x:at.x,y:at.y})}
+  return true;
+}
 /* ================= things placed after a level is generated ================= */
 const _genLevel=genLevel;
 genLevel=function(){_genLevel();const L=S.L,P=S.P;
@@ -3251,7 +3266,7 @@ if(HF){
 }
 
 /* ================= export for tests ================= */
-if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,spawnMon:(...a)=>spawnMon(...a),startCombat:(...a)=>startCombat(...a),gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems,damage,killMon,heroAttack,HOLLOW,HF,heal:(...a)=>heal(...a),drownedTurn,drownedPhase,drownedFlood,drownedSummon,monsterTurn,endCombat,POOL,hasC,addC,intentOf,intentText,pickAb,heroEdges,stepCost};return}
+if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,spawnMon:(...a)=>spawnMon(...a),startCombat:(...a)=>startCombat(...a),gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,TOWN_LAYOUT,BUILDINGS,migrateTownLayout,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems,damage,killMon,heroAttack,HOLLOW,HF,heal:(...a)=>heal(...a),drownedTurn,drownedPhase,drownedFlood,drownedSummon,monsterTurn,endCombat,POOL,hasC,addC,intentOf,intentText,pickAb,heroEdges,stepCost};return}
 /* =====================================================================
    BROWSER: sprites, rendering, animation, UI
    ===================================================================== */
@@ -5157,7 +5172,7 @@ const SAVE_KEY='saltmarrow-run-v5';
 let saveTimer=null;
 UI.save=(clear)=>{try{if(clear||S.over){localStorage.removeItem(SAVE_KEY);return}clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{const s=JSON.parse(JSON.stringify(S,(k,v)=>['rx','ry','lunge','flashT','route','bart'].includes(k)?undefined:v instanceof Uint8Array?Array.from(v):v));s.busy=false;localStorage.setItem(SAVE_KEY,JSON.stringify(s))}catch(e){}},200)}catch(e){}};
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');return s&&s.v===5&&s.L&&!s.over?s:null}catch(e){return null}}
-function resume(s){S=s;S.busy=false;const L=S.L;L.light=new Uint8Array(L.light||W*H);L.opq=new Uint8Array(L.opq||W*H);L.deco=new Uint8Array(L.deco||W*H);L.decal=new Uint8Array(L.decal||W*H);if(L.bld)L.bld=new Uint8Array(L.bld);if(S.gear)for(const t of S.gear.tomes)registerTome(t);S.P.rx=S.P.x;S.P.ry=S.P.y;rebuildOpq();computeLight();computeFov();
+function resume(s){S=s;S.busy=false;migrateTownLayout();const L=S.L;L.light=new Uint8Array(L.light||W*H);L.opq=new Uint8Array(L.opq||W*H);L.deco=new Uint8Array(L.deco||W*H);L.decal=new Uint8Array(L.decal||W*H);if(L.bld)L.bld=new Uint8Array(L.bld);if(S.gear)for(const t of S.gear.tomes)registerTome(t);S.P.rx=S.P.x;S.P.ry=S.P.y;rebuildOpq();computeLight();computeFov();
   if(S.mode==='combat'&&S.C){S.C.phase='hero';beginHeroTurn()}$('overlay').hidden=true;camInit=false;UI.render();UI.toast(S.L.town?'Saltmarrow':S.depth===MAXD?'The Chapel':'Depth '+S.depth,S.L.town?'':BIOMES[S.L.bio].name)}
 
 /* ---------- overlays ---------- */
@@ -7298,7 +7313,8 @@ drawObj=function(o){
   let key=o.type;if(key==='chest'||key==='coffin')key+=o.open?'Open':'';if(key==='brazier'&&!o.lit)key='brazierCold';if(key==='lever'&&o.on)key='leverOn';
   const a=ART?.get('props',key);if(!a)return artObjBase(o);
   const p=wpos(o),h=key==='lamp'?T*2.1:['shrine','statue','shelf','bell','forge','altar'].includes(key)?T*1.45:T*.85,w=Math.round(h*a.image.width/a.image.height);
-  ctx.save();if(o.type==='shrine'&&o.used)ctx.filter='brightness(.5)';ctx.drawImage(a.image,Math.round(p.x-w/2),Math.round(p.y+T/2-h),w,Math.round(h));
+  ctx.save();if(o.type==='lamp'&&Math.abs((S.P.rx??S.P.x)-o.x)<.7&&(S.P.ry??S.P.y)<o.y&&o.y-(S.P.ry??S.P.y)<2.5)ctx.globalAlpha*=.28;
+  if(o.type==='shrine'&&o.used)ctx.filter='brightness(.5)';ctx.drawImage(a.image,Math.round(p.x-w/2),Math.round(p.y+T/2-h),w,Math.round(h));
   if((o.type==='brazier'&&o.lit)||o.type==='forge')flame(p.x,p.y+T*.15,.6,o.id);
   ctx.restore();
 };
