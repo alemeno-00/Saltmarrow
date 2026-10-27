@@ -42,3 +42,9 @@ test('seeded mixed encounter policies finish with survival pressure and no stall
  assert.ok(rows.every(r=>!r.stalled),JSON.stringify(rows));assert.ok(rows.some(r=>r.hpLost>0));assert.ok(rows.some(r=>r.dodges>0));if(!process.env.FEEL_BASELINE)assert.ok(rows.filter(r=>r.won).length>=rows.length/2,'mixed encounter should be survivable by the fixed basic policy');const sorted=rows.map(r=>r.turns).sort((a,b)=>a-b);assert.ok(sorted[12]>=4&&sorted[12]<=10,'provisional turn-budget guardrail, not a fixed encounter length');
  if(process.env.FEEL_REPORT){fs.writeFileSync(process.env.FEEL_REPORT,JSON.stringify(rows,null,2));console.log(JSON.stringify(rows))}
 });
+
+test('an ambush surprises its target while nearby guards can act in the first round',async()=>{
+ const g=game(),target=g.spawnMon('husk',16,15),guard=g.spawnMon('sailor',15,16);await g.startCombat('ambush',target);
+ assert.equal(target.surprised,true);assert.equal(guard.surprised,false);assert.equal(guard.inCombat,true);
+ const hp=g.S.P.stam;await g.endHeroTurn();assert.ok(g.S.P.stam<hp,'nearby guard attacks instead of skipping the entire opening round');
+});

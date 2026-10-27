@@ -529,6 +529,7 @@ body.mob .mhead{display:none}
 <script src="drowned-sprites.js"></script>
 <script src="flat-art.js"></script>
 <script src="animation-art.js"></script>
+<script src="miner-body.js"></script>
 <script src="hollow-faith.js"></script>
 <script src="hollow-sprites.js"></script>
 <script>
@@ -1834,7 +1835,7 @@ async function startCombat(cause,m){
   S.C={round:0,malice:0,kills:0,heroFirst:true,act:{move:true,man:true,main:true},moveLeft:0,phase:'start',shanty:0,flags:{},usedAny:false};
   P.res=S.victories;P.hidden=false;P.defending=false;P.webbed=0;
   const wake=(o,surprise)=>{const ws=o.state==='sus';o.state='alert';if(surprise)o.surprised=!ws};
-  if(cause==='ambush'){wake(m,true);for(const o of S.L.mons){if(o===m||o.inCombat)continue;if(cheb(o.x,o.y,m.x,m.y)<=6&&sees(o.x,o.y,m.x,m.y))wake(o,true)}}
+  if(cause==='ambush'){wake(m,true);for(const o of S.L.mons){if(o===m||o.inCombat)continue;if(cheb(o.x,o.y,m.x,m.y)<=6&&sees(o.x,o.y,m.x,m.y))wake(o,false)}}
   else spreadAlert(m,false);
   const packs=new Set(S.L.mons.filter(o=>o.state==='alert'&&o.pack).map(o=>o.pack));
   let howl=false;for(const o of S.L.mons)if(o.pack&&packs.has(o.pack)&&o.state!=='alert'){o.state='alert';howl=true}
@@ -4385,7 +4386,7 @@ const BITERS=new Set(['rat','wolf','direwolf','ghoul','eel','bat','gaunt','deepo
 /* ---------- drawn-out, flashy attacks: wind-up, glowing strike, impact ---------- */
 FX.x=[];FX.imp=[];
 const PF=()=>META.pace==='fast'?0.35:META.pace==='instant'?0.08:1;
-const ASTYLE={slash:[260,780,0.6],smash:[360,960,0.6],thrust:[210,680,0.6],spin:[260,800,0.58],whip:[280,800,0.61],hook:[240,780,0.565],cast:[390,980,0.62],throw:[200,700,0.55],claw:[240,720,0.62],bite:[240,720,0.62],mcast:[280,800,0.62]};
+const ASTYLE={slash:[300,900,0.6],smash:[440,1240,0.6],thrust:[220,760,0.6],spin:[300,960,0.58],whip:[280,800,0.61],hook:[240,780,0.565],cast:[440,1100,0.62],throw:[200,700,0.55],claw:[260,800,0.62],bite:[240,760,0.62],mcast:[300,900,0.62]};
 function flashAttack(att,tgt,style,col){const timing=ASTYLE[style]||ASTYLE.slash;att.pixelAction={t0:NOW,dur:Math.max(80,timing[1]*PF())};if(UI.quiet||REDUCE)return 0;const P=ASTYLE[style]||ASTYLE.slash,pf=PF();const a=wpos(att),b={x:tgt.x*T+T/2,y:tgt.y*T+T/2};
   const dx=Math.sign(tgt.x-att.x),dy=Math.sign(tgt.y-att.y);if(style!=='spin'&&style!=='cast'&&style!=='mcast')att.windup={t0:NOW,dur:P[0]*pf,dx,dy};if(style==='smash')att.hop={t0:NOW+P[0]*pf*0.2,dur:P[0]*pf*1.4,h:14};
   FX.x.push({k:style,a,b,att,c:col||'#f4ecd8',t0:NOW,dur:P[1]*pf,imp:P[2],hit:false,crit:false,seed:Math.random()*6});FX.lastSwing={x:att.x,y:att.y,t:NOW+P[0]*pf};
@@ -5507,15 +5508,15 @@ function heroBark(anchor){if(!S||!S.P||!S.L)return;const lines=(BARKS_P[S.cls]||
   clearTimeout(PORT.bt);PORT.bt=setTimeout(()=>{b.hidden=true},4200);try{sfx('voice',{cls:S.cls})}catch(e){}log(`${cls().name}: “${line}”`,'whisper')}
 PORT.cv.addEventListener('click',ev=>{ev.stopPropagation();heroBark(PORT.cv)});PORT.cv.style.cursor='pointer';
 /* ---------- real-time exploration: the world moves on its own clock; combat stays turn-based ---------- */
-const RT={on:(()=>{try{return localStorage.getItem('saltmarrow-rt')!=='off'}catch(e){return true}})(),busy:false,inTicker:false,moved:false,last:0,period:300};
+const RT={on:(()=>{try{return localStorage.getItem('saltmarrow-rt')!=='off'}catch(e){return true}})(),busy:false,inTicker:false,moved:false,last:0,lastTick:0,period:300};
 window.RT=RT;
 {const t0=exploreTick;exploreTick=async function(){if(RT.on&&!RT.inTicker&&S&&S.mode==='explore'){computeFov();return}return t0()}}
 {const e0=exploreStep;exploreStep=async function(dx,dy){if(RT.on&&S&&S.mode==='explore'&&(dx||dy)){const now=performance.now();if(now-RT.last<120)return true;RT.last=now}
-  const P=S&&S.P,x0=P&&P.x,y0=P&&P.y;const r=await e0(dx,dy);if(P&&(P.x!==x0||P.y!==y0))RT.moved=true;return r}}
+  const P=S&&S.P,L0=S&&S.L,x0=P&&P.x,y0=P&&P.y;const r=await e0(dx,dy);if(P&&(P.x!==x0||P.y!==y0)){RT.moved=true;if(RT.on&&S.L===L0&&performance.now()-RT.lastTick>=RT.period)await rtTick()}return r}}
 async function rtTick(){if(!RT.on||RT.busy)return;if(!S||!S.L||S.over||S.mode!=='explore'||S.busy||!$('overlay').hidden||document.hidden)return;
-  RT.busy=true;RT.inTicker=true;const L=S.L,P=S.P;const moved=RT.moved;RT.moved=false;const t0=L.turns||0,dk=S.darkT||0,f0=P.fat||0;
+  RT.busy=true;RT.lastTick=performance.now();RT.inTicker=true;S.busy=true;const state=S,L=S.L,P=S.P;const moved=RT.moved;RT.moved=false;const t0=L.turns||0,dk=S.darkT||0,f0=P.fat||0;
   const vis0=L.mons.filter(m=>monVisible(m)).length,sus0=L.mons.filter(m=>m.state!=='idle').length;
-  try{await exploreTick()}catch(e){}finally{RT.inTicker=false;RT.busy=false}
+  try{await exploreTick()}catch(e){}finally{RT.inTicker=false;RT.busy=false;if(S===state)S.busy=false}
   if(S.L===L&&!moved){if((L.turns||0)>t0)L.turns-=0.75;if((S.darkT||0)>dk)S.darkT=Math.max(0,S.darkT-0.75);if((P.fat||0)>f0)P.fat=f0+(P.fat-f0)*0.25}
   if(S.L===L&&S.mode==='explore'){const vis1=L.mons.filter(m=>monVisible(m)).length,sus1=L.mons.filter(m=>m.state!=='idle').length;
     if((vis1>vis0||sus1>sus0)&&(walkQ||AUTO.on)){window.RT_STOP=true;UI.stopWalk();log('You stop. Something stirs.','gold')}}
@@ -7295,29 +7296,38 @@ let WEAPON_ABILITY=null;
 }}
 const artSpriteBase=drawSprite;
 drawSprite=function(img,imgW,e,size,alpha,flipOk){
-  const key=e===S.P?S.cls:e.key||e.type,asset=e===S.P&&wpn()?ART?.heroBody(key,e,NOW,REDUCE):ART?.frameAsset?.(key,e,NOW,REDUCE)||ART?.actor(key);
+  const key=e===S.P?S.cls:e.key||e.type,body=e===S.P&&wpn()?ART?.fullBodyAsset?.(key,e,NOW,REDUCE,wpn().base,WEAPON_ACTIONS.get(e)):null,asset=body||(e===S.P&&wpn()?ART?.heroBody(key,e,NOW,REDUCE):ART?.frameAsset?.(key,e,NOW,REDUCE)||ART?.actor(key));
   if(!asset)return artSpriteBase(img,imgW,e,size,alpha,flipOk);
   const p=wpos(e),scale=(size||T)/T,im=asset.image,h=Math.round(im.height*scale),w=Math.round(im.width*scale);
-  let ox=0,oy=0,hop=0;
-  if(e.lunge){const t=(NOW-e.lunge.t0)/200;if(t<1){const k=Math.sin(t*Math.PI)*T*.3;ox+=e.lunge.dx*k;oy+=e.lunge.dy*k}else e.lunge=null}
+  let ox=0,oy=0,hop=0;const action=FEEL.actions.get(e),active=action&&NOW>=action.t0&&NOW<action.end;
+  if(e.lunge&&!active&&!asset.fullBody){const t=(NOW-e.lunge.t0)/200;if(t<1){const k=Math.sin(t*Math.PI)*T*.3;ox+=e.lunge.dx*k;oy+=e.lunge.dy*k}else e.lunge=null}
   if(e.kb){const t=(NOW-e.kb.t0)/240;if(t<1){const k=Math.sin(t*Math.PI)*T*.16;ox+=e.kb.dx*k;oy+=e.kb.dy*k}else e.kb=null}
-  if(e.windup){const t=(NOW-e.windup.t0)/e.windup.dur;if(t<1){const k=Math.sin(Math.min(1,t)*Math.PI/2)*T*.15;ox-=e.windup.dx*k;oy-=e.windup.dy*k}else e.windup=null}
-  if(e.hop){const t=(NOW-e.hop.t0)/e.hop.dur;if(t<1)hop=Math.sin(t*Math.PI)*e.hop.h;else e.hop=null}
+  if(e.windup&&!active&&!asset.fullBody){const t=(NOW-e.windup.t0)/e.windup.dur;if(t<1){const k=Math.sin(Math.min(1,t)*Math.PI/2)*T*.15;ox-=e.windup.dx*k;oy-=e.windup.dy*k}else e.windup=null}
+  if(e.hop&&!active&&!asset.fullBody){const t=(NOW-e.hop.t0)/e.hop.dur;if(t<1)hop=Math.sin(t*Math.PI)*e.hop.h;else e.hop=null}
+  if(active&&!REDUCE&&!asset.fullBody){
+    const dx=e.fx||0,dy=e.fy||0,wind=e.pixelAction?.windupEnd??action.impact;
+    const physical=!action.effect||!['cast','mcast'].includes(action.effect.k);
+    let reach=0;
+    if(NOW<wind)reach=-.20*Math.min(1,(NOW-action.t0)/Math.max(1,wind-action.t0));
+    else if(NOW<action.impact){const q=Math.min(1,(NOW-wind)/Math.max(1,action.impact-wind));reach=-.20+.46*q*q*q}
+    else{const hold=e.pixelAction?.hold||0,q=Math.max(0,Math.min(1,(NOW-action.impact-hold)/Math.max(1,action.end-action.impact-hold)));reach=.26*(1-q)*(1-q)}
+    if(physical){ox+=dx*T*reach;oy+=dy*T*reach}else oy-=Math.sin(Math.min(1,(NOW-action.t0)/Math.max(1,action.impact-action.t0))*Math.PI/2)*2;
+  }
   const moving=Math.abs((e.rx??e.x)-e.x)+Math.abs((e.ry??e.y)-e.y)>.04;
   const stride=e.walkStart!=null?Math.max(0,Math.min(1,(NOW-e.walkStart)/Math.max(1,e.walkDuration))):null;
-  const bob=REDUCE?0:moving&&stride!=null?-Math.round(Math.sin(stride*Math.PI)*1.5):Math.round(Math.sin(NOW/(moving?100:540)+(Number(e.id)||0))*(moving?1.3:.65));
+  const bob=REDUCE||asset.fullBody?0:moving&&stride!=null?-Math.round(Math.sin(stride*Math.PI)*1.5):Math.round(Math.sin(NOW/(moving?100:540)+(Number(e.id)||0))*(moving?1.3:.65));
   const footX=Math.round(p.x+ox),footY=Math.round(p.y+T/2+oy);
   ctx.save();if(alpha!=null)ctx.globalAlpha*=alpha;
   ctx.fillStyle='rgba(0,5,9,.48)';ctx.fillRect(footX-Math.round(w*.3),footY-2,Math.round(w*.6),3);
   ctx.translate(footX,footY+(asset.posed&&!moving?0:bob)-hop);
   if(e.squash&&!REDUCE&&!asset.posed){const t=(NOW-e.squash.t0)/e.squash.dur;if(t>=0&&t<1){const k=Math.sin(t*Math.PI)*.18;ctx.scale(1+k,1-k)}else if(t>=1)e.squash=null}
   const weapon=e===S.P?wpn():null;
-  const held=weapon?ART.weaponPose(weapon.base,e,NOW,WEAPON_ACTIONS.get(e),REDUCE):null;
+  const held=weapon&&!asset.integratedWeapon?ART.weaponPose(weapon.base,e,NOW,WEAPON_ACTIONS.get(e),REDUCE):null;
   // Feet, body and held equipment share one transform, including hit recoil.
   ctx.imageSmoothingEnabled=false;
   if(held?.back)ART.drawWeapon(ctx,held,weapon.base,NOW);
-  ctx.save();ctx.scale(!asset.directional&&flipOk!==false&&e.fx<0?-1:1,1);ctx.drawImage(im,-Math.round(w/2),-h,w,h);
-  if(e.flashT&&NOW-e.flashT<140){ctx.globalAlpha*=.7;ctx.drawImage(ART.white(asset),-Math.round(w/2),-h,w,h)}ctx.restore();
+  ctx.save();ctx.scale(!asset.directional&&flipOk!==false&&e.fx<0?-1:1,1);ctx.drawImage(im,-Math.round(w/2),-h+(asset.groundOffsetY||0)*scale,w,h);
+  if(e.flashT&&NOW-e.flashT<140){ctx.globalAlpha*=.7;ctx.drawImage(ART.white(asset),-Math.round(w/2),-h+(asset.groundOffsetY||0)*scale,w,h)}ctx.restore();
   if(held&&!held.back)ART.drawWeapon(ctx,held,weapon.base,NOW);ctx.restore();
 };
 /* ---------- presentation clock: bounded movement and complete action beats ---------- */
@@ -7339,7 +7349,7 @@ const FEEL={motions:new WeakMap(),actions:new WeakMap(),active:0,current:null};
 {const original=animate;animate=function(dt){original(dt);for(const e of [S.P,...S.L.mons]){
   const m=FEEL.motions.get(e);if(!m)continue;
   if(m.level!==S.L||m.tx!==e.x||m.ty!==e.y){FEEL.motions.delete(e);e.rx=e.x;e.ry=e.y;continue}
-  const t=Math.max(0,Math.min(1,(NOW-m.t0)/m.dur)),q=t*t*(3-2*t);
+  const t=Math.max(0,Math.min(1,(NOW-m.t0)/m.dur)),q=t;
   e.rx=m.x+(m.tx-m.x)*q;e.ry=m.y+(m.ty-m.y)*q;
   if(t===1){e.rx=e.x;e.ry=e.y;FEEL.motions.delete(e)}
 }}}
@@ -7354,7 +7364,7 @@ const FEEL={motions:new WeakMap(),actions:new WeakMap(),active:0,current:null};
 }}
 function feelContact(att,target){
   const a=FEEL.actions.get(att);if(!a||a.resolved)return;
-  a.resolved=true;for(const fx of a.pending||[])UI.fx(fx.type,fx.d);a.pending=[];a.impact=NOW;const hold=REDUCE?0:65*PF();a.end=Math.max(a.end+hold,NOW+(REDUCE?100:285)*PF());
+  a.resolved=true;for(const fx of a.pending||[])UI.fx(fx.type,fx.d);a.pending=[];a.impact=NOW;const hold=REDUCE?0:90*PF();a.end=Math.max(a.end+hold,NOW+(REDUCE?100:285)*PF());
   if(att.pixelAction){att.pixelAction.impact=NOW;att.pixelAction.hold=hold;att.pixelAction.end=a.end}
   if(a.effect){const fx=a.effect;fx.awaitHit=false;fx.hit=true;fx.pauseAt=NOW;fx.pause=hold;fx.imp=(NOW-fx.t0)/fx.dur;
     if(target&&!REDUCE)impactFX(wpos(target).x,wpos(target).y,fx.c,fx.big||fx.k==='smash',fx.crit)}
@@ -7382,6 +7392,30 @@ for(const key of ['hero','monster','free']){
 }
 {const original=endCombat;endCombat=function(){const result=original();if(FEEL.active)S.busy=true;return result}}
 {const original=drawIntent;drawIntent=function(){original();for(const m of S.L.mons){if(!m.heavyAim||!monVisible(m))continue;const p=tc(m.heavyAim);ctx.save();ctx.fillStyle='rgba(230,125,65,.3)';ctx.fillRect(p.x-T/2,p.y-T/2,T,T);ctx.strokeStyle='#ffc078';ctx.lineWidth=2;ctx.strokeRect(p.x-T/2+2,p.y-T/2+2,T-4,T-4);ctx.fillStyle='#fff0c0';ctx.font='bold 17px monospace';ctx.textAlign='center';ctx.fillText('!',p.x,p.y+6);ctx.restore()}}}
+
+/* Held movement repeats player input through the existing tick or combat movement budget. */
+const HELD_WALK={keys:new Map(),pending:null,running:false};
+function clearHeldWalk(){HELD_WALK.keys.clear();HELD_WALK.pending=null}
+async function heldWalk(){
+  if(HELD_WALK.running)return;HELD_WALK.running=true;const mode=S?.mode;
+  try{while((HELD_WALK.keys.size||HELD_WALK.pending)&&S&&!S.over&&S.mode===mode&&(mode==='explore'||mode==='combat'&&S.C?.phase==='hero'&&moveAvail()>0)&&ov.hidden&&!menuOpen()&&!SEL.id){
+    if(S.busy){await new Promise(resolve=>setTimeout(resolve,10));continue}
+    const direction=HELD_WALK.pending||[...HELD_WALK.keys.values()].at(-1),before={x:S.P.x,y:S.P.y},level=S.L;
+    HELD_WALK.pending=null;if(mode==='combat'&&monAt(S.P.x+direction[0],S.P.y+direction[1]))break;const moved=mode==='explore'?await exploreStep(...direction):(await combatStep(...direction),true);
+    if(S.L!==level||!moved||(S.P.x===before.x&&S.P.y===before.y))break;
+  }}finally{HELD_WALK.running=false;if(S?.mode!==mode||mode==='combat')clearHeldWalk()}
+}
+document.addEventListener('keydown',ev=>{
+  if(ev.key==='Escape'){clearHeldWalk();return}
+  const key=ev.key.length===1?ev.key.toLowerCase():ev.key,direction=MOVE[key];
+  if(!direction||ev.ctrlKey||ev.metaKey||ev.altKey||!S||S.over||!['explore','combat'].includes(S.mode)||S.mode==='combat'&&(S.C?.phase!=='hero'||monAt(S.P.x+direction[0],S.P.y+direction[1]))||!ov.hidden||menuOpen()||SEL.id||/^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(ev.target?.tagName||''))return;
+  ev.preventDefault();ev.stopImmediatePropagation();walkQ=null;AUTO.on=false;closeInspect();
+  if(!HELD_WALK.keys.has(key)){if(HELD_WALK.running&&S.busy)HELD_WALK.pending=direction;HELD_WALK.keys.set(key,direction)}heldWalk();
+},true);
+document.addEventListener('keyup',ev=>{const key=ev.key.length===1?ev.key.toLowerCase():ev.key;HELD_WALK.keys.delete(key)},true);
+window.addEventListener('blur',clearHeldWalk);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clearHeldWalk()});
+{const original=UI.stopWalk;UI.stopWalk=function(){clearHeldWalk();return original()}}
 
 const artObjBase=drawObj;
 drawObj=function(o){

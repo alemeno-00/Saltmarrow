@@ -1,10 +1,10 @@
 name: Movement and combat feel
 on:
   pull_request:
-    paths: ['index.html', 'flat-art.js', 'animation-art.js', 'tests/**', 'package*.json', '.github/workflows/combat-feel.yml']
+    paths: ['index.html', 'flat-art.js', 'animation-art.js', 'miner-body.js', 'assets/flat/miner-body*', 'assets/flat/miner-maul*', 'tests/**', 'package*.json', '.github/workflows/combat-feel.yml']
   push:
     branches: [main]
-    paths: ['index.html', 'flat-art.js', 'animation-art.js', 'tests/**', 'package*.json', '.github/workflows/combat-feel.yml']
+    paths: ['index.html', 'flat-art.js', 'animation-art.js', 'miner-body.js', 'assets/flat/miner-body*', 'assets/flat/miner-maul*', 'tests/**', 'package*.json', '.github/workflows/combat-feel.yml']
 jobs:
   feel:
     runs-on: ${{ matrix.os }}
@@ -25,6 +25,10 @@ jobs:
       - run: npx playwright install --with-deps ${{ matrix.browser }}
       - run: npm test
       - run: npm run test:feel
+        env:
+          BROWSER: ${{ matrix.browser }}
+          SCREENSHOT_DIR: test-results/feel
+      - run: node tests/miner-body-browser.cjs
         env:
           BROWSER: ${{ matrix.browser }}
           SCREENSHOT_DIR: test-results/feel

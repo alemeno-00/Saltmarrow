@@ -1,3 +1,5 @@
+> Current follow-up: full-body miner maul poses, exact mirrored side walking, held input and first-round guard responses. Earlier recordings below document the first pass; [new pose evidence](body-art/full-body-poses.png) and [art notes](full-body-art.md) document the current change. Human animation-quality review is still pending.
+
 # Movement and combat feel review
 
 Direct playtest feedback: grid movement felt clunky; animations and fights passed too quickly to read; battles should feel impactful and dangerous.
@@ -7,11 +9,11 @@ This branch starts from main `9bf5a8a`. It retains the flat pixel art, turn-base
 ## Result
 
 - Each ordinary tile step interpolates from its actual rendered position to its authoritative grid destination in 145 ms at normal pace, with a smooth start/stop and exact arrival. Strides and held-weapon motion follow that step rather than the global animation clock. Click paths stop on the existing threat/obstruction rules; redundant click-path waits are removed.
-- Attack profiles have distinct anticipation and travel/contact, a 65 ms contact hold, reaction and recovery. Normal profiles last roughly 0.7–1.0 s before any death settling. The wrapper keeps input locked until the beat finishes, including nested/free attacks; inputs do not accumulate an attack backlog.
+- Attack profiles have distinct anticipation and travel/contact, a 90 ms contact hold, reaction and recovery. Normal profiles last roughly 0.7–1.0 s before any death settling. The wrapper keeps input locked until the beat finishes, including nested/free attacks; inputs do not accumulate an attack backlog.
 - Weapon/body contact and primary impact effects use the actual damage event. Area bursts wait for contact, delayed resolution holds the effect, and enemy strikes share the same contact clock. Existing hit/death sounds still originate from the real hit/death events. Fast/instant settings scale the timeline and primary effects; reduced motion snaps movement and omits the contact hold and extra death settling.
 - Drowned Knights and Spore Walkers commit a marked tile before a heavy slam, brace against 3 frontal damage while preparing, then recover for a turn. Moving clear, flanking, displacement and daze provide counterplay. Standing in the mark adds 3 damage to the existing attack tiers. Extra attacks cannot skip the warning. Enemy HP is unchanged.
 
-This adds interpolation and timing to existing native poses; it does **not** add a newly painted sprite atlas. Footstep sounds retain the existing accepted-step trigger. Cosmetic death debris may persist after input returns.
+The initial pass added interpolation to existing poses. After direct user review rejected the static-body/hand-only result, the current follow-up adds an actual full-body miner walk/heavy-maul atlas. See [full-body art notes and scope](full-body-art.md). Footstep sounds retain the existing accepted-step trigger. Cosmetic death debris may persist after input returns.
 
 ## Before / after evidence
 
@@ -23,7 +25,7 @@ The browser fixture uses the same seeded room, equipped maul and controlled tier
 | ![Main when attack returns](before.jpg) | ![This branch when attack returns](after.jpg) |
 | [Timing/state capture](before-metrics.json) | [Timing/state capture](after-metrics.json) |
 
-The main fixture returns while the held weapon still reports `recover`; this branch returns in `idle`. The normal maul action changes from about 0.65 s to about 1.0–1.1 s on this Mac. These are observations, not frame-time guarantees. The automated midpoint/arrival check verifies identical positions at 60 and 144 Hz.
+The main fixture returns while the held weapon still reports `recover`; this branch returns in `idle`. The normal maul action changes from about 0.65 s to about 1.3–1.4 s on this Mac. These are observations, not frame-time guarantees. The automated midpoint/arrival check verifies identical positions at 60 and 144 Hz.
 
 ![Actual knight warning tile](heavy-telegraph.jpg)
 
@@ -43,7 +45,7 @@ The stronger survival rate reflects readable counterplay rather than extra HP. I
 
 ## Verification and compatibility
 
-- 67 automated tests pass, including movement destinations/costs, telegraph commitment, interruption, displacement, bleeding, guard counterplay, contact hold and seeded encounter guardrails.
+- 71 automated tests pass, including movement destinations/costs, telegraph commitment, interruption, displacement, bleeding, guard counterplay, contact hold and seeded encounter guardrails.
 - Desktop Chromium on macOS: new feel suite, equipped weapons, tactics, native animations (normal/reduced), flat projection and ordinary gameplay pass. The feel suite checks 60/144 Hz interpolation, exact arrival, rejected overlapping attack input, unchanged turn number, hero/enemy damage contact, burst contact, recovery, three speeds, killing-blow lock and reduced motion. CI uploads its recordings and screenshots.
 - A separate local combination with UI PR #29 and environment PR #28 passes 80 tests plus feel, UI and environment browser suites. Gameplay/rendering hunks merge cleanly after moving this branch's hooks beside actor rendering. Shared `sw.js` cache revision and the UI/environment package-script additions require mechanical reconciliation; retain all environment CORE assets and all test scripts. The independent feel CI workflow avoids edits to their renderer workflow.
 - Combat PR #25 and weapons PR #27 were already merged into the base. The compatibility combination was tested separately; neither pending branch was modified or incorporated into this PR.
