@@ -528,6 +528,7 @@ body.mob .mhead{display:none}
 <script src="death-effects.js"></script>
 <script src="drowned-sprites.js"></script>
 <script src="flat-art.js"></script>
+<script src="environment-art.js"></script>
 <script src="hollow-faith.js"></script>
 <script src="hollow-sprites.js"></script>
 <script>
@@ -7104,6 +7105,7 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
       if(OPENT(L.map[i])){ctx.fillStyle='#8d8064';ctx.globalAlpha*=.55;if(inb(x,y+1)&&L.map[I(x,y+1)]===PIT)ctx.fillRect(x*T,y*T+T-2,T,2);if(inb(x+1,y)&&L.map[I(x+1,y)]===PIT)ctx.fillRect(x*T+T-2,y*T,2,T)}
     }ctx.globalAlpha=1;
     if(TS.face&&!L.town)drawDressing(L,TS,0,W-1,0,H-1);
+    window.SaltmarrowEnvironment?.draw(ctx,L,tiles,{w:W,h:H,types:{floor:FLOOR,wall:WALL},now:NOW,reduced:REDUCE,visible:vis,buildings:BUILDINGS,actors:[P,...L.mons,...(L.npcs||[])]});
     DEATHS.sync(L);DEATHS.draw(ctx,deathProject,deathVisible,'floor');
     for(const s of FX.stains)if(inb(s.x,s.y)&&L.seen[I(s.x,s.y)]){ctx.globalAlpha=.65*Math.max(0,1-(NOW-s.t0)/s.life);ctx.fillStyle=s.c;ctx.fillRect((s.x+.25)*T,(s.y+.45)*T,T*.5,T*.22)}ctx.globalAlpha=1;
     for(const it of L.items)if(L.seen[I(it.x,it.y)]){ctx.globalAlpha=vis[I(it.x,it.y)]?1:.4;ctx.drawImage(SPR[it.kind==='gear'?gearSpr(it.item):it.kind],it.x*T,it.y*T,T,T)}ctx.globalAlpha=1;
@@ -7120,6 +7122,7 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
       // Cut away nearby foreground masonry so the hero and target remain readable.
       if(entry.depth>P.y+1&&Math.abs(entry.x-P.x)<=2&&Math.abs(entry.y-P.y)<=2)ctx.globalAlpha*=.3;
       isoWall(TS,entry.x,entry.y,wf);
+      window.SaltmarrowEnvironment?.drawWall(ctx,L,entry.x,entry.y,{w:W,types:{floor:FLOOR,wall:WALL},front:inb(entry.x,entry.y-1)&&OPENT(L.map[I(entry.x,entry.y-1)]),now:NOW,reduced:REDUCE});
     }else{const e=entry.e;ctx.globalAlpha=vis[I(e.x,e.y)]||entry.hero?1:.45;isoUpright(e,()=>{
       if(entry.object)drawObj(e);else if(entry.hero)drawSprite(SPR[S.cls],SPRW[S.cls],e,T,P.hidden?.5:S.over&&!S.won?.35:1);
       else if(entry.npc)drawSprite(npcImg(e),null,e,T);

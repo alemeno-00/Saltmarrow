@@ -7,7 +7,8 @@
     "test:browser": "node tests/gameplay.cjs",
     "test:drowned": "node tests/drowned-browser.cjs",
     "test:art": "node tests/art-browser.cjs",
-    "test:hollow": "node tests/hollow-browser.cjs"
+    "test:hollow": "node tests/hollow-browser.cjs",
+    "test:environment": "node tests/environment-browser.cjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"
