@@ -44,10 +44,10 @@ function polygon(g,points){g.beginPath();points.forEach((p,i)=>i?g.lineTo(p.x,p.
 function seenClip(g,L,w){g.beginPath();if(L.townLand&&!L.interior&&L.seen.every(Boolean)){g.rect(0,0,w*32,Math.ceil(L.map.length/w)*32);g.clip();return}for(let i=0;i<L.map.length;i++)if(L.seen[i])g.rect(i%w*32,Math.floor(i/w)*32,32,32);g.clip()}
 function point(g,x,y,r,color,alpha){g.save();g.globalCompositeOperation='screen';g.globalAlpha*=alpha;const im=texture(r,color);g.drawImage(im,Math.round(x-im.width/2),Math.round(y-im.height/2));g.restore()}
 function memoryMask(L,w,h,visible){
- let revision=2166136261;for(let i=0;i<L.map.length;i++)revision=Math.imul(revision^(visible[i]?3:L.seen[i]?1:0),16777619);
+ const seen=L.deepLayout&&root.SaltmarrowDeepArt?root.SaltmarrowDeepArt.memory(L,w):L.seen;let revision=2166136261;for(let i=0;i<L.map.length;i++)revision=Math.imul(revision^(visible[i]?3:seen[i]?seen[i]:0),16777619);
  let cached=memories.get(L);if(cached?.revision===revision)return cached.image;
  const scale=8,ww=w*scale,hh=h*scale,a=new Float32Array(ww*hh),b=new Float32Array(ww*hh);
- for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x,alpha=visible[i]?0:L.seen[i]?(L.town?72:128):255;for(let yy=0;yy<scale;yy++)a.fill(alpha,(y*scale+yy)*ww+x*scale,(y*scale+yy)*ww+x*scale+scale)}
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x,alpha=visible[i]||seen[i]===2?0:seen[i]?(L.town?72:128):255;for(let yy=0;yy<scale;yy++)a.fill(alpha,(y*scale+yy)*ww+x*scale,(y*scale+yy)*ww+x*scale+scale)}
  // Two separable box passes approximate a soft 12px visibility edge. Only this alpha mask is softened.
  const radius=3,den=radius*2+1;
  for(let pass=0;pass<2;pass++){
@@ -57,7 +57,7 @@ function memoryMask(L,w,h,visible){
  const c=document.createElement('canvas');c.width=ww;c.height=hh;const cg=c.getContext('2d'),im=cg.createImageData(ww,hh);for(let i=0;i<a.length;i++)im.data[i*4+3]=Math.round(a[i]);cg.putImageData(im,0,0);memories.set(L,{revision,image:c});return c;
 }
 function draw(g,L,opt){
- const {w,h,camera:c,viewport:v,hero,visible,types,now=0,reduced=false}=opt,p=profiles[L.bio]||profiles.mine;
+ const {w,h,camera:c,viewport:v,hero,visible,types,now=0,reduced=false}=opt,p=L.deepLayout?{...(profiles[L.bio]||profiles.mine),dark:.14}:profiles[L.bio]||profiles.mine;
  if(!mask){mask=document.createElement('canvas');mg=mask.getContext('2d')}
  const vw=Math.ceil(v.w),vh=Math.ceil(v.h);if(mask.width!==vw||mask.height!==vh){mask.width=vw;mask.height=vh}
  mg.setTransform(1,0,0,1,0,0);mg.clearRect(0,0,vw,vh);mg.fillStyle=p.tint;mg.globalAlpha=p.dark;mg.fillRect(0,0,vw,vh);mg.globalAlpha=1;mg.translate(-c.x,-c.y);

@@ -7,7 +7,8 @@ const server=http.createServer((req,res)=>{const name=decodeURIComponent(req.url
  await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
  try{
   browser=await chromium.launch({headless:true,...(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{})});
-  for(const bio of ['town','mine','crypt','fungal','drowned']){
+  // Dungeon module/navigation coverage lives in deep-browser.cjs.
+  for(const bio of ['town']){
    const page=await browser.newPage({viewport:{width:1440,height:1000},deviceScaleFactor:1,reducedMotion:'reduce'}),errors=[];
    page.on('pageerror',e=>errors.push(e.message));
    await page.goto(`http://127.0.0.1:${server.address().port}`);

@@ -534,7 +534,7 @@ body.mob .mhead{display:none}
 <script src="town-coast.js"></script>
 <script src="environment-lighting.js"></script>
 <script src="weapon-art.js"></script>
-<script src="room-composition.js"></script>
+<script src="deep-art.js"></script>
 <script src="animation-art.js"></script>
 <script src="miner-body.js"></script>
 <script src="hollow-faith.js"></script>
@@ -558,10 +558,10 @@ const UI={log(){},render(){},sleep:()=>Promise.resolve(),fx(){},over(){},save(){
 
 /* ================= world ================= */
 const BIOMES={
-  mine:{name:'The Salt Mines',blurb:'Old workings of the Saltmarrow mine. Timber props groan under the weight of the hill.'},
-  crypt:{name:'The Bone Crypts',blurb:'The miners broke into a forgotten ossuary. Skulls line every wall.'},
-  fungal:{name:'The Fungal Hollows',blurb:'Glowing caps and webbed galleries. The air tastes of spores.'},
-  drowned:{name:'The Drowned Vaults',blurb:'A sunken temple under the mountain, half-flooded and full of bells.'},
+  mine:{name:'The Salt Pits',blurb:'Old workings of the Saltmarrow mine. Timber props groan under the weight of the hill.'},
+  crypt:{name:'The Forgotten Catacombs',blurb:'The miners broke into a forgotten ossuary. Skulls line every wall.'},
+  fungal:{name:'The Blooming Deep',blurb:'Glowing caps and webbed galleries. The air tastes of spores.'},
+  drowned:{name:'Rotwater Sewers',blurb:'A sunken temple under the mountain, half-flooded and full of bells.'},
 };
 const biomeOf=d=>(typeof S!=='undefined'&&S&&S.inSewer&&S.genning)?'drowned':d<=2?'mine':d<=4?'crypt':d<=6?'fungal':'drowned';
 
@@ -1213,117 +1213,49 @@ Object.assign(FEAT,{
 AB.clapper={name:'Drowned Clapper',icon:'bellic',act:'maneuver',kind:'none',univ:true,desc:'Once per level: every enemy within 6 is dazed. Raises your Dread by 2.'};
 
 /* ================= level generation ================= */
+/* Approved-art dungeon layout: authored platform masks, randomized assembly. */
+function deepLayout(w,h,bio,seed,boss=false){
+ let state=seed>>>0;const random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296},int=n=>Math.floor(random()*n),mix=a=>{for(let i=a.length-1;i>0;i--){const j=int(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
+ const art=bio==='sewer'||bio==='drowned'?'sewer':bio==='abbey'?'crypt':bio,p={sewer:{fy:9,s:5,n:null},fungal:{fy:7,s:5,n:5},crypt:{fy:9,s:10,n:9},mine:{fy:9,s:11,n:5}}[art];
+ const map=Array(w*h).fill(PIT),modules=[],rooms=[],links=[],bridge=new Uint8Array(w*h),variants=mix([0,1,2,3]);
+ const put=(x,y,t)=>{if(x>0&&y>0&&x<w-1&&y<h-1)map[y*w+x]=t};
+ for(let slot=0;slot<4;slot++){const x=slot%2?35:3,y=slot<2?1+int(2):25+int(2),variant=variants[slot];
+  for(let yy=y;yy<y+16;yy++)for(let xx=x;xx<x+24;xx++)put(xx,yy,WALL);
+  for(let yy=p.fy;yy<=p.fy+2;yy++)for(let xx=3;xx<=20;xx++)put(x+xx,y+yy,FLOOR);
+  for(let xx=0;xx<24;xx++)for(let yy=p.fy;yy<p.fy+2;yy++)put(x+xx,y+yy,FLOOR);
+  for(let yy=p.fy+2;yy<16;yy++)for(let xx=p.s;xx<p.s+2;xx++)put(x+xx,y+yy,FLOOR);
+  if(p.n!=null)for(let yy=0;yy<=p.fy;yy++)for(let xx=p.n;xx<p.n+2;xx++)put(x+xx,y+yy,FLOOR);
+  modules.push({x,y,w:24,h:16,variant,slot,floorY:p.fy,south:p.s,north:p.n});rooms.push({x:x+3,y:y+p.fy-2,w:18,h:7,r:slot,cx:x+12,cy:y+p.fy+1,shape:'rect',theme:['landmark','gallery','sanctum','workshop'][variant],artVariant:variant,module:slot});
+ }
+ const route=points=>{for(let k=1;k<points.length;k++){let[x,y]=points[k-1];const[tx,ty]=points[k];for(let guard=0;guard<w+h;guard++){for(let dy=0;dy<2;dy++)for(let dx=0;dx<2;dx++){const i=(y+dy)*w+x+dx;if(x+dx>0&&y+dy>0&&x+dx<w-1&&y+dy<h-1){if(map[i]===PIT)bridge[i]=1;map[i]=FLOOR}}if(x===tx&&y===ty)break;if(x!==tx)x+=Math.sign(tx-x);else y+=Math.sign(ty-y)}}};
+ const edgeList=mix([[0,1],[2,3],[0,2],[1,3]]),parent=[0,1,2,3],find=x=>parent[x]===x?x:parent[x]=find(parent[x]);
+ for(const[a,b]of edgeList){if(find(a)===find(b)&&random()>.45)continue;parent[find(a)]=find(b);const A=modules[a],B=modules[b];let points;
+  if(b-a===1){const mid=30;points=[[A.x+23,A.y+p.fy],[mid,A.y+p.fy],[mid,B.y+p.fy],[B.x,B.y+p.fy]]}
+  else{const outer=a===0?1:w-3,mid=21+int(2),endX=a===0?B.x:B.x+23;points=[[A.x+p.s,A.y+15],[A.x+p.s,mid],[outer,mid],[outer,B.y+p.fy],[endX,B.y+p.fy]]}
+  route(points);links.push({a,b,points});
+ }
+ const start=int(4);if(boss){rooms[0].chapel=true;rooms[0].theme='final-sanctum'}
+ return{version:1,seed:seed>>>0,art,map,modules,rooms,links,start,bridge:Array.from(bridge)};
+}
 function genLevel(){
-  const map=new Array(W*H).fill(WALL),reg=new Array(W*H).fill(-1),rooms=[];let nreg=0;const boss=S.depth===MAXD;const bio=biomeOf(S.depth);
-  const carve=(x,y,r)=>{map[I(x,y)]=FLOOR;reg[I(x,y)]=r};const resv=new Uint8Array(W*H);
-  const SHAPES={mine:['rect','rect','cave','round','octa','pillar','cave'],crypt:['rect','cross','octa','pillar','round','rect','pillar'],fungal:['cave','cave','round','cave','octa','rect'],drowned:['round','octa','pillar','rect','cross','cave']}[bio];
-  const addRoom=(x,y,w,h,ex)=>{const r=nreg++;const shape=ex||w<7||h<5?'rect':pick(SHAPES);const cx=x+(w>>1),cy=y+(h>>1);
-    const inShape=(i,j)=>{if(i===cx||j===cy)return true;const nx=(i-x+0.5)/w*2-1,ny=(j-y+0.5)/h*2-1;
-      switch(shape){case'round':return nx*nx+ny*ny<=1.08;case'cave':return nx*nx+ny*ny<=0.78+Math.random()*0.5;case'cross':return Math.abs(nx)<0.5||Math.abs(ny)<0.5;
-        case'octa':{const c=Math.max(1,Math.floor(Math.min(w,h)/3));const dx=Math.min(i-x,x+w-1-i),dy=Math.min(j-y,y+h-1-j);return dx+dy>=c}default:return true}};
-    for(let j=y;j<y+h;j++)for(let i=x;i<x+w;i++){resv[I(i,j)]=1;if(inShape(i,j))carve(i,j,r)}
-    if(shape==='pillar')for(let j=y+1;j<y+h-1;j++)for(let i=x+1;i<x+w-1;i++)if((i-x)%3===1&&(j-y)%3===1&&i!==cx&&j!==cy){map[I(i,j)]=WALL;reg[I(i,j)]=-1}
-    rooms.push(Object.assign({x,y,w,h,r,cx,cy,shape,cave:shape==='cave'},ex||{}))};
-  const LW=boss?W:47,LH=boss?H:33;
-  if(boss)addRoom(23,15,17,13,{chapel:true});
-  for(let t=0;t<320&&rooms.length<(boss?11:10);t++){
-    const w=rr(2,5)*2+1,h=rr(2,4)*2+1,x=rr(0,(LW-2-w)>>1)*2+1,y=rr(0,(LH-2-h)>>1)*2+1;
-    if(rooms.some(r=>x<r.x+r.w+1&&x+w+1>r.x&&y<r.y+r.h+1&&y+h+1>r.y))continue;addRoom(x,y,w,h)}
-  const straight={crypt:0.85,drowned:0.75,mine:0.6,fungal:0.4}[bio];
-  for(let y=1;y<LH-1;y+=2)for(let x=1;x<LW-1;x+=2){if(map[I(x,y)]!==WALL||resv[I(x,y)])continue;const r=nreg++;carve(x,y,r);const st=[[x,y]];let last=null;
-    while(st.length){const[cx,cy]=st[st.length-1];const opts=DIR4.filter(([dx,dy])=>{const nx=cx+dx*2,ny=cy+dy*2;return nx>0&&ny>0&&nx<LW-1&&ny<LH-1&&map[I(nx,ny)]===WALL&&!resv[I(nx,ny)]&&!resv[I(cx+dx,cy+dy)]});
-      if(opts.length){const d=(last&&opts.includes(last)&&Math.random()<straight)?last:pick(opts);carve(cx+d[0],cy+d[1],r);carve(cx+d[0]*2,cy+d[1]*2,r);st.push([cx+d[0]*2,cy+d[1]*2]);last=d}else{st.pop();last=null}}}
-  const roomReg=new Set(rooms.map(r=>r.r));const conns=[];
-  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){if(map[I(x,y)]!==WALL)continue;const rs=new Set();for(const[dx,dy]of DIR4){const g=reg[I(x+dx,y+dy)];if(g>=0)rs.add(g)}if(rs.size>=2)conns.push({x,y,rs:[...rs]})}
-  const par=[...Array(nreg).keys()];const find=a=>{while(par[a]!==a){par[a]=par[par[a]];a=par[a]}return a};
-  const openC=c=>{map[I(c.x,c.y)]=c.rs.some(r=>roomReg.has(r))&&Math.random()<0.75?DOOR:FLOOR;reg[I(c.x,c.y)]=c.rs[0];c.done=true};
-  for(;;){const live=conns.filter(c=>!c.done&&new Set(c.rs.map(find)).size>1);if(!live.length)break;const c=pick(live);openC(c);const r0=find(c.rs[0]);for(const r of c.rs)par[find(r)]=r0}
-  for(const c of conns){if(c.done||Math.random()>0.13)continue;if(DIR8.some(([dx,dy])=>map[I(c.x+dx,c.y+dy)]===DOOR))continue;openC(c)}
-  const inRoom=(x,y)=>rooms.some(r=>x>=r.x&&x<r.x+r.w&&y>=r.y&&y<r.y+r.h);
-  for(let pass=0;pass<60;pass++){const kill=[];for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const i=I(x,y);if((map[i]!==FLOOR&&map[i]!==DOOR)||inRoom(x,y))continue;let n=0;for(const[dx,dy]of DIR4)if(map[I(x+dx,y+dy)]!==WALL)n++;if(n<=1)kill.push(i)}if(!kill.length)break;kill.forEach(i=>map[i]=WALL)}
-  // natural biomes: erode corridors into rough tunnels and small caverns (rooms keep their walls so gates still hold)
-  const nearRoom=(x,y)=>rooms.some(r=>x>=r.x-1&&x<=r.x+r.w&&y>=r.y-1&&y<=r.y+r.h);
-  const ero={fungal:0.34,drowned:0.2,mine:0.16,crypt:0}[bio];
-  for(let pass=0;pass<2&&ero;pass++){const add=[];for(let y=2;y<H-2;y++)for(let x=2;x<W-2;x++){const i=I(x,y);if(map[i]!==WALL||nearRoom(x,y))continue;
-      if(DIR8.some(([dx,dy])=>map[I(x+dx,y+dy)]===DOOR))continue;let n=0,rg=-1;for(const[dx,dy]of DIR8){const j=I(x+dx,y+dy);if(map[j]===FLOOR){n++;rg=reg[j]}}
-      if(n>=2&&Math.random()<ero*n/4)add.push([i,rg])}for(const[i,rg]of add){map[i]=FLOOR;reg[i]=rg}}
-  S.L={map,bio,seen:new Array(W*H).fill(0),smoke:new Array(W*H).fill(0),spore:new Array(W*H).fill(0),fire:new Array(W*H).fill(0),light:new Uint8Array(W*H),opq:new Uint8Array(W*H),items:[],mons:[],objs:[],deco:new Uint8Array(W*H),decal:new Uint8Array(W*H),tset:bio+(S.depth%2===0?'2':'')};
-  const L=S.L;const DC=L.decal;L.rooms=rooms;
-  const nonC=rooms.filter(r=>!r.chapel);
-  let start=pick(nonC),stairsRoom=null;
-  if(boss){const ch=rooms[0],d=bfsDist(ch.cx,ch.cy);start=nonC.reduce((a,b)=>d[I(b.cx,b.cy)]>d[I(a.cx,a.cy)]?b:a)}
-  let dm=bfsDist(start.cx,start.cy);
-  if(!boss){stairsRoom=nonC.filter(r=>r!==start).reduce((a,b)=>dm[I(b.cx,b.cy)]>dm[I(a.cx,a.cy)]?b:a);map[I(stairsRoom.cx,stairsRoom.cy)]=STAIRS}
-  const free=(x,y)=>inb(x,y)&&map[I(x,y)]===FLOOR&&!L.objs.some(o=>o.x===x&&o.y===y)&&!(x===start.cx&&y===start.cy)&&map[I(x,y)]!==STAIRS;
-  const nearDoor=(x,y)=>DIR8.some(([dx,dy])=>{const t=map[I(x+dx,y+dy)];return t===DOOR||t===GATE})||DIR4.some(([dx,dy])=>{const t=map[I(x+dx,y+dy)];return t===FLOOR&&!inRoom(x+dx,y+dy)});
-  const obj=(type,x,y,ex)=>{const o=Object.assign({type,x,y,id:S.nextId++},ex||{});L.objs.push(o);return o};
-  const inner=r=>{const c=[];for(let y=r.y+1;y<r.y+r.h-1;y++)for(let x=r.x+1;x<r.x+r.w-1;x++)c.push([x,y]);return c};
-  const cells=r=>{const c=[];for(let y=r.y;y<r.y+r.h;y++)for(let x=r.x;x<r.x+r.w;x++)if(map[I(x,y)]===FLOOR)c.push([x,y]);return c};
-  const corners=r=>[[r.x,r.y],[r.x+r.w-1,r.y],[r.x,r.y+r.h-1],[r.x+r.w-1,r.y+r.h-1]].filter(([x,y])=>free(x,y)&&!nearDoor(x,y));
-  const placeSome=(r,type,n,ex,where)=>{let k=0;for(const[x,y]of shuffle((where||cells)(r)))if(k<n&&free(x,y)&&!nearDoor(x,y)){obj(type,x,y,typeof ex==='function'?ex():ex);k++}return k};
-  const patch=(r,tile,p)=>{for(const[x,y]of cells(r))if(Math.random()<p&&!nearDoor(x,y)&&!(x===start.cx&&y===start.cy))map[I(x,y)]=tile};
-  const blob=(r,tile,n)=>{const c=cells(r);if(!c.length)return;for(let k=0;k<n;k++){let[x,y]=pick(c);for(let s=0;s<6;s++){if(inb(x,y)&&map[I(x,y)]===FLOOR&&!nearDoor(x,y)&&!(x===start.cx&&y===start.cy))map[I(x,y)]=tile;const d=pick(DIR8);x+=d[0];y+=d[1];if(!inRoom(x,y))break}}};
-  /* ---- room themes ---- */
-  const themes={mine:['storage','props','crystals','plain','shrine','flooded','rails','rails','camp','collapse','chasm'],crypt:['ossuary','pillars','chapel','plain','vault','ossuary','cathedral','cathedral','chasm','collapse'],fungal:['grove','nest','pods','grove','pool','garden','garden','chasm','plain'],drowned:['flooded','pillars','chapel','plain','cistern','cistern','cathedral','drain','chasm']}[bio];
-  const nests=[],flooded=new Set();let shrineDone=false;
-  let bellRoom=null;if([2,4,6].includes(S.depth)&&!S.inSewer){const cands=nonC.filter(r=>r!==start&&r!==stairsRoom&&r.w>=7&&r.h>=5);const pool2=cands.length?cands:nonC.filter(r=>r!==start&&r!==stairsRoom);bellRoom=pool2.reduce((a,b)=>dm[I(b.cx,b.cy)]>dm[I(a.cx,a.cy)]?b:a,pool2[0]);if(bellRoom)bellRoom.bell=true}
-  for(const r of nonC){if(r===bellRoom){r.theme='bell';placeSome(r,'brazier',2,{lit:true},corners);continue}if(r===start&&Math.random()<0.6){r.theme='plain';continue}
-    let th=pick(themes);if(r===stairsRoom&&(th==='flooded'||th==='pool'))th='plain';if(th==='shrine'&&shrineDone)th='plain';r.theme=th;
-    switch(th){
-      case'storage':placeSome(r,'keg',rr(1,3),null,corners);placeSome(r,'cart',rr(1,2));break;
-      case'props':{let n=0;for(const[x,y]of shuffle(inner(r)))if(n<rr(2,3)&&free(x,y)&&!nearDoor(x,y)&&(x+y)%2===0){obj('support',x,y);n++}if(Math.random()<0.5)placeSome(r,'keg',1,null,corners);break}
-      case'crystals':placeSome(r,'crystal',rr(2,4));break;
-      case'shrine':placeSome(r,'shrine',1);shrineDone=true;placeSome(r,'brazier',2,{lit:true},corners);break;
-      case'flooded':flooded.add(r);for(const[x,y]of inner(r))if(map[I(x,y)]===FLOOR)map[I(x,y)]=WATER;break;
-      case'pool':flooded.add(r);blob(r,WATER,3);patch(r,GRASS,0.12);break;
-      case'ossuary':patch(r,BONES,0.22);placeSome(r,'coffin',rr(1,3),()=>({ghoul:Math.random()<0.3}),corners);if(Math.random()<0.5)placeSome(r,'brazier',1,{lit:true});break;
-      case'pillars':for(let y=r.y+1;y<r.y+r.h-1;y+=2)for(let x=r.x+1;x<r.x+r.w-1;x+=3)if(free(x,y)&&!nearDoor(x,y)&&r.w>=7)obj('statue',x,y);break;
-      case'chapel':placeSome(r,'brazier',rr(2,3),{lit:true});if(!shrineDone&&Math.random()<0.5){placeSome(r,'shrine',1);shrineDone=true}patch(r,BONES,0.06);break;
-      case'vault':r.vault=true;placeSome(r,'chest',rr(1,2),()=>({trap:Math.random()<0.4}),corners);break;
-      case'grove':blob(r,GRASS,rr(3,5));placeSome(r,'shroom',rr(3,6),null);break;
-      case'nest':nests.push(r);patch(r,WEB,0.3);patch(r,BONES,0.08);placeSome(r,'corpse',1,{of:'miner'});break;
-      case'pods':placeSome(r,'pod',rr(2,4));blob(r,GRASS,2);placeSome(r,'shroom',2);break;
-      case'chasm':{if(boss||r.w<7||r.h<5||r===stairsRoom||!['rect','pillar'].includes(r.shape)){r.theme='plain';break}const ix=r.x+1,iy=r.y+1,iw=r.w-2,ih=r.h-2;
-        for(let j=iy;j<iy+ih;j++)for(let i=ix;i<ix+iw;i++){const nx=(i-ix+0.5)/iw*2-1,ny=(j-iy+0.5)/ih*2-1;if(nx*nx+ny*ny>0.95+Math.random()*0.15||map[I(i,j)]!==FLOOR)continue;if(j===r.cy){DC[I(i,j)]=11;continue}if(!(i===start.cx&&j===start.cy))map[I(i,j)]=PIT}break}
-      case'cistern':{flooded.add(r);for(let j=r.y+1;j<r.y+r.h-1;j++)for(let i=r.x+1;i<r.x+r.w-1;i++){const ring=Math.min(i-r.x,r.x+r.w-1-i,j-r.y,r.y+r.h-1-j);if(ring===1&&map[I(i,j)]===FLOOR&&i!==r.cx&&j!==r.cy)map[I(i,j)]=WATER}DC[I(r.cx,r.cy)]=15;break}
-      case'cathedral':{for(let j=r.y+1;j<r.y+r.h-1;j+=2)for(const i of[r.x+1,r.x+r.w-2])if(map[I(i,j)]===FLOOR&&free(i,j)&&!nearDoor(i,j)&&j!==r.cy){map[I(i,j)]=WALL;DC[I(i,j)]=30}
-        for(let j=r.y;j<r.y+r.h;j++)if(map[I(r.cx,j)]===FLOOR)DC[I(r.cx,j)]=9;if(free(r.cx,r.y)&&!nearDoor(r.cx,r.y))obj('brazier',r.cx,r.y,{lit:true});patch(r,BONES,0.03);break}
-      case'rails':{const y=r.cy;for(let i=r.x;i<r.x+r.w;i++)if(map[I(i,y)]===FLOOR)DC[I(i,y)]=7;for(const dir of[-1,1]){let i=dir<0?r.x-1:r.x+r.w;for(let k=0;k<10&&inb(i,y)&&(map[I(i,y)]===FLOOR||map[I(i,y)]===DOOR);k++,i+=dir)if(map[I(i,y)]===FLOOR)DC[I(i,y)]=7}
-        const cxs=shuffle(cells(r).filter(([x,yy])=>yy===y&&free(x,yy)&&!nearDoor(x,yy)));if(cxs.length)obj('cart',cxs[0][0],y);placeSome(r,'keg',1,null,corners);break}
-      case'camp':{const c=shuffle(cells(r).filter(([x,y])=>free(x,y)&&!nearDoor(x,y)));for(const[x,y]of c.slice(0,2))DC[I(x,y)]=14;placeSome(r,'brazier',1,{lit:false});placeSome(r,'keg',1,null,corners);placeSome(r,'corpse',1,{of:'miner'});break}
-      case'collapse':patch(r,RUBBLE,0.16);if(bio==='mine'&&Math.random()<0.6)placeSome(r,'support',1);break;
-      case'garden':{blob(r,GRASS,rr(2,4));placeSome(r,'shroom',rr(4,7));if(r.w>=7)blob(r,WATER,1);for(const[x,y]of cells(r))if(Math.random()<0.18&&!DC[I(x,y)])DC[I(x,y)]=19;break}
-      case'drain':{for(let i=r.x+1;i<r.x+r.w-1;i+=2)if(map[I(i,r.cy)]===FLOOR)DC[I(i,r.cy)]=15;blob(r,WATER,2);break}
-    }
-    if(bio!=='fungal'&&th==='plain'&&Math.random()<0.3)placeSome(r,'brazier',1,{lit:true},corners);
-    if(!boss&&Math.random()<0.18&&r!==start){const x=r.x+1+rnd(Math.max(1,r.w-2)),y=r.y+1+rnd(Math.max(1,r.h-2));if(free(x,y)&&!nearDoor(x,y))map[I(x,y)]=PIT}
-  }
-  // corridor grass and webs in the fungal hollows
-  if(bio==='fungal')for(let i=0;i<W*H;i++){const x=i%W,y=(i/W)|0;if(map[i]===FLOOR&&!inRoom(x,y)&&Math.random()<0.05)map[i]=Math.random()<0.6?GRASS:WEB}
-  if(bio==='crypt')for(let i=0;i<W*H;i++){const x=i%W,y=(i/W)|0;if(map[i]===FLOOR&&!inRoom(x,y)&&Math.random()<0.03)map[i]=BONES}
-  // the Abbot's chapel
-  if(boss){const ch=rooms[0];for(let y=ch.y+2;y<=ch.y+ch.h-3;y++){map[I(ch.x+2,y)]=WATER;map[I(ch.x+ch.w-3,y)]=WATER}
-    for(const[px,py]of[[ch.x+5,ch.y+3],[ch.x+11,ch.y+3],[ch.x+5,ch.y+9],[ch.x+11,ch.y+9]])obj('statue',px,py);
-    for(const[kx,ky]of[[ch.x,ch.y],[ch.x+ch.w-1,ch.y],[ch.x,ch.y+ch.h-1],[ch.x+ch.w-1,ch.y+ch.h-1]])obj('keg',kx,ky);
-    for(const[bx,by]of[[ch.x+3,ch.y+1],[ch.x+ch.w-4,ch.y+1]])obj('brazier',bx,by,{lit:true})}
-  // gates and levers: a gate on a vault door, or a random room door
-  const doors=[];for(let i=0;i<W*H;i++)if(map[i]===DOOR)doors.push(i);
-  const gated=[];
-  for(const r of shuffle(nonC.slice())){if(gated.length>=(boss?0:2))break;if(r===start||(!r.vault&&Math.random()<0.6))continue;
-    const ds=doors.filter(i=>{const x=i%W,y=(i/W)|0;return x>=r.x-1&&x<=r.x+r.w&&y>=r.y-1&&y<=r.y+r.h&&map[i]===DOOR});if(!ds.length)continue;
-    const gi=pick(ds);map[gi]=GATE;const d=bfsDist(start.cx,start.cy,false);
-    const levOk=L.objs.filter(o=>o.type==='lever').every(o=>DIR8.some(([dx,dy])=>d[I(o.x+dx,o.y+dy)]>=0));if(!levOk){map[gi]=DOOR;continue}
-    const opts=[];for(let i=0;i<W*H;i++){if(d[i]<4||map[i]!==FLOOR)continue;const x=i%W,y=(i/W)|0;if(!free(x,y)||nearDoor(x,y))continue;if(!DIR4.some(([dx,dy])=>map[I(x+dx,y+dy)]===WALL))continue;const gd=cheb(x,y,gi%W,(gi/W)|0);if(gd>=3&&gd<=12)opts.push(i)}
-    if(!opts.length){map[gi]=DOOR;continue}
-    const li=pick(opts);obj('lever',li%W,(li/W)|0,{gate:gi,on:false});gated.push(gi);
-    if(!r.vault)placeSome(r,'chest',1,()=>({trap:Math.random()<0.3}),corners)}
-  // cracked walls: shortcuts between far-apart sides
-  const pass=(x,y)=>{const t=map[I(x,y)];return t!==WALL&&t!==CRACK&&t!==PIT&&t!==GATE};
-  const cand=[];for(let y=2;y<H-2;y++)for(let x=2;x<W-2;x++){if(map[I(x,y)]!==WALL)continue;
-    if(pass(x-1,y)&&pass(x+1,y)&&!pass(x,y-1)&&!pass(x,y+1))cand.push([x,y,x-1,y,x+1,y]);
-    else if(pass(x,y-1)&&pass(x,y+1)&&!pass(x-1,y)&&!pass(x+1,y))cand.push([x,y,x,y-1,x,y+1])}
-  shuffle(cand);const cracks=[];const want=4+rnd(3);
-  for(const c of cand.slice(0,120)){if(cracks.length>=want)break;if(cracks.some(k=>cheb(k[0],k[1],c[0],c[1])<7))continue;const d=bfsDist(c[2],c[3],true);if(d[I(c[4],c[5])]>22||d[I(c[4],c[5])]<0){map[I(c[0],c[1])]=CRACK;cracks.push(c)}}
+ const boss=S.depth===MAXD,bio=biomeOf(S.depth),seed=Math.floor(Math.random()*4294967296)>>>0,layout=deepLayout(W,H,bio,seed,boss),map=layout.map,rooms=layout.rooms,LW=W,LH=H;
+ S.L={map,bio,deepLayout:{...layout,map:undefined},gas:new Uint8Array(W*H),oil:new Uint8Array(W*H),weak:new Uint8Array(W*H),secrets:[],traps:[],seen:new Array(W*H).fill(0),smoke:new Array(W*H).fill(0),spore:new Array(W*H).fill(0),fire:new Array(W*H).fill(0),light:new Uint8Array(W*H),opq:new Uint8Array(W*H),items:[],mons:[],objs:[],deco:new Uint8Array(W*H),decal:new Uint8Array(W*H),tset:bio,rooms};
+ const L=S.L,DC=L.decal,nonC=rooms.filter(r=>!r.chapel),inRoom=(x,y)=>rooms.some(r=>x>=r.x&&x<r.x+r.w&&y>=r.y&&y<r.y+r.h);
+ let start=rooms[layout.start];if(start.chapel)start=nonC[0];let dm=bfsDist(start.cx,start.cy,true),stairsRoom=null;
+ if(!boss){stairsRoom=nonC.filter(r=>r!==start).reduce((a,b)=>dm[I(a.cx,a.cy)]>dm[I(b.cx,b.cy)]?a:b);map[I(stairsRoom.cx,stairsRoom.cy)]=STAIRS}
+ const free=(x,y)=>inb(x,y)&&map[I(x,y)]===FLOOR&&!L.objs.some(o=>o.x===x&&o.y===y)&&!(x===start.cx&&y===start.cy);
+ const nearDoor=(x,y)=>DIR8.some(([dx,dy])=>{const t=map[I(x+dx,y+dy)];return t===DOOR||t===GATE})||DIR4.some(([dx,dy])=>map[I(x+dx,y+dy)]===FLOOR&&!inRoom(x+dx,y+dy));
+ const obj=(type,x,y,ex)=>{const o=Object.assign({type,x,y,id:S.nextId++},ex||{});L.objs.push(o);return o};
+ const cells=r=>{const c=[];for(let y=r.y;y<r.y+r.h;y++)for(let x=r.x;x<r.x+r.w;x++)if(map[I(x,y)]===FLOOR)c.push([x,y]);return c};
+ const corners=r=>cells(r).filter(([x,y])=>Math.abs(x-r.cx)>5&&y!==r.cy),inner=cells;
+ const placeSome=(r,type,n,ex,where)=>{let k=0;for(const[x,y]of shuffle((where||cells)(r)))if(k<n&&free(x,y)&&!nearDoor(x,y)){obj(type,x,y,typeof ex==='function'?ex():ex);k++}return k};
+ const flooded=new Set(),nests=[];let bellRoom=null;
+ if([2,4,6].includes(S.depth)&&!S.inSewer){const pool=nonC.filter(r=>r!==start&&r!==stairsRoom);bellRoom=pool.sort((a,b)=>dm[I(b.cx,b.cy)]-dm[I(a.cx,a.cy)])[0];if(bellRoom)bellRoom.bell=true}
+ for(const r of nonC){if(r!==start){placeSome(r,bio==='fungal'?'pod':bio==='crypt'?'coffin':'crate',1,null,corners);placeSome(r,'brazier',1,{lit:true},corners)}
+  if(bio==='fungal'){placeSome(r,'shroom',2,null,corners);if(r.artVariant===2)nests.push(r)}
+  if(bio==='mine')placeSome(r,'crystal',1,null,corners);
+  if((bio==='drowned'||bio==='sewer')&&r!==start&&r!==stairsRoom&&r.artVariant===1){for(let x=r.x;x<r.x+3;x++)for(let y=r.cy-1;y<=r.cy;y++)if(free(x,y))map[I(x,y)]=WATER;flooded.add(r)}
+ }
   // player
   const P=S.P;P.x=start.cx;P.y=start.cy;if(map[I(P.x,P.y)]!==FLOOR)map[I(P.x,P.y)]=FLOOR;P.rx=P.x;P.ry=P.y;P.webbed=0;
   L.objs=L.objs.filter(o=>!(o.x===P.x&&o.y===P.y));
@@ -1372,7 +1304,8 @@ function genLevel(){
   for(let p=0;p<np;p++){for(let t=0;t<60;t++){const x=rr(1,LW-2),y=rr(1,LH-2);const k=pick(pool.filter(k=>!MON[k].aquatic));if(freeFor(k,x,y)&&dm[I(x,y)]>14){if(MON[k].ai==='pack')pack(k,x,y,'patrol',S.depth<=2?2:rr(2,3));else spawn(k,x,y,'patrol');break}}}
   // decoration seeds (purely visual)
   for(let i=0;i<W*H;i++)L.deco[i]=rnd(256);
-  dressLevel(L,rooms,inRoom);
+  // Module artwork owns permanent scenery; no legacy tile dressing.
+  L.deepLayout.base=map.slice();
   // guarantee the way on is never blocked by props
   const essential=['bell','lever','captive','merchant'];const reach=()=>{const d=bfsDist(P.x,P.y,true);const st=map.indexOf(STAIRS);if(st>=0&&d[st]<0)return false;
     for(const o of L.objs)if(essential.includes(o.type)&&!DIR8.some(([dx,dy])=>inb(o.x+dx,o.y+dy)&&d[I(o.x+dx,o.y+dy)]>=0))return false;return true};
@@ -1395,6 +1328,7 @@ function rollLoot(){const roll=rnd(100);if(roll<14)return{kind:'gear',item:rollG
   if(free.length&&!(S.L&&S.L.items.some(i=>i.kind==='trinket')))return{kind:'trinket',t:pick(free)};return{kind:'gold',amt:rr(4,9)*S.depth}}
 function computeLight(){const L=S.L;L.light.fill(0);
   const add=(x0,y0,r)=>{for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const x=x0+dx,y=y0+dy;if(!inb(x,y)||dx*dx+dy*dy>r*r+1)continue;if(los(x0,y0,x,y,true))L.light[I(x,y)]=Math.max(L.light[I(x,y)],r-Math.max(Math.abs(dx),Math.abs(dy))+1)}};
+  if(L.deepLayout)for(const m of L.deepLayout.modules)for(const dx of[2,21])add(m.x+dx,m.y+m.floorY,4);
   for(const o of L.objs){if(o.type==='brazier'&&o.lit)add(o.x,o.y,4);else if(o.type==='crystal')add(o.x,o.y,2);else if(o.type==='shroom')add(o.x,o.y,1)}
   for(let i=0;i<W*H;i++)if(L.fire[i]>0)add(i%W,(i/W)|0,2);
   if(L.decal&&!L.town)for(let i=0;i<W*H;i++)if(L.decal[i]===30&&L.map[i]===WALL){const x=i%W,y=(i/W)|0;if(inb(x,y+1)&&!solid(L.map[I(x,y+1)]))add(x,y+1,2)}}
@@ -2833,7 +2767,7 @@ async function toppleIt(o){const L=S.L,P=S.P;const dx=Math.sign(o.x-P.x),dy=Math
 {const c0=computeLight;computeLight=function(){c0();const L=S.L;if(!L||L.town)return;const add=(x0,y0,r)=>{for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const x=x0+dx,y=y0+dy;if(!inb(x,y)||dx*dx+dy*dy>r*r+1)continue;if(los(x0,y0,x,y,true))L.light[I(x,y)]=Math.max(L.light[I(x,y)],r-Math.max(Math.abs(dx),Math.abs(dy))+1)}};
   for(const o of L.objs){if(o.type==='ritualcandle'&&o.lit)add(o.x,o.y,2);else if(o.type==='chandelier')add(o.x,o.y,3)}}}
 /* ---------- hooks: generation, ticking, movement, features ---------- */
-{const g0=genLevel;genLevel=function(){g0();const L=S.L;L.sit={};for(const f of[placeTraps,placeSecrets,placeSituation,placeChains,placeEncounter]){try{f()}catch(e){LV.err++;if(!HEADLESS)console.error(e)}}try{sealSecrets()}catch(e){LV.err++}rebuildOpq();computeLight();computeFov()}}
+{const g0=genLevel;genLevel=function(){g0();const L=S.L;L.sit={};for(const f of(L.deepLayout?[placeTraps,placeEncounter]:[placeTraps,placeSecrets,placeSituation,placeChains,placeEncounter])){try{f()}catch(e){LV.err++;if(!HEADLESS)console.error(e)}}try{sealSecrets()}catch(e){LV.err++}rebuildOpq();computeLight();computeFov()}}
 async function lvTick(n){const L=S.L;if(!L||L.town)return;try{sitTick(n);if(S.over)return;await weakTick();if(S.over||S.L!==L)return;if(S.weakFall){S.weakFall=false;await fallDown();return}
   if(S.mode==='explore'){factionTick();trapSpot();draughtCheck()}
   if(L.fire&&L.gas){for(let i=0;i<W*H;i++)if(L.fire[i]>0)for(const[dx,dy]of DIR8){const j=i+dx+dy*W;if(L.gas[j]){gasBoom(j);if(S.over)return}}}
@@ -3307,9 +3241,12 @@ function prepareHeavy(m,ab){
 {const original=endCombat;endCombat=function(){for(const m of S.L.mons){m.heavyAim=null;m.heavyRecovery=false}return original()}}
 
 /* Room composition follows all population, story and faction placement. */
-{const roomGen=genLevel;genLevel=function(){roomGen();if(globalThis.SaltmarrowRooms){SaltmarrowRooms.apply(S.L,W,H,{hero:S.P,blocked:Object.keys(FEAT).filter(k=>FEAT[k].block)});rebuildOpq();computeLight();computeFov()}}}
+{const roomGen=genLevel;genLevel=function(){roomGen();if(globalThis.SaltmarrowRooms&&!S.L.deepLayout){SaltmarrowRooms.apply(S.L,W,H,{hero:S.P,blocked:Object.keys(FEAT).filter(k=>FEAT[k].block)});rebuildOpq();computeLight();computeFov()}}}
+{const approvedGen=genLevel;genLevel=function(){approvedGen();const L=S.L;if(!L.deepLayout)return;const protectedCell=(x,y)=>{const i=I(x,y);if(L.deepLayout.bridge[i])return true;return L.deepLayout.modules.some(m=>x>=m.x&&x<m.x+24&&y>=m.y&&y<m.y+16&&(y===m.y+m.floorY+1||x>=m.x+m.south&&x<m.x+m.south+2||m.north!=null&&x>=m.x+m.north&&x<m.x+m.north+2))};
+ const taken=new Set([...L.mons,...L.objs,...L.items].map(o=>I(o.x,o.y)));for(const o of L.objs){if(!FEAT[o.type].block||!protectedCell(o.x,o.y))continue;const spots=[];for(const r of L.rooms)for(let y=r.y;y<r.y+r.h;y++)for(let x=r.x;x<r.x+r.w;x++){const i=I(x,y);if(L.map[i]===FLOOR&&!taken.has(i)&&!protectedCell(x,y)&&cheb(x,y,S.P.x,S.P.y)>1)spots.push({x,y,d:cheb(x,y,o.x,o.y)})}spots.sort((a,b)=>a.d-b.d);if(spots.length){taken.delete(I(o.x,o.y));o.x=spots[0].x;o.y=spots[0].y;if(o.rx!=null)o.rx=o.x;if(o.ry!=null)o.ry=o.y;taken.add(I(o.x,o.y))}}
+ rebuildOpq();computeLight();computeFov();}}
 /* ================= export for tests ================= */
-if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,spawnMon:(...a)=>spawnMon(...a),startCombat:(...a)=>startCombat(...a),gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,TOWN_LAYOUT,BUILDINGS,migrateTownLayout,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems,damage,killMon,heroAttack,HOLLOW,HF,heal:(...a)=>heal(...a),drownedTurn,drownedPhase,drownedFlood,drownedSummon,monsterTurn,endCombat,POOL,hasC,addC,intentOf,intentText,pickAb,heroEdges,stepCost};return}
+if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},deepLayout,get META(){return META},set META(v){META=v},newGame,newRun,spawnMon:(...a)=>spawnMon(...a),startCombat:(...a)=>startCombat(...a),gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,TOWN_LAYOUT,BUILDINGS,migrateTownLayout,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems,damage,killMon,heroAttack,HOLLOW,HF,heal:(...a)=>heal(...a),drownedTurn,drownedPhase,drownedFlood,drownedSummon,monsterTurn,endCombat,POOL,hasC,addC,intentOf,intentText,pickAb,heroEdges,stepCost};return}
 /* =====================================================================
    BROWSER: sprites, rendering, animation, UI
    ===================================================================== */
@@ -5217,7 +5154,7 @@ const SAVE_KEY='saltmarrow-run-v5';
 let saveTimer=null;
 UI.save=(clear)=>{try{if(clear||S.over){localStorage.removeItem(SAVE_KEY);return}clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{const s=JSON.parse(JSON.stringify(S,(k,v)=>['rx','ry','lunge','flashT','route','bart'].includes(k)?undefined:v instanceof Uint8Array?Array.from(v):v));s.busy=false;localStorage.setItem(SAVE_KEY,JSON.stringify(s))}catch(e){}},200)}catch(e){}};
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');return s&&s.v===5&&s.L&&!s.over?s:null}catch(e){return null}}
-function resume(s){S=s;S.busy=false;migrateTownLayout();const L=S.L;L.light=new Uint8Array(L.light||W*H);L.opq=new Uint8Array(L.opq||W*H);L.deco=new Uint8Array(L.deco||W*H);L.decal=new Uint8Array(L.decal||W*H);if(L.bld)L.bld=new Uint8Array(L.bld);if(S.gear)for(const t of S.gear.tomes)registerTome(t);S.P.rx=S.P.x;S.P.ry=S.P.y;rebuildOpq();computeLight();computeFov();
+function resume(s){S=s;S.busy=false;if(S.L&&!S.L.town&&!S.L.interior&&!S.L.deepLayout){S.mode='explore';S.C=null;genLevel()}migrateTownLayout();const L=S.L;L.light=new Uint8Array(L.light||W*H);L.opq=new Uint8Array(L.opq||W*H);L.deco=new Uint8Array(L.deco||W*H);L.decal=new Uint8Array(L.decal||W*H);if(L.bld)L.bld=new Uint8Array(L.bld);if(S.gear)for(const t of S.gear.tomes)registerTome(t);S.P.rx=S.P.x;S.P.ry=S.P.y;rebuildOpq();computeLight();computeFov();
   if(S.mode==='combat'&&S.C){S.C.phase='hero';beginHeroTurn()}$('overlay').hidden=true;camInit=false;UI.render();UI.toast(S.L.town?'Saltmarrow':S.depth===MAXD?'The Chapel':'Depth '+S.depth,S.L.town?'':BIOMES[S.L.bio].name)}
 
 /* ---------- overlays ---------- */
@@ -7104,7 +7041,7 @@ function buildTutorial(){const L=S.L,P=S.P,N=W*H;
   P.x=8;P.y=14;P.rx=8;P.ry=14;P.fx=1;P.fy=0;
   try{rebuildOpq()}catch(e){}try{computeLight()}catch(e){}computeFov();
   S.sewerAt=2;S.tutDone=1;META.tips=META.tips||{};META.tips.start=1;saveMeta()}
-{const g0=genLevel;genLevel=function(){const nl=S&&S.log?S.log.length:0;g0();try{if(S&&!S.tutDone&&S.depth===1&&(S.startDepth||1)===1&&!S.inSewer&&S.L&&!S.L.town&&firstDelve()&&!(META.tips&&META.tips.tut_done)){buildTutorial();S.log.length=nl}}catch(e){console.error(e)}}}
+{const g0=genLevel;genLevel=function(){const nl=S&&S.log?S.log.length:0;g0();try{if(S&&!S.tutDone&&S.depth===1&&(S.startDepth||1)===1&&!S.inSewer&&S.L&&!S.L.town&&!S.L.deepLayout&&firstDelve()&&!(META.tips&&META.tips.tut_done)){buildTutorial();S.log.length=nl}}catch(e){console.error(e)}}}
 // Mara talks you through it, one room at a time
 {const r0=UI.render;UI.render=function(){r0.apply(this,arguments);try{const L=S&&S.L;if(!L||!L.tutorial||S.mode!=='explore'||!$('overlay').hidden)return;const P=S.P;META.tips=META.tips||{};
   for(const k in TUT.rooms){if(META.tips['tut_'+k])continue;if(inRect(P.x,P.y,TUT.rooms[k])){META.tips['tut_'+k]=1;if(k==='E')META.tips.tut_done=1;saveMeta();UI.tip(TUT.say[k]);log(TUT.say[k],'gold');break}}}catch(e){}}}
@@ -7146,6 +7083,7 @@ function isoWall(TS,x,y,wf){
 }
 function isoFloorArt(img,t,x,y){return img}
 function isoBridgeEdge(x,y){
+  if(window.SaltmarrowDeepArt?.eligible(S.L))return;
   const poly=(points,col)=>{ctx.fillStyle=col;ctx.beginPath();points.forEach((p,k)=>k?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fill()};
   const a=ISO.project((x+1)*T,(y+1)*T),b=ISO.project(x*T,(y+1)*T),c=ISO.project((x+1)*T,y*T),down=p=>({x:p.x,y:p.y+7});
   if(inb(x,y+1)&&S.L.map[I(x,y+1)]===PIT)poly([b,a,down(a),down(b)],'#26373c');
@@ -7175,21 +7113,22 @@ draw=function(){if(S?.L?.townScene)return drawUnifiedTown();const L=S.L,P=S.P,TS
   ctx.setTransform(dpr,0,0,dpr,0,0);ctx.imageSmoothingEnabled=false;ctx.globalAlpha=1;ctx.fillStyle='#04090e';ctx.fillRect(0,0,VW,VH);
   let shakeX=0,shakeY=0;if(FX.shake.m){const t=(NOW-FX.shake.t)/350;if(t<1&&!REDUCE){shakeX=Math.round((Math.random()-.5)*FX.shake.m*(1-t));shakeY=Math.round((Math.random()-.5)*FX.shake.m*(1-t))}else FX.shake.m=0}
   ctx.save();ctx.translate(-c.x+shakeX,-c.y+shakeY);
+  const deep=window.SaltmarrowDeepArt?.eligible(L);if(deep)SaltmarrowDeepArt.ground(ctx,L,{w:W,h:H,visible:vis});
   const tiles=[],standing=[],townPlan=townArtPlan(L);
   for(let i=DYING.length-1;i>=0;i--){const d=DYING[i];if(d.level!==L||NOW-d.t0>=d.duration)DYING.splice(i,1);else standing.push({death:d,depth:ISO.depth(d.e)+1})}
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=I(x,y);if(!L.seen[i])continue;const q=ISO.project((x+.5)*T,(y+.5)*T);if(q.x<c.x-T*3||q.x>c.x+VW+T*3||q.y<c.y-T*3||q.y>c.y+VH+T*3)continue;tiles.push({x,y,i});
-    if((L.map[i]===WALL||L.map[i]===CRACK)&&!(L.townLand&&!L.townLand[i])&&!townPlan?.covered.has(i))standing.push({x,y,depth:y+1,wall:true})}
-  isoGround(()=>{for(const{x,y,i}of tiles){if(L.townLand&&!L.townLand[i])continue;ctx.globalAlpha=window.SaltmarrowLighting?1:vis[i]?1:.45;ctx.drawImage(isoFloorArt(tileImg(TS,L.map[i],x,y,wf),L.map[i],x,y),x*T,y*T,T,T);
+    if(!deep&&(L.map[i]===WALL||L.map[i]===CRACK)&&!(L.townLand&&!L.townLand[i])&&!townPlan?.covered.has(i))standing.push({x,y,depth:y+1,wall:true})}
+  isoGround(()=>{for(const{x,y,i}of tiles){if(L.townLand&&!L.townLand[i])continue;ctx.globalAlpha=window.SaltmarrowLighting?1:vis[i]?1:.45;if(deep)SaltmarrowDeepArt.changedTile(ctx,L,x,y,{w:W});else ctx.drawImage(isoFloorArt(tileImg(TS,L.map[i],x,y,wf),L.map[i],x,y),x*T,y*T,T,T);
       // Exposed walkway edges give bridges and chasms visible thickness.
-      if(OPENT(L.map[i])){ctx.fillStyle='#8d8064';ctx.globalAlpha*=.55;if(inb(x,y+1)&&L.map[I(x,y+1)]===PIT)ctx.fillRect(x*T,y*T+T-2,T,2);if(inb(x+1,y)&&L.map[I(x+1,y)]===PIT)ctx.fillRect(x*T+T-2,y*T,2,T)}
+      if(!deep&&OPENT(L.map[i])){ctx.fillStyle='#8d8064';ctx.globalAlpha*=.55;if(inb(x,y+1)&&L.map[I(x,y+1)]===PIT)ctx.fillRect(x*T,y*T+T-2,T,2);if(inb(x+1,y)&&L.map[I(x+1,y)]===PIT)ctx.fillRect(x*T+T-2,y*T,2,T)}
     }ctx.globalAlpha=1;
-    if(TS.face&&!L.town)drawDressing(L,TS,0,W-1,0,H-1);
+    if(!window.SaltmarrowDeepArt?.dressing(ctx,L,tiles,{w:W,visible:vis})&&TS.face&&!L.town)drawDressing(L,TS,0,W-1,0,H-1);
     window.SaltmarrowRooms?.ground(ctx,L,tiles,{w:W,h:H,actors:[P,...L.mons],visible:vis});
-    window.SaltmarrowLighting?.detail(ctx,L,tiles,{w:W,types:{floor:FLOOR,wall:WALL,water:WATER},visible:vis,actors:[P,...L.mons]});
+    if(!window.SaltmarrowDeepArt?.eligible(L))window.SaltmarrowLighting?.detail(ctx,L,tiles,{w:W,types:{floor:FLOOR,wall:WALL,water:WATER},visible:vis,actors:[P,...L.mons]});
     window.SaltmarrowEnvironment?.draw(ctx,L,tiles,{w:W,h:H,types:{floor:FLOOR,wall:WALL},now:NOW,reduced:REDUCE,visible:vis,buildings:BUILDINGS,actors:[P,...L.mons,...(L.npcs||[])]});
     DEATHS.sync(L);DEATHS.draw(ctx,deathProject,deathVisible,'floor');
     for(const s of FX.stains)if(inb(s.x,s.y)&&L.seen[I(s.x,s.y)]){ctx.globalAlpha=.65*Math.max(0,1-(NOW-s.t0)/s.life);ctx.fillStyle=s.c;ctx.fillRect((s.x+.25)*T,(s.y+.45)*T,T*.5,T*.22)}ctx.globalAlpha=1;
-    for(const it of L.items)if(L.seen[I(it.x,it.y)]){ctx.globalAlpha=vis[I(it.x,it.y)]?1:.4;ctx.drawImage(SPR[it.kind==='gear'?gearSpr(it.item):it.kind],it.x*T,it.y*T,T,T)}ctx.globalAlpha=1;
+    for(const it of L.items)if(L.seen[I(it.x,it.y)]){ctx.globalAlpha=vis[I(it.x,it.y)]?1:.4;if(!window.SaltmarrowDeepArt?.loot(ctx,L,it))ctx.drawImage(SPR[it.kind==='gear'?gearSpr(it.item):it.kind],it.x*T,it.y*T,T,T)}ctx.globalAlpha=1;
     drawOverlays(0,W-1,0,H-1);
   });
   for(const{x,y,i}of tiles)if(OPENT(L.map[i])){ctx.save();ctx.globalAlpha=window.SaltmarrowLighting?1:vis[i]?1:.45;isoBridgeEdge(x,y);ctx.restore()}
@@ -7309,6 +7248,7 @@ function calmTownTile(v,surface='stone'){
 const artTileBase=tileImg;
 tileImg=function(TS,t,x,y,wf){
   const L=S.L,plan=townArtPlan(L),v=h4(x,y);
+  const cohesive=window.SaltmarrowDeepArt?.tile(L,t,x,y,wf,{w:W});if(cohesive)return cohesive;
   if(L.town&&!L.interior&&L.bart?.[I(x,y)]&&!plan)return artTileBase(TS,t,x,y,wf);
   if(plan?.covered.has(I(x,y)))return calmTownTile(v);
   if(L.town&&!L.interior&&t===FLOOR){const surface=window.SaltmarrowSurfaces?.get(L,t,x,y,{w:W,types:{floor:FLOOR,wall:WALL},buildings:BUILDINGS});if(surface)return surface;}
@@ -7517,7 +7457,10 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)clearHeldWa
 
 const artObjBase=drawObj;
 drawObj=function(o){
+  if(window.SaltmarrowDeepArt?.object(ctx,S.L,o))return;
+  if(window.SaltmarrowDeepArt?.eligible(S.L)&&['merchant','captive','rival','dying'].includes(o.type))return artObjBase(o);
   if(o.type==='corpse'){if(DYING.some(d=>d.level===S.L&&d.e.x===o.x&&d.e.y===o.y))return;const a=ART?.corpseAsset?.(o.mt);if(a){const p=wpos(o),scale=MON[o.mt]?.boss?1.5:1,w=Math.round(a.image.width*scale),h=Math.round(a.image.height*scale);ctx.save();if(o.visualKind==='fire')ctx.filter='brightness(.45)';ctx.drawImage(a.image,Math.round(p.x-w/2),Math.round(p.y+T/2-h),w,h);ctx.restore();return}}
+  if(window.SaltmarrowDeepArt?.eligible(S.L)&&o.type==='corpse')return artObjBase(o);
   const plan=townArtPlan(S.L);if(plan&&['door','house'].includes(o.type)&&plan.covered.has(I(o.x,o.y)))return;
   let key=o.type;if(key==='chest'||key==='coffin')key+=o.open?'Open':'';if(key==='brazier'&&!o.lit)key='brazierCold';if(key==='lever'&&o.on)key='leverOn';
   const a=ART?.get('props',key);if(!a)return artObjBase(o);
