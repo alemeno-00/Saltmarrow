@@ -528,6 +528,7 @@ body.mob .mhead{display:none}
 <script src="death-effects.js"></script>
 <script src="drowned-sprites.js"></script>
 <script src="flat-art.js"></script>
+<script src="weapon-art.js"></script>
 <script src="animation-art.js"></script>
 <script src="hollow-faith.js"></script>
 <script src="hollow-sprites.js"></script>
@@ -3513,7 +3514,8 @@ Object.assign(ICON_MASK,{
 });
 for(const k in SPR_DATA)if(!SPR[k]){SPR[k]=mk(SPR_DATA[k][0],SPR_DATA[k][1]);SPRW[k]=white(SPR[k])}
 for(const k of['flag','occult','page','quest','tea','tome','w_blunt','w_hook','w_blade','w_ranged','w_focus'])ICON[k]=SPR[k].toDataURL();
-const gearSpr=it=>it.kind==='tome'?'tome':it.kind==='relic'?'relic':it.kind==='armor'?'a_'+it.base:WBASE[it.base].spr;
+for(const base of Object.keys(WBASE)){const c=document.createElement('canvas');c.width=c.height=48;SaltmarrowWeapons.drawSprite(c.getContext('2d'),base,8,34,-.85);SPR['weapon_'+base]=c;SPRW['weapon_'+base]=white(c);ICON['weapon_'+base]=c.toDataURL()}
+const gearSpr=it=>it.kind==='weapon'?'weapon_'+it.base:it.kind==='tome'?'tome':it.kind==='relic'?'relic':it.kind==='armor'?'a_'+it.base:WBASE[it.base].spr;
 /* ---------- the town ---------- */
 BPAL.town={w:'#24242a',wl:'#34343c',wd:'#121216',acc:'#ffd890',acc2:'#6a5a4a',f:'#26282c',fa:'#2e3034',fl:'#17181b',fd:'#383a40',wa:['#0e1a22','#1e3040','#6a8aa0'],beam:'#3a2a1a',beamd:'#20160c'};
 function townTiles(T0){const B=BPAL.town;
@@ -4283,7 +4285,7 @@ drawSprite=function(img,imgW,e,size,alpha,flipOk){if(S&&e===S.P&&HERO_LOOK[S.cls
   ctx.fillStyle='rgba(0,0,0,.38)';ctx.beginPath();ctx.ellipse(p.x+ox,p.y+T/2-3,sz*0.32*(1-hop/40),4,0,0,Math.PI*2);ctx.fill();
   ctx.translate(x+sz/2,y+sz);ctx.scale(flipOk!==false&&e.fx<0?-1:1,br);ctx.translate(-sz/2,-sz);
   if(img.width===48){const k=sz/32;ctx.drawImage(img,-8*k,-12*k,48*k,48*k);if(imgW&&e.flashT&&NOW-e.flashT<140)ctx.drawImage(imgW,-8*k,-12*k,48*k,48*k)}else{ctx.drawImage(img,0,0,sz,sz);if(imgW&&e.flashT&&NOW-e.flashT<140)ctx.drawImage(imgW,0,0,sz,sz)}ctx.restore()};
-function drawAnims(){const A=FX.anims;for(let i=A.length-1;i>=0;i--){const a=A[i];const t=(NOW-a.t0)/a.dur;if(t>1){A.splice(i,1);continue}if(t<0)continue;
+function drawAnims(){const A=FX.anims;for(let i=A.length-1;i>=0;i--){const a=A[i];const t=a.awaitHit?Math.min((NOW-a.t0)/a.dur,a.imp-.001):(NOW-a.t0)/a.dur;if(t>1){A.splice(i,1);continue}if(t<0)continue;
     ctx.save();switch(a.k){
       case'slash':{const ang=Math.atan2(a.b.y-a.a.y,a.b.x-a.a.x);const cx=a.a.x+(a.b.x-a.a.x)*0.55,cy=a.a.y+(a.b.y-a.a.y)*0.55;const sw=Math.min(1,t*1.6);
         for(let k=0;k<5;k++){const tt=sw-k*0.08;if(tt<0)continue;ctx.strokeStyle=hexA(a.c,(1-t)*(0.9-k*0.16));ctx.lineWidth=4-k*0.6;ctx.beginPath();ctx.arc(cx,cy,T*0.55,ang-1.25+tt*2.5-0.5,ang-1.25+tt*2.5,false);ctx.stroke()}break}
@@ -4363,7 +4365,7 @@ const glow=(c,a)=>hexA(c,Math.max(0,Math.min(1,a)));
 function arcTrail(cx,cy,r,a0,a1,c,w,alpha){const n=12;for(let k=0;k<n;k++){const q=k/n,aa=a0+(a1-a0)*q,ab=a0+(a1-a0)*(q+1/n);ctx.strokeStyle=glow(c,alpha*(0.15+0.85*q));ctx.lineWidth=w*(0.3+0.7*q);ctx.beginPath();ctx.arc(cx,cy,r,aa,ab);ctx.stroke()}
   ctx.strokeStyle=glow('#ffffff',alpha*0.9);ctx.lineWidth=Math.max(1,w*0.35);ctx.beginPath();ctx.arc(cx,cy,r,a0+(a1-a0)*0.7,a1);ctx.stroke()}
 function drawFlashy(){const A=FX.x;ctx.save();ctx.globalCompositeOperation='lighter';
-  for(let i=A.length-1;i>=0;i--){const a=A[i];const t=(NOW-a.t0)/a.dur;if(t>1.05){A.splice(i,1);continue}if(t<0)continue;const w=ASTYLE[a.k][0]/ASTYLE[a.k][1];const imp=a.imp;
+  for(let i=A.length-1;i>=0;i--){const a=A[i];const t=a.awaitHit?Math.min((NOW-a.t0)/a.dur,a.imp-.001):(NOW-a.t0)/a.dur;if(t>1.05){A.splice(i,1);continue}if(t<0)continue;const w=a.windFraction??ASTYLE[a.k][0]/ASTYLE[a.k][1];const imp=a.imp;
     if(!a.hit&&!a.awaitHit&&t>=imp){a.hit=true;const tgt=a.k==='spin'?a.a:a.b;impactFX(tgt.x,tgt.y,a.c,a.big||a.k==='smash',a.crit)}
     const ang=Math.atan2(a.b.y-a.a.y,a.b.x-a.a.x)||0;const s=Math.max(0,Math.min(1,(t-w)/(imp-w)));const after=Math.max(0,(t-imp)/(1-imp));
     switch(a.k){
@@ -6794,7 +6796,7 @@ const SND_K={slam:'smash',cavein:'smash',judge:'smash',uppercut:'smash',heave:'t
 {const s0=sfx;sfx=function(t,d){if(t==='windup'&&d&&SND_K[d.style])return s0(t,Object.assign({},d,{style:SND_K[d.style]}));if(t==='windup'&&d&&CASTK.has(d.style))return s0(t,Object.assign({},d,{style:'cast'}));return s0(t,d)}}
 // abilities with no target still show something on the hero
 const AURA={penance:'#e0485a',bloodrage:'#e8503a',seafog:'#c8d8e0',offering:'#e0485a',veil:'#9a6ae0',martyr:'#fff2b0',inkcloud:'#6a6a80',eelstep:'#d8d0c0',shadowstep:'#4a4a6a',defend:'#c0c8cc',hide:'#4a4a6a',dash:'#d8d0c0'};
-{const u0=useAbility;useAbility=async function(id,tx,ty){const P=S&&S.P;const r=await u0(id,tx,ty);try{if(P&&AURA[id]&&!REDUCE)FX.x.push({k:'aura',a:wpos(P),b:wpos(P),att:P,c:AURA[id],t0:NOW,dur:760*PF(),imp:0.25,hit:true,seed:Math.random()*6,id})}catch(e){}return r}}
+// Utility choreography is emitted by the final doUtility wrapper at the actual action boundary.
 
 /* --- drawing the new effects --- */
 const cl01=v=>v<0?0:v>1?1:v;
@@ -6802,7 +6804,7 @@ function jag(x0,y0,x1,y1,n,amp,seed){const pts=[[x0,y0]];for(let i=1;i<n;i++){co
 function strokePts(pts,c,w){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);for(const p of pts)ctx.lineTo(p[0],p[1]);ctx.stroke()}
 function drawFx2(){const A=FX.x;if(!A.length)return;ctx.save();
   for(const a of A){const k=a.k;if(!ASTYLE[k]||['slash','smash','thrust','spin','whip','hook','cast','throw','claw','bite','mcast'].includes(k))continue;
-    const t=(NOW-a.t0)/a.dur;if(t<0||t>1.05)continue;const w=ASTYLE[k][0]/ASTYLE[k][1],imp=a.imp,s=cl01((t-w)/Math.max(0.01,imp-w)),af=cl01((t-imp)/(1-imp));const A0=a.a,B=a.b,c=a.c,sd=a.seed;
+    const t=a.awaitHit?Math.min((NOW-a.t0)/a.dur,a.imp-.001):(NOW-a.t0)/a.dur;if(t<0||t>1.05)continue;const w=a.windFraction??ASTYLE[k][0]/ASTYLE[k][1],imp=a.imp,s=cl01((t-w)/Math.max(0.01,imp-w)),af=cl01((t-imp)/(1-imp));const A0=a.a,B=a.b,c=a.c,sd=a.seed;
     ctx.globalCompositeOperation='lighter';
     switch(k){
       case'slam':case'judge':case'cavein':{const pre=cl01(t/imp);
@@ -7221,7 +7223,7 @@ const WEAPON_ACTIONS=new WeakMap();
 function weaponContact(source,target){
   const action=WEAPON_ACTIONS.get(source);if(!action||action.resolved!==false)return;
   const recovery=Math.max(1,action.end-action.impact);action.impact=NOW;action.end=NOW+recovery;action.resolved=true;
-  const effect=action.effect;if(effect){effect.awaitHit=false;effect.imp=(NOW-effect.t0)/effect.dur;
+  const effect=action.effect;if(effect){const windTime=effect.windFraction*effect.dur;effect.awaitHit=false;effect.dur=action.end-effect.t0;effect.windFraction=windTime/effect.dur;effect.imp=(NOW-effect.t0)/effect.dur;
     if(target&&!effect.hit){effect.hit=true;const p=wpos(target);impactFX(p.x,p.y,effect.c,effect.big||effect.k==='smash',effect.crit)}
   }
 }
@@ -7229,19 +7231,46 @@ function weaponContact(source,target){
 {const original=flashAttack;flashAttack=function(att,tgt,style,col){
   if(att!==S.P)return original(att,tgt,style,col);
   const weapon=wpn(),ab=WEAPON_ABILITY;
-  if(weapon&&ab)style=ART.weaponStyle(weapon.base,ab,style);
+  const profile=ab&&SaltmarrowWeapons.profile(ab);
+  if(profile)style=profile.style;else if(weapon&&ab)style=ART.weaponStyle(weapon.base,ab,style);
   const dx=Math.sign(tgt.x-att.x),dy=Math.sign(tgt.y-att.y);
   if(dx||dy){att.fx=dx;att.fy=dy}
-  const wind=original(att,tgt,style,col),effect=FX.x[FX.x.length-1];
+  // Pass per-ability timing through the existing effect constructor without changing global pacing.
+  const previous=ASTYLE[style];if(profile)ASTYLE[style]=[profile.wind,profile.wind+170+profile.recovery,.6];
+  let wind;try{wind=original(att,tgt,style,col)}finally{if(previous)ASTYLE[style]=previous}
+  const effect=FX.x[FX.x.length-1];
   if(effect&&effect.att===att&&!UI.quiet&&!REDUCE){
     // heroAttack resolves damage after wind-up plus its existing 170 ms roll pause.
-    effect.imp=Math.min(.9,(wind+170)*PF()/effect.dur);
-    if(weapon&&ab){effect.awaitHit=true;WEAPON_ACTIONS.set(att,{base:weapon.base,style,t0:NOW,impact:NOW+(wind+170)*PF(),end:NOW+effect.dur,dx,dy,resolved:false,effect})}
+    effect.imp=Math.min(.9,(wind+170)*PF()/effect.dur);effect.windFraction=wind*PF()/effect.dur;
+    if(ab){effect.awaitHit=true;WEAPON_ACTIONS.set(att,{base:weapon?.base||null,style,id:ab.id,profile,t0:NOW,impact:NOW+(wind+170)*PF(),end:NOW+effect.dur,dx,dy,resolved:false,effect})}
   }
   return wind;
 }}
 let WEAPON_ABILITY=null;
-{const original=heroAttack;heroAttack=async function(id,tx,ty){WEAPON_ABILITY={...AB[id],id};try{return await original(id,tx,ty)}finally{weaponContact(S.P,null);WEAPON_ABILITY=null}}}
+async function weaponRecovery(actor){
+  const action=WEAPON_ACTIONS.get(actor);if(!action||UI.quiet||REDUCE)return;
+  // Wait for the painted recovery boundary, including slow desktop frames. A hidden
+  // tab may suspend painting, so wall time also provides a bounded completion path.
+  const deadline=performance.now()+Math.max(0,action.end-NOW)+100;
+  while(WEAPON_ACTIONS.get(actor)===action&&NOW<action.end&&performance.now()<deadline){
+    await UI.sleep(Math.max(16,Math.min(60,action.end-NOW))/PF());
+  }
+}
+{const original=heroAttack;heroAttack=async function(id,tx,ty){WEAPON_ABILITY={...AB[id],id};try{return await original(id,tx,ty)}finally{weaponContact(S.P,null);await weaponRecovery(S.P);WEAPON_ABILITY=null}}}
+// Utilities use the same contact clock as attacks, while their existing gameplay remains authoritative.
+{const original=doUtility;doUtility=async function(id,tx,ty){
+  const ab={...AB[id],id},profile=SaltmarrowWeapons.profile(ab),prior=WEAPON_ABILITY;
+  if(!profile||UI.quiet||REDUCE)return original(id,tx,ty);
+  WEAPON_ABILITY=ab;
+  try{
+    const col=ABCOL[id]||AURA[id]||(ab.el&&ELEM[ab.el]?.col)||'#c4d6ce';
+    const wind=flashAttack(S.P,{x:tx??S.P.x,y:ty??S.P.y},profile.style,col);
+    await UI.sleep(wind+170);
+    const result=await original(id,tx,ty);weaponContact(S.P,null);
+    await weaponRecovery(S.P);
+    return result;
+  }finally{weaponContact(S.P,null);WEAPON_ABILITY=prior}
+}}
 {const original=freeStrike;freeStrike=async function(att,tgt){
   if(att!==S.P||!wpn())return original(att,tgt);
   const prior=WEAPON_ABILITY;WEAPON_ABILITY={kind:'melee',id:'freeStrike'};
