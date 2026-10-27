@@ -161,8 +161,10 @@ if(typeof document==='object'){
 const oldPose=art.weaponPose,oldDraw=art.drawWeapon;
 art.weaponPose=function(base,e,now,action,reduced){const pose=oldPose(base,e,now,action,reduced);if(!pose||reduced||!action||action.base!==base||now<action.t0||(now>=action.end&&action.resolved!==false))return pose;
  const p=action.profile||profiles[action.id];if(!p)return pose;
- const clock=action.resolved===false?Math.min(now,action.impact-.01):now;
- const t=(clock-action.t0)/Math.max(1,action.impact-action.t0),recovery=Math.max(0,(clock-action.impact)/Math.max(1,action.end-action.impact));
+ const hold=Math.max(0,action.hold||0),elapsed=Math.max(0,now-action.impact);
+ const clock=action.resolved===false?Math.min(now,action.impact-.01):now-Math.min(hold,elapsed);
+ const t=(clock-action.t0)/Math.max(1,action.impact-action.t0),recovery=Math.max(0,(clock-action.impact)/Math.max(1,action.end-action.impact-hold));
+ if(action.resolved!==false&&now>=action.impact&&elapsed<hold)pose.phase='strike';
  const [x,y,angle]=track(p,t,recovery),vertical=Math.abs(action.dy)>Math.abs(action.dx);
  pose.x=Math.round(pose.side*(9+x*(vertical?.4:1)));pose.y=Math.round(-21+y+(vertical?action.dy*Math.max(0,Math.min(1,t))*6:0));pose.angle=angle+(vertical?(action.dy<0?-.6:.6):0);return pose;
 };

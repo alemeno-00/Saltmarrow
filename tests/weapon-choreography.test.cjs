@@ -27,3 +27,13 @@ test('body-family selection preserves named choreography and keeps tome utility 
 test('authored replacement atlas is transparent PNG, precached, and every weapon has a source cell',()=>{
  assert.equal(W.atlas.order.length,9);assert.deepEqual(new Set(W.atlas.order),new Set(W.bases));const png=fs.readFileSync(W.atlas.url);assert.equal(png.subarray(1,4).toString(),'PNG');assert.equal(png[25],6,'RGBA source preserves transparency');assert.ok(fs.readFileSync('sw.js','utf8').includes(W.atlas.url));
 });
+test('resolved non-baked weapon tracks retain the shared contact hold then recover to the original deadline',()=>{
+ const A=global.SaltmarrowArt,e={fx:1,fy:0};
+ for(const id of ['knife','breakwater','brinebolt']){
+  const a={base:'knife',id,profile:W.profiles[id],t0:0,impact:500,end:1100,hold:100,dx:1,dy:0,resolved:true};
+  const position=now=>{const p=A.weaponPose('knife',e,now,a);return[p.x,p.y,p.angle]};
+  assert.deepEqual(position(500),position(550));assert.deepEqual(position(500),position(599));assert.equal(A.weaponPose('knife',e,550,a).phase,'strike');
+  assert.notDeepEqual(position(500),position(800));assert.equal(A.weaponPose('knife',e,1101,a).phase,'idle');
+  a.resolved=false;assert.deepEqual(position(500),position(1500),'an unresolved hit stays before contact even when hold is configured');
+ }
+});
