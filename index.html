@@ -532,6 +532,7 @@ body.mob .mhead{display:none}
 <script src="environment-surfaces.js"></script>
 <script src="environment-scenes.js"></script>
 <script src="environment-lighting.js"></script>
+<script src="room-composition.js"></script>
 <script src="animation-art.js"></script>
 <script src="hollow-faith.js"></script>
 <script src="hollow-sprites.js"></script>
@@ -3266,6 +3267,8 @@ if(HF){
  };
 }
 
+/* Room composition follows all population, story and faction placement. */
+{const roomGen=genLevel;genLevel=function(){roomGen();if(globalThis.SaltmarrowRooms){SaltmarrowRooms.apply(S.L,W,H,{hero:S.P,blocked:Object.keys(FEAT).filter(k=>FEAT[k].block)});rebuildOpq();computeLight();computeFov()}}}
 /* ================= export for tests ================= */
 if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,spawnMon:(...a)=>spawnMon(...a),startCombat:(...a)=>startCombat(...a),gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,TOWN_LAYOUT,BUILDINGS,migrateTownLayout,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems,damage,killMon,heroAttack,HOLLOW,HF,heal:(...a)=>heal(...a),drownedTurn,drownedPhase,drownedFlood,drownedSummon,monsterTurn,endCombat,POOL,hasC,addC,intentOf,intentText,pickAb,heroEdges,stepCost};return}
 /* =====================================================================
@@ -7116,6 +7119,7 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
       if(OPENT(L.map[i])){ctx.fillStyle='#8d8064';ctx.globalAlpha*=.55;if(inb(x,y+1)&&L.map[I(x,y+1)]===PIT)ctx.fillRect(x*T,y*T+T-2,T,2);if(inb(x+1,y)&&L.map[I(x+1,y)]===PIT)ctx.fillRect(x*T+T-2,y*T,2,T)}
     }ctx.globalAlpha=1;
     if(TS.face&&!L.town)drawDressing(L,TS,0,W-1,0,H-1);
+    window.SaltmarrowRooms?.ground(ctx,L,tiles,{w:W,h:H,actors:[P,...L.mons],visible:vis});
     window.SaltmarrowLighting?.detail(ctx,L,tiles,{w:W,types:{floor:FLOOR,wall:WALL,water:WATER},visible:vis,actors:[P,...L.mons]});
     window.SaltmarrowEnvironment?.draw(ctx,L,tiles,{w:W,h:H,types:{floor:FLOOR,wall:WALL},now:NOW,reduced:REDUCE,visible:vis,buildings:BUILDINGS,actors:[P,...L.mons,...(L.npcs||[])]});
     DEATHS.sync(L);DEATHS.draw(ctx,deathProject,deathVisible,'floor');
@@ -7129,9 +7133,10 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
   for(const n of L.npcs||[])if(L.seen[I(n.x,n.y)])standing.push({e:n,depth:ISO.depth(n)+1,npc:true});
   if(townPlan)for(const b of townPlan.entries)standing.push({building:b,depth:b.y+b.h});
   for(const scene of window.SaltmarrowScenes?.entries(L,W,H,{wall:WALL,floor:FLOOR},BUILDINGS)||[])if(L.seen[I(scene.x,scene.y)])standing.push({scene,depth:scene.depth});
+  for(const focal of window.SaltmarrowRooms?.entries(L,W,H)||[])if(L.seen[I(focal.x,focal.y)])standing.push({roomFocal:focal,depth:focal.depth});
   standing.push({e:P,depth:ISO.depth(P)+1,hero:true});
   standing.sort((a,b)=>a.depth-b.depth||(a.wall?-1:1)-(b.wall?-1:1));
-  for(const entry of standing){ctx.save();if(entry.scene){window.SaltmarrowScenes.draw(ctx,L,entry.scene,{w:W,types:{wall:WALL,floor:FLOOR},visible:vis,actors:[P,...L.mons]})}else if(entry.death){drawPixelDeath(entry.death)}else if(entry.building){drawArtBuilding(entry.building)}else if(entry.wall){ctx.globalAlpha=window.SaltmarrowLighting?1:vis[I(entry.x,entry.y)]?1:.45;
+  for(const entry of standing){ctx.save();if(entry.roomFocal){const f=entry.roomFocal;if(f.depth>P.y+1&&P.x>=f.x-2&&P.x<=f.x+4&&Math.abs(f.y-P.y)<=2)ctx.globalAlpha*=.3;window.SaltmarrowRooms.drawFocal(ctx,L,entry.roomFocal,{w:W,actors:[P,...L.mons,...(L.npcs||[])]})}else if(entry.scene){window.SaltmarrowScenes.draw(ctx,L,entry.scene,{w:W,types:{wall:WALL,floor:FLOOR},visible:vis,actors:[P,...L.mons]})}else if(entry.death){drawPixelDeath(entry.death)}else if(entry.building){drawArtBuilding(entry.building)}else if(entry.wall){ctx.globalAlpha=window.SaltmarrowLighting?1:vis[I(entry.x,entry.y)]?1:.45;
       // Cut away nearby foreground masonry so the hero and target remain readable.
       if(entry.depth>P.y+1&&Math.abs(entry.x-P.x)<=2&&Math.abs(entry.y-P.y)<=2)ctx.globalAlpha*=.3;
       isoWall(TS,entry.x,entry.y,wf);
