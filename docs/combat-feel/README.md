@@ -1,0 +1,68 @@
+# Movement and combat feel review
+
+Direct playtest feedback: grid movement felt clunky; animations and fights passed too quickly to read; battles should feel impactful and dangerous.
+
+This branch starts from main `9bf5a8a`. It retains the flat pixel art, turn-based grid, movement costs, occupancy, pathfinding, actions, existing factions and equipped-weapon hooks. No real-time combat or new projection is introduced.
+
+## Result
+
+- Each ordinary tile step interpolates from its actual rendered position to its authoritative grid destination in 145 ms at normal pace, with a smooth start/stop and exact arrival. Strides and held-weapon motion follow that step rather than the global animation clock. Click paths stop on the existing threat/obstruction rules; redundant click-path waits are removed.
+- Attack profiles have distinct anticipation and travel/contact, a 65 ms contact hold, reaction and recovery. Normal profiles last roughly 0.7–1.0 s before any death settling. The wrapper keeps input locked until the beat finishes, including nested/free attacks; inputs do not accumulate an attack backlog.
+- Weapon/body contact and primary impact effects use the actual damage event. Area bursts wait for contact, delayed resolution holds the effect, and enemy strikes share the same contact clock. Existing hit/death sounds still originate from the real hit/death events. Fast/instant settings scale the timeline and primary effects; reduced motion snaps movement and omits the contact hold and extra death settling.
+- Drowned Knights and Spore Walkers commit a marked tile before a heavy slam, brace against 3 frontal damage while preparing, then recover for a turn. Moving clear, flanking, displacement and daze provide counterplay. Standing in the mark adds 3 damage to the existing attack tiers. Extra attacks cannot skip the warning. Enemy HP is unchanged.
+
+This adds interpolation and timing to existing native poses; it does **not** add a newly painted sprite atlas. Footstep sounds retain the existing accepted-step trigger. Cosmetic death debris may persist after input returns.
+
+## Before / after evidence
+
+The browser fixture uses the same seeded room, equipped maul and controlled tier-2 roll. Baseline serves main's original HTML, `flat-art.js` and `animation-art.js`. Videos show actual browser execution, including the fixture reset between checks. Screenshots alone cannot show pacing.
+
+| Main | This branch |
+| --- | --- |
+| [Desktop recording](before.webm) | [Desktop recording](after.webm) |
+| ![Main when attack returns](before.jpg) | ![This branch when attack returns](after.jpg) |
+| [Timing/state capture](before-metrics.json) | [Timing/state capture](after-metrics.json) |
+
+The main fixture returns while the held weapon still reports `recover`; this branch returns in `idle`. The normal maul action changes from about 0.65 s to about 1.0–1.1 s on this Mac. These are observations, not frame-time guarantees. The automated midpoint/arrival check verifies identical positions at 60 and 144 Hz.
+
+![Actual knight warning tile](heavy-telegraph.jpg)
+
+## Provisional encounter tuning
+
+Twenty-four seeded depth-3 mixed encounters (Knight + Sailor + Sapper), twelve each for Riptide and Shadow, use a fixed basic policy: dodge a committed warning when possible, approach and use the default attack. Both versions use the same seeds and unchanged monster HP. This intentionally limited policy does not use healing, advanced abilities or gear optimization.
+
+| Measure | Main | This branch |
+| --- | ---: | ---: |
+| Median meaningful hero turns until victory/defeat | 4 | 6 |
+| Range | 3–7 | 4–7 |
+| Survivals | 7/24 | 21/24 |
+| Median stamina lost | 48.5 | 34.5 |
+| Twenty-turn stalls | 0 | 0 |
+
+The stronger survival rate reflects readable counterplay rather than extra HP. It also means this is not evidence of universally harder encounters. The provisional 5–9-turn target is a tuning guide; individual quick wins and defeats remain valid. [Raw baseline](encounters-before.json) / [raw branch](encounters-after.json).
+
+## Verification and compatibility
+
+- 67 automated tests pass, including movement destinations/costs, telegraph commitment, interruption, displacement, bleeding, guard counterplay, contact hold and seeded encounter guardrails.
+- Desktop Chromium on macOS: new feel suite, equipped weapons, tactics, native animations (normal/reduced), flat projection and ordinary gameplay pass. The feel suite checks 60/144 Hz interpolation, exact arrival, rejected overlapping attack input, unchanged turn number, hero/enemy damage contact, burst contact, recovery, three speeds, killing-blow lock and reduced motion. CI uploads its recordings and screenshots.
+- A separate local combination with UI PR #29 and environment PR #28 passes 80 tests plus feel, UI and environment browser suites. Gameplay/rendering hunks merge cleanly after moving this branch's hooks beside actor rendering. Shared `sw.js` cache revision and the UI/environment package-script additions require mechanical reconciliation; retain all environment CORE assets and all test scripts. The independent feel CI workflow avoids edits to their renderer workflow.
+- Combat PR #25 and weapons PR #27 were already merged into the base. The compatibility combination was tested separately; neither pending branch was modified or incorporated into this PR.
+
+Safari and physical keyboard/mouse feel review remain outstanding. No native desktop build, deployment or merge is claimed. Human review should especially assess heavy-enemy threat frequency, the substantially improved survival rate, held-key feel and whether normal recovery is too long in larger encounters.
+
+## Reproduce
+
+```sh
+npm ci
+npx playwright install chromium --only-shell
+npm test
+SCREENSHOT_DIR=test-results/feel npm run test:feel
+npm run test:weapons
+npm run test:tactics
+node tests/animation-browser.cjs
+node tests/flat-browser.cjs
+npm run test:browser
+FEEL_REPORT=test-results/encounters.json node --test tests/feel.test.cjs
+```
+
+For baseline comparison, save `git show 9bf5a8a:index.html` as `before-feel.html`, with `before-flat-art.js` and `before-animation-art.js` alongside it from the same commit. Set `FEEL_BASELINE` to that HTML when running `tests/feel-browser.cjs`; set it for the `seeded mixed` test to generate baseline balance data. `CHROME_PATH` can select an installed Chromium executable.

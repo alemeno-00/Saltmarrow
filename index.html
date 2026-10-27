@@ -1680,7 +1680,7 @@ async function rollCart(o,dx,dy){const L=S.L;if(!dx&&!dy)return;log('The cart ru
     o.x=nx;o.y=ny;await UI.sleep(45)}}
 
 /* ================= exploration ================= */
-function moveEnt(e,x,y){if(x!==e.x||y!==e.y){e.fx=Math.sign(x-e.x);e.fy=Math.sign(y-e.y)}const t=tileAt(x,y);if(t===DOOR){S.L.map[I(x,y)]=OPEN;computeFov()}e.x=x;e.y=y}
+function moveEnt(e,x,y){const from={x:e.x,y:e.y};if(x!==e.x||y!==e.y){e.fx=Math.sign(x-e.x);e.fy=Math.sign(y-e.y)}const t=tileAt(x,y);if(t===DOOR){S.L.map[I(x,y)]=OPEN;computeFov()}e.x=x;e.y=y;if(from.x!==x||from.y!==y)UI.fx('step',{e,from})}
 function calm(m){m.state='idle';m.sus=0;m.inv=null;m.look=0;m.route=null}
 function turnRandom(m){const d=pick(DIR8);m.fx=d[0];m.fy=d[1]}
 function stepToward(m,tx,ty){if(m.x===tx&&m.y===ty)return false;const g=I(tx,ty);const pr=paths(m,m.x,m.y,40,{ignoreMons:true,goal:g});const p=pathTo(pr,g);if(!p||!p.length)return false;const n=p[0],x=n%W,y=(n/W)|0;if(occupied(x,y,m))return false;moveEnt(m,x,y);return true}
@@ -1740,7 +1740,7 @@ async function exploreStep(dx,dy){
   if(t===WEB){P.webbed=2;log('You blunder into a web and stick fast!','bad')}
   if(t===BONES&&!S.seenBones){S.seenBones=1;log('Bones crunch loudly underfoot.','old')}
   noise(P.x,P.y,stepNoise(),true);
-  await exploreTick();UI.render();return true}
+  S.busy=true;try{await UI.sleep(145);await exploreTick()}finally{S.busy=false}UI.render();return true}
 function smashWall(x,y){S.L.map[I(x,y)]=RUBBLE;S.L.seen[I(x,y)]=1;UI.fx('debris',{x,y});UI.fx('shake',{m:4});log('You smash through the cracked wall.','gold');noise(x,y,10);computeFov()}
 async function fallDown(){const P=S.P;if(S.depth>=MAXD){log('The shaft is choked with rubble a few feet down. There is nowhere deeper to fall.','old');UI.render();return}log('You drop into the shaft…','bad');S.C=null;S.mode='explore';const d=rr(2,5);await descend(true);damage(P,d,null);if(!S.over)log(`You land hard. ${d} damage.`,'bad');UI.render()}
 async function descend(fell){if(S.mode==='combat'&&!fell){log('You can\'t take the stairs with enemies on you.','bad');return}
@@ -2004,7 +2004,7 @@ async function walkHero(path,shift){const P=S.P;
     if(!shift){if(moveAvail()<cost)break;
       for(const m of S.L.mons.filter(m=>m.inCombat&&!m.surprised&&!hasC(m,'dazed')&&cheb(m.x,m.y,P.x,P.y)===1&&cheb(m.x,m.y,x,y)>1)){await freeStrike(m,P);if(S.over)return}
       consumeMove(cost)}
-    moveEnt(P,x,y);pickup();computeFov();await UI.sleep(85);revealCheck();
+    moveEnt(P,x,y);pickup();computeFov();await UI.sleep(145);revealCheck();
     if(S.L.fire[n]>0){damage(P,3,null);if(S.over)return;log('You run through the flames!','bad')}
     if(tileAt(x,y)===WEB){addC(P,'grabbed','web');log('You blunder into a web and stick fast!','bad');break}}
   if(tileAt(P.x,P.y)===STAIRS)log('The stairs are here, but you can\'t descend mid-fight.','old')}
@@ -2086,7 +2086,7 @@ function inReach(m,ab,x,y,cx,cy){const P=S.P;cx=cx==null?P.x:cx;cy=cy==null?P.y:
 async function walkMonster(m,path,freeSteps){const P=S.P;let k=0;
   for(const n of path){const x=n%W,y=(n/W)|0;if(occupied(x,y,m))break;
     if(k>=(freeSteps||0)&&!MT(m).fly&&cheb(m.x,m.y,P.x,P.y)===1&&cheb(x,y,P.x,P.y)>1&&P.stam>0&&!hasC(P,'dazed')&&!P.hidden){await freeStrike(P,m);if(m.dead||S.over)return}
-    moveEnt(m,x,y);k++;await UI.sleep(70);if(S.L.fire[n]>0&&!m.dead){damage(m,3,null);if(m.dead)return}}}
+    moveEnt(m,x,y);k++;await UI.sleep(145);if(S.L.fire[n]>0&&!m.dead){damage(m,3,null);if(m.dead)return}}}
 function bestTile(m,max,score){const pr=paths(m,m.x,m.y,max);let best=-1,bs=Infinity;
   for(let i=0;i<W*H;i++){if(pr.dist[i]===Infinity)continue;const s=score(i%W,(i/W)|0,pr.dist[i]);if(s<bs){bs=s;best=i}}
   return best<0?null:{i:best,path:pathTo(pr,best),score:bs}}
@@ -3247,6 +3247,44 @@ if(HF){
  };
 }
 
+/* ---------- deliberate heavy threats: committed aim, guard and recovery ---------- */
+const HEAVY_THREATS=new Set(['knight','shambler']);
+{const original=monsterAttack;monsterAttack=async function(m,ab,center){
+  if(!HEAVY_THREATS.has(m.type)||ab.kind!=='melee'||m.heavyResolving)return original(m,ab,center);
+  return prepareHeavy(m,ab);
+}}
+function prepareHeavy(m,ab){
+  if(m.heavyAim)return; // Extra attacks cannot bypass the warning turn.
+  m.heavyAim={x:S.P.x,y:S.P.y,fromX:m.x,fromY:m.y};faceTo(m,S.P.x,S.P.y);
+  log(`${The(m)} braces for ${ab.name}. Leave the marked tile, flank it, or daze it!`,'bad');
+  UI.fx('float',{e:m,text:'BRACED',color:'#ffc078'});
+}
+{const original=monsterTurn;monsterTurn=async function(m){
+  if(!m.heavyAim&&!m.heavyRecovery)return original(m);
+  if(m.surprised)return;
+  if(hasC(m,'bleeding')){damage(m,rr(2,4),null);if(m.dead){checkCombatEnd();return}}
+  if(m.heavyRecovery){m.heavyRecovery=false;log(`${The(m)} recovers. An opening!`,'old');endConds(m);return}
+  const aim=m.heavyAim;m.heavyAim=null;
+  if(hasC(m,'dazed')||m.x!==aim.fromX||m.y!==aim.fromY){log(`${The(m)} loses the prepared slam.`,'good');endConds(m);return}
+  m.heavyRecovery=true;
+  if(S.P.x===aim.x&&S.P.y===aim.y){
+    const ab=MT(m).ab.find(a=>a.kind==='melee');m.heavyResolving=true;
+    try{await monsterAttack(m,{...ab,t:ab.t.map(t=>({...t,d:t.d+3}))})}finally{m.heavyResolving=false}
+  }else{log(`${The(m)} slams the empty marked tile.`,'good');UI.fx('debris',aim);await UI.sleep(220)}
+  endConds(m);checkCombatEnd();
+}}
+{const original=damage;damage=function(e,amt,src,hit){
+  if(e.heavyAim&&src===S.P&&!hasC(e,'dazed')){
+    const aim=e.heavyAim,frontX=Math.sign(aim.x-e.x),frontY=Math.sign(aim.y-e.y);
+    if(Math.sign(src.x-e.x)===frontX&&Math.sign(src.y-e.y)===frontY){amt=Math.max(0,amt-3);UI.fx('float',{e,text:'BRACED −3',color:'#b8cbd2'})}
+  }
+  return original(e,amt,src,hit);
+}}
+{const original=addC;addC=function(e,id,src){const result=original(e,id,src);if(id==='dazed'&&e.heavyAim){e.heavyAim=null;e.heavyRecovery=true}return result}}
+{const original=intentOf;intentOf=function(m){if(m.heavyAim)return{kind:'slam',x:m.heavyAim.x,y:m.heavyAim.y};if(m.heavyRecovery)return{kind:'recover'};return original(m)}}
+{const original=intentText;intentText=function(m){if(m.heavyAim)return 'Braced −3 frontal damage. Slam: marked tile next enemy turn (+3 damage); move clear, flank or daze';if(m.heavyRecovery)return 'Recovering: cannot attack next turn; exploit the opening';return original(m)}}
+{const original=endCombat;endCombat=function(){for(const m of S.L.mons){m.heavyAim=null;m.heavyRecovery=false}return original()}}
+
 /* ================= export for tests ================= */
 if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,spawnMon:(...a)=>spawnMon(...a),startCombat:(...a)=>startCombat(...a),gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems,damage,killMon,heroAttack,HOLLOW,HF,heal:(...a)=>heal(...a),drownedTurn,drownedPhase,drownedFlood,drownedSummon,monsterTurn,endCombat,POOL,hasC,addC,intentOf,intentText,pickAb,heroEdges,stepCost};return}
 /* =====================================================================
@@ -4341,13 +4379,13 @@ function drawIntent(){const L=S.L,P=S.P;
     if(wind)await UI.sleep(wind)}catch(e){}
   return h0(id,tx,ty)}}
 const BITERS=new Set(['rat','wolf','direwolf','ghoul','eel','bat','gaunt','deepone','spider']);
-{const m0=monsterAttack;monsterAttack=async function(m,ab,center){try{let wind=0;if(ab.kind==='melee')wind=flashAttack(m,S.P,BITERS.has(m.type)?'bite':'claw','#e8503a');else if(ab.kind==='area'&&center){UI.fx('throw',{from:m,to:center,color:'#3a3a3a',big:true})}else{wind=flashAttack(m,S.P,'mcast',m.type==='cultist'||MT(m).ai==='caster'?'#b48ae8':'#c8d2d6');sfx('shoot')}if(wind)await UI.sleep(wind)}catch(e){}return m0(m,ab,center)}}
+{const m0=monsterAttack;monsterAttack=async function(m,ab,center){try{let wind=0;if(ab.kind==='melee')wind=flashAttack(m,S.P,BITERS.has(m.type)?'bite':'claw','#e8503a');else if(ab.kind==='area'&&center){UI.fx('throw',{from:m,to:center,color:'#3a3a3a',big:true})}else{wind=flashAttack(m,S.P,'mcast',m.type==='cultist'||MT(m).ai==='caster'?'#b48ae8':'#c8d2d6')}if(wind)await UI.sleep(wind)}catch(e){}return m0(m,ab,center)}}
 {const d0=doUtility;doUtility=async function(id,tx,ty){try{if(tx!=null&&['stone','oil','ink','charge'].includes(id)&&cheb(tx,ty,S.P.x,S.P.y)>1){UI.fx('throw',{from:S.P,to:{x:tx,y:ty},color:id==='oil'?'#ffb347':id==='ink'?'#5a5a7a':'#c8c0b0',big:id!=='stone'});await UI.sleep(260)}}catch(e){}return d0(id,tx,ty)}}
 {const h0=heal;heal=function(a){h0(a);try{UI.fx('healfx',{e:S.P})}catch(e){}}}
 /* ---------- drawn-out, flashy attacks: wind-up, glowing strike, impact ---------- */
 FX.x=[];FX.imp=[];
 const PF=()=>META.pace==='fast'?0.35:META.pace==='instant'?0.08:1;
-const ASTYLE={slash:[200,620,0.6],smash:[300,800,0.6],thrust:[150,540,0.6],spin:[200,640,0.58],whip:[220,640,0.61],hook:[180,620,0.565],cast:[340,820,0.62],throw:[140,560,0.55],claw:[180,560,0.62],bite:[180,560,0.62],mcast:[200,600,0.62]};
+const ASTYLE={slash:[260,780,0.6],smash:[360,960,0.6],thrust:[210,680,0.6],spin:[260,800,0.58],whip:[280,800,0.61],hook:[240,780,0.565],cast:[390,980,0.62],throw:[200,700,0.55],claw:[240,720,0.62],bite:[240,720,0.62],mcast:[280,800,0.62]};
 function flashAttack(att,tgt,style,col){const timing=ASTYLE[style]||ASTYLE.slash;att.pixelAction={t0:NOW,dur:Math.max(80,timing[1]*PF())};if(UI.quiet||REDUCE)return 0;const P=ASTYLE[style]||ASTYLE.slash,pf=PF();const a=wpos(att),b={x:tgt.x*T+T/2,y:tgt.y*T+T/2};
   const dx=Math.sign(tgt.x-att.x),dy=Math.sign(tgt.y-att.y);if(style!=='spin'&&style!=='cast'&&style!=='mcast')att.windup={t0:NOW,dur:P[0]*pf,dx,dy};if(style==='smash')att.hop={t0:NOW+P[0]*pf*0.2,dur:P[0]*pf*1.4,h:14};
   FX.x.push({k:style,a,b,att,c:col||'#f4ecd8',t0:NOW,dur:P[1]*pf,imp:P[2],hit:false,crit:false,seed:Math.random()*6});FX.lastSwing={x:att.x,y:att.y,t:NOW+P[0]*pf};
@@ -4363,7 +4401,7 @@ const glow=(c,a)=>hexA(c,Math.max(0,Math.min(1,a)));
 function arcTrail(cx,cy,r,a0,a1,c,w,alpha){const n=12;for(let k=0;k<n;k++){const q=k/n,aa=a0+(a1-a0)*q,ab=a0+(a1-a0)*(q+1/n);ctx.strokeStyle=glow(c,alpha*(0.15+0.85*q));ctx.lineWidth=w*(0.3+0.7*q);ctx.beginPath();ctx.arc(cx,cy,r,aa,ab);ctx.stroke()}
   ctx.strokeStyle=glow('#ffffff',alpha*0.9);ctx.lineWidth=Math.max(1,w*0.35);ctx.beginPath();ctx.arc(cx,cy,r,a0+(a1-a0)*0.7,a1);ctx.stroke()}
 function drawFlashy(){const A=FX.x;ctx.save();ctx.globalCompositeOperation='lighter';
-  for(let i=A.length-1;i>=0;i--){const a=A[i];const t=(NOW-a.t0)/a.dur;if(t>1.05){A.splice(i,1);continue}if(t<0)continue;const w=ASTYLE[a.k][0]/ASTYLE[a.k][1];const imp=a.imp;
+  for(let i=A.length-1;i>=0;i--){const a=A[i];const elapsed=(NOW-a.t0-Math.min(a.pause||0,Math.max(0,NOW-(a.pauseAt??NOW))))/a.dur,t=a.awaitHit?Math.min(elapsed,a.imp-.001):elapsed;if(t>1.05){A.splice(i,1);continue}if(t<0)continue;const w=ASTYLE[a.k][0]/ASTYLE[a.k][1];const imp=a.imp;
     if(!a.hit&&!a.awaitHit&&t>=imp){a.hit=true;const tgt=a.k==='spin'?a.a:a.b;impactFX(tgt.x,tgt.y,a.c,a.big||a.k==='smash',a.crit)}
     const ang=Math.atan2(a.b.y-a.a.y,a.b.x-a.a.x)||0;const s=Math.max(0,Math.min(1,(t-w)/(imp-w)));const after=Math.max(0,(t-imp)/(1-imp));
     switch(a.k){
@@ -5191,7 +5229,7 @@ function startWalk(x,y){if(!S||S.busy||S.mode!=='explore')return;const P=S.P;con
 async function runWalk(){while(walkQ&&walkQ.length&&S.mode==='explore'&&!S.over){const n=walkQ.shift();const x=n%W,y=(n/W)|0;const P=S.P;const before=S.L.mons.filter(monVisible).length;const sus0=S.L.mons.filter(m=>m.state!=='idle').length;
     if(cheb(x,y,P.x,P.y)!==1){walkQ=null;break}const ok=await exploreStep(x-P.x,y-P.y);if(!ok){walkQ=null;break}
     const after=S.L.mons.filter(monVisible).length,sus1=S.L.mons.filter(m=>m.state!=='idle').length;if(after>before||sus1>sus0){walkQ=null;log('You stop. Something stirs.','old');UI.render();break}
-    if(window.RT_STOP){window.RT_STOP=false;walkQ=null;break}await new Promise(r=>setTimeout(r,window.RT&&RT.on?150:90))}walkQ=null;if(walkTalk){const k=walkTalk;walkTalk=null;const n=S.L.npcs&&S.L.npcs.find(n=>n.key===k&&cheb(n.x,n.y,S.P.x,S.P.y)<=1);if(n)UI.talk(k)}}
+    if(window.RT_STOP){window.RT_STOP=false;walkQ=null;break}await UI.sleep(0)}walkQ=null;if(walkTalk){const k=walkTalk;walkTalk=null;const n=S.L.npcs&&S.L.npcs.find(n=>n.key===k&&cheb(n.x,n.y,S.P.x,S.P.y)<=1);if(n)UI.talk(k)}}
 function tileFromEvent(ev){const r=cv.getBoundingClientRect();return{x:Math.floor(((ev.clientX-r.left)/ZOOM+camX)/T),y:Math.floor(((ev.clientY-r.top)/ZOOM+camY)/T)}}
 function clickTile(x,y){if(!S||S.over||!$('overlay').hidden||!inb(x,y))return;
   if(!insp.hidden){closeInspect();return}
@@ -7266,11 +7304,12 @@ drawSprite=function(img,imgW,e,size,alpha,flipOk){
   if(e.windup){const t=(NOW-e.windup.t0)/e.windup.dur;if(t<1){const k=Math.sin(Math.min(1,t)*Math.PI/2)*T*.15;ox-=e.windup.dx*k;oy-=e.windup.dy*k}else e.windup=null}
   if(e.hop){const t=(NOW-e.hop.t0)/e.hop.dur;if(t<1)hop=Math.sin(t*Math.PI)*e.hop.h;else e.hop=null}
   const moving=Math.abs((e.rx??e.x)-e.x)+Math.abs((e.ry??e.y)-e.y)>.04;
-  const bob=REDUCE?0:Math.round(Math.sin(NOW/(moving?100:540)+(Number(e.id)||0))*(moving?1.3:.65));
+  const stride=e.walkStart!=null?Math.max(0,Math.min(1,(NOW-e.walkStart)/Math.max(1,e.walkDuration))):null;
+  const bob=REDUCE?0:moving&&stride!=null?-Math.round(Math.sin(stride*Math.PI)*1.5):Math.round(Math.sin(NOW/(moving?100:540)+(Number(e.id)||0))*(moving?1.3:.65));
   const footX=Math.round(p.x+ox),footY=Math.round(p.y+T/2+oy);
   ctx.save();if(alpha!=null)ctx.globalAlpha*=alpha;
   ctx.fillStyle='rgba(0,5,9,.48)';ctx.fillRect(footX-Math.round(w*.3),footY-2,Math.round(w*.6),3);
-  ctx.translate(footX,footY+(asset.posed?0:bob)-hop);
+  ctx.translate(footX,footY+(asset.posed&&!moving?0:bob)-hop);
   if(e.squash&&!REDUCE&&!asset.posed){const t=(NOW-e.squash.t0)/e.squash.dur;if(t>=0&&t<1){const k=Math.sin(t*Math.PI)*.18;ctx.scale(1+k,1-k)}else if(t>=1)e.squash=null}
   const weapon=e===S.P?wpn():null;
   const held=weapon?ART.weaponPose(weapon.base,e,NOW,WEAPON_ACTIONS.get(e),REDUCE):null;
@@ -7281,6 +7320,67 @@ drawSprite=function(img,imgW,e,size,alpha,flipOk){
   if(e.flashT&&NOW-e.flashT<140){ctx.globalAlpha*=.7;ctx.drawImage(ART.white(asset),-Math.round(w/2),-h,w,h)}ctx.restore();
   if(held&&!held.back)ART.drawWeapon(ctx,held,weapon.base,NOW);ctx.restore();
 };
+/* ---------- presentation clock: bounded movement and complete action beats ---------- */
+const FEEL={motions:new WeakMap(),actions:new WeakMap(),active:0,current:null};
+{const original=impactFX;impactFX=function(...args){if(REDUCE)return;const start=FX.imp.length,lights=FX.lights.length;original(...args);for(const fx of FX.imp.slice(start))fx.dur*=PF();for(const fx of FX.lights.slice(lights))fx.dur*=PF();if(FX.flash)FX.flash.dur*=PF();FX.stop=NOW+Math.max(0,FX.stop-NOW)*PF()}}
+{const original=UI.fx;UI.fx=function(type,d){
+  if(type==='step'){
+    const e=d.e,fromX=e.rx??d.from.x,fromY=e.ry??d.from.y;
+    if(REDUCE||UI.quiet){e.rx=e.x;e.ry=e.y;FEEL.motions.delete(e);return}
+    const motion={x:fromX,y:fromY,tx:e.x,ty:e.y,t0:NOW,dur:145*PF(),level:S.L};
+    FEEL.motions.set(e,motion);e.walkCycle=(e.walkCycle||0)+1;e.walkStart=NOW;e.walkDuration=motion.dur;return;
+  }
+  const action=FEEL.current&&FEEL.actions.get(FEEL.current);
+  if(action&&!action.resolved&&['burstfx','fire','lightning','splash','voidfx','explosion'].includes(type)){(action.pending||=[]).push({type,d});return}
+  const rings=FX.rings.length,bolts=FX.bolts.length,lights=FX.lights.length;
+  const result=original(type,d);for(const list of [FX.rings.slice(rings),FX.bolts.slice(bolts),FX.lights.slice(lights)])for(const fx of list)fx.dur*=PF();
+  if(type==='hit')FX.stop=NOW+Math.max(0,FX.stop-NOW)*PF();return result;
+}}
+{const original=animate;animate=function(dt){original(dt);for(const e of [S.P,...S.L.mons]){
+  const m=FEEL.motions.get(e);if(!m)continue;
+  if(m.level!==S.L||m.tx!==e.x||m.ty!==e.y){FEEL.motions.delete(e);e.rx=e.x;e.ry=e.y;continue}
+  const t=Math.max(0,Math.min(1,(NOW-m.t0)/m.dur)),q=t*t*(3-2*t);
+  e.rx=m.x+(m.tx-m.x)*q;e.ry=m.y+(m.ty-m.y)*q;
+  if(t===1){e.rx=e.x;e.ry=e.y;FEEL.motions.delete(e)}
+}}}
+{const original=flashAttack;flashAttack=function(att,tgt,style,col){
+  const wind=original(att,tgt,style,col);if(UI.quiet)return wind;
+  const effect=FX.x.filter(a=>a.att===att).at(-1),profile=ASTYLE[effect?.k||style]||ASTYLE.slash;
+  const action={t0:NOW,impact:NOW+(wind+170)*PF(),end:NOW+(REDUCE?170:profile[1])*PF(),effect,resolved:false};
+  FEEL.actions.set(att,action);
+  if(effect&&!REDUCE){effect.awaitHit=true;effect.imp=(action.impact-effect.t0)/effect.dur}
+  att.pixelAction={t0:NOW,dur:profile[1]*PF(),windupEnd:NOW+wind*PF(),impact:action.impact,end:action.end};
+  return wind;
+}}
+function feelContact(att,target){
+  const a=FEEL.actions.get(att);if(!a||a.resolved)return;
+  a.resolved=true;for(const fx of a.pending||[])UI.fx(fx.type,fx.d);a.pending=[];a.impact=NOW;const hold=REDUCE?0:65*PF();a.end=Math.max(a.end+hold,NOW+(REDUCE?100:285)*PF());
+  if(att.pixelAction){att.pixelAction.impact=NOW;att.pixelAction.hold=hold;att.pixelAction.end=a.end}
+  if(a.effect){const fx=a.effect;fx.awaitHit=false;fx.hit=true;fx.pauseAt=NOW;fx.pause=hold;fx.imp=(NOW-fx.t0)/fx.dur;
+    if(target&&!REDUCE)impactFX(wpos(target).x,wpos(target).y,fx.c,fx.big||fx.k==='smash',fx.crit)}
+  const held=WEAPON_ACTIONS.get(att);if(held){held.hold=hold;held.end=Math.max(held.end,a.end)}
+}
+{const original=damage;damage=function(e,amt,src,hit){if(amt>0)feelContact(src||FEEL.current,e);return original(e,amt,src,hit)}}
+async function feelFinish(att){
+  feelContact(att,null);const a=FEEL.actions.get(att);if(!a||UI.quiet)return;a.end=Math.max(a.end,WEAPON_ACTIONS.get(att)?.end||0);
+  const left=a.end-NOW;if(left>0)await UI.sleep(left/PF());
+  // A death sequence can outlast a light attack. Keep its collapse readable.
+  const deaths=DYING.filter(d=>d.level===S.L);const remaining=deaths.length?Math.max(...deaths.map(d=>780-(NOW-d.t0))):0;
+  if(!REDUCE&&META.pace==='normal'&&remaining>0)await UI.sleep(Math.min(remaining,320));
+  FEEL.actions.delete(att);
+}
+for(const key of ['hero','monster','free']){
+  const original=key==='hero'?heroAttack:key==='monster'?monsterAttack:freeStrike;
+  const wrapped=async function(...args){const att=key==='hero'?S.P:args[0],busy=S.busy;if(key==='monster'&&HEAVY_THREATS.has(att.type)&&args[1].kind==='melee'&&!att.heavyResolving)return prepareHeavy(att,args[1]);const previous=FEEL.current;FEEL.current=att;FEEL.active++;S.busy=true;
+    if(key==='free'&&!UI.quiet){const impact=NOW+110*PF(),end=NOW+(REDUCE?170:360)*PF();FEEL.actions.set(att,{t0:NOW,impact,end,resolved:false});att.pixelAction={t0:NOW,dur:end-NOW,windupEnd:NOW+70*PF(),impact,end}}
+    try{const result=await original(...args);await feelFinish(att);return result}
+    finally{FEEL.current=previous;FEEL.active--;S.busy=S.over?false:busy}
+  };
+  if(key==='hero')heroAttack=wrapped;else if(key==='monster')monsterAttack=wrapped;else freeStrike=wrapped;
+}
+{const original=endCombat;endCombat=function(){const result=original();if(FEEL.active)S.busy=true;return result}}
+{const original=drawIntent;drawIntent=function(){original();for(const m of S.L.mons){if(!m.heavyAim||!monVisible(m))continue;const p=tc(m.heavyAim);ctx.save();ctx.fillStyle='rgba(230,125,65,.3)';ctx.fillRect(p.x-T/2,p.y-T/2,T,T);ctx.strokeStyle='#ffc078';ctx.lineWidth=2;ctx.strokeRect(p.x-T/2+2,p.y-T/2+2,T-4,T-4);ctx.fillStyle='#fff0c0';ctx.font='bold 17px monospace';ctx.textAlign='center';ctx.fillText('!',p.x,p.y+6);ctx.restore()}}}
+
 const artObjBase=drawObj;
 drawObj=function(o){
   if(o.type==='corpse'){if(DYING.some(d=>d.level===S.L&&d.e.x===o.x&&d.e.y===o.y))return;const a=ART?.corpseAsset?.(o.mt);if(a){const p=wpos(o),scale=MON[o.mt]?.boss?1.5:1,w=Math.round(a.image.width*scale),h=Math.round(a.image.height*scale);ctx.save();if(o.visualKind==='fire')ctx.filter='brightness(.45)';ctx.drawImage(a.image,Math.round(p.x-w/2),Math.round(p.y+T/2-h),w,h);ctx.restore();return}}

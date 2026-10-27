@@ -18,3 +18,7 @@ test('every animation asset and runtime is cached and bundled offline',()=>{
  const sw=fs.readFileSync('sw.js','utf8');for(const name of ['actions','deaths','hero-actions','miner-actions','corpses']){const url='assets/flat/'+name+'.webp';assert.ok(fs.statSync(url).size>1024);assert.ok(sw.includes("'"+url+"'"))}
  assert.ok(sw.includes("'animation-art.js'"));for(const file of ['apk','mac'])assert.ok(fs.readFileSync('.github/workflows/'+file+'.yml','utf8').includes('../animation-art.js'));
 });
+test('explicit contact clock holds strike before entering recovery, without advancing simulation',()=>{
+ const e={x:1,y:1,pixelAction:{t0:1000,dur:960,impact:1530,hold:65,end:2025}};
+ const original=JSON.stringify(e);assert.equal(A.sample(e,1450,false).state,'windup');assert.equal(A.sample(e,1530,false).state,'strike');assert.equal(A.sample(e,1594,false).state,'strike');assert.equal(A.sample(e,1595,false).state,'recover');assert.equal(A.sample(e,1800,true).state,'idle');assert.equal(JSON.stringify(e),original);
+});
