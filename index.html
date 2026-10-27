@@ -5209,11 +5209,11 @@ cv.addEventListener('click',ev=>{const{x,y}=tileFromEvent(ev);clickTile(x,y)});
 cv.addEventListener('contextmenu',ev=>{ev.preventDefault();if(!S||!S.L||!$('overlay').hidden)return;if(SEL.id){cancelSel();return}const{x,y}=tileFromEvent(ev);openInspect(x,y,ev.clientX,ev.clientY)});
 let lastHover='';
 cv.addEventListener('mousemove',ev=>{if(!S||!S.L)return;const t=tileFromEvent(ev);
-  if(SEL.id){if(isValid(t.x,t.y)){SEL.cursor=t;const m=monAt(t.x,t.y);const f=m?forecast(SEL.id,t.x,t.y):'';if(f)showTip(f,ev.clientX,ev.clientY);else hideTip()}else hideTip();return}
-  SEL.hover=t;if(S.mode==='combat')renderGear();const key=t.x+','+t.y;if(key!==lastHover){lastHover=key;SEL.walk=null;
+  if(SEL.id){if(isValid(t.x,t.y)){const changed=!SEL.cursor||SEL.cursor.x!==t.x||SEL.cursor.y!==t.y;SEL.cursor=t;if(changed&&S.mode==='combat')renderGear();const m=monAt(t.x,t.y);const f=m?forecast(SEL.id,t.x,t.y):'';if(f)showTip(f,ev.clientX,ev.clientY);else hideTip()}else hideTip();return}
+  SEL.hover=t;const key=t.x+','+t.y;if(key!==lastHover){if(S.mode==='combat')renderGear();lastHover=key;SEL.walk=null;
     if(S.mode==='explore'&&inb(t.x,t.y)&&S.L.seen[I(t.x,t.y)]&&cheb(t.x,t.y,S.P.x,S.P.y)<=24&&!blockObjAt(t.x,t.y)){const pr=paths(S.P,S.P.x,S.P.y,40);SEL.walk=pathTo(pr,I(t.x,t.y))}}
   const s=insp.hidden?tileSummary(t.x,t.y):null;if(s)showTip(s,ev.clientX,ev.clientY);else hideTip()});
-cv.addEventListener('mouseleave',()=>{SEL.hover=null;SEL.walk=null;lastHover='';hideTip()});
+cv.addEventListener('mouseleave',()=>{SEL.hover=null;SEL.walk=null;lastHover='';if(S?.mode==='combat')renderGear();hideTip()});
 document.addEventListener('mousedown',ev=>{if(!insp.hidden&&!insp.contains(ev.target)&&ev.target!==cv)closeInspect()});
 const MOVE={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0],q:[-1,-1],e:[1,-1],z:[-1,1],c:[1,1],Home:[-1,-1],PageUp:[1,-1],End:[-1,1],PageDown:[1,1]};
 function doMove(dx,dy){closeInspect();if(S.mode==='combat')combatStep(dx,dy);else{walkQ=null;exploreStep(dx,dy)}}
@@ -7398,9 +7398,9 @@ if(HFA){
   d.innerHTML=`<div>Stamina <b>${Math.max(0,P.stam)} / ${P.max}</b></div><div class="bar2"><i style="width:${Math.max(0,Math.min(100,P.stam/P.max*100))}%;background:#a6372e"></i></div><div>Dread ${P.dread||0} / 10</div>`;b.querySelector('.who')?.after(d)}}
 {const r0=renderGear;renderGear=function(){r0();if(S?.mode!=='combat')return;
   const enemies=S.L.mons.filter(m=>!m.dead&&m.stam>0&&monVisible(m));
-  const m=enemies.find(m=>SEL.hover&&m.x===SEL.hover.x&&m.y===SEL.hover.y)||enemies.sort((a,b)=>Math.hypot(a.x-S.P.x,a.y-S.P.y)-Math.hypot(b.x-S.P.x,b.y-S.P.y))[0];if(!m)return;
+  const focus=SEL.id?SEL.cursor:SEL.hover;const m=enemies.find(m=>focus&&m.x===focus.x&&m.y===focus.y)||enemies.sort((a,b)=>Math.hypot(a.x-S.P.x,a.y-S.P.y)-Math.hypot(b.x-S.P.x,b.y-S.P.y))[0];if(!m)return;
   const el=$('gearBox'),a=ART?.frameAsset?.(m.type,m,NOW,true)||ART?.actor(m.type)||(HFA?.ids.includes(m.type)?{image:HFA.frame(m,NOW,true)}:null);
-  el.innerHTML=`<p class="label"><span>${SEL.hover&&m.x===SEL.hover.x&&m.y===SEL.hover.y?'Target':'Nearest foe'} · ${esc(MT(m).name)}</span><button class="btn" id="targetPack">Pack</button></p><div class="target-detail">${a?'<img alt="">':''}<div><div class="bar2"><i style="width:${Math.max(0,Math.min(100,m.stam/m.max*100))}%;background:#a6372e"></i></div><p>Stamina ${Math.max(0,m.stam)} / ${m.max}</p><small>${esc((m.conds||[]).map(c=>c.id).join(' · ')||AI_TXT[MT(m).ai]||'Hostile')}</small><p class="enemy-intent"><b>Intent</b> · ${esc(intentText(m))}</p></div></div>`;
+  el.innerHTML=`<p class="label"><span>${focus&&m.x===focus.x&&m.y===focus.y?'Target':'Nearest foe'} · ${esc(MT(m).name)}</span><button class="btn" id="targetPack">Pack</button></p><div class="target-detail">${a?'<img alt="">':''}<div><div class="bar2"><i style="width:${Math.max(0,Math.min(100,m.stam/m.max*100))}%;background:#a6372e"></i></div><p>Stamina ${Math.max(0,m.stam)} / ${m.max}</p><small>${esc((m.conds||[]).map(c=>c.id).join(' · ')||AI_TXT[MT(m).ai]||'Hostile')}</small><p class="enemy-intent"><b>Intent</b> · ${esc(intentText(m))}</p></div></div>`;
   if(a)el.querySelector('img').src=a.image.toDataURL();el.querySelector('#targetPack').onclick=UI.gear;
 }}
 
