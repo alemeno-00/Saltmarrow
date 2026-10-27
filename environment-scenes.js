@@ -8,7 +8,7 @@ function plan(L,w,h,types,buildings=[]){
   out.push({kind:'coal',x:b.x,y:b.y+b.h-1,w:2,h:1,depth:b.y+b.h+.01});
   out.push({kind:'quench',x:b.x+b.w-2,y:b.y+b.h-1,w:2,h:1,depth:b.y+b.h+.01});
  }}else if(L.bio==='mine'){
-  for(const r of L.rooms||[]){if(r.w<7||r.h<5||r.chapel||r.bell||!['rect','pillar','octa'].includes(r.shape))continue;
+  for(const r of L.rooms||[]){if(L.roomComposition?.rooms.some(c=>c.x===r.x&&c.y===r.y&&c.focal))continue;if(r.w<7||r.h<5||r.chapel||r.bell||!['rect','pillar','octa'].includes(r.shape))continue;
    // Find an intact three-tile rear wall, away from authored wall clues and entrances.
    for(let x=r.x;x<=r.x+r.w-3;x++){
     const y=r.y-1;let safe=y>0;
