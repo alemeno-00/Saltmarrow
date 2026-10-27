@@ -4,7 +4,7 @@ const html=fs.readFileSync('index.html','utf8'),script=html.match(/<script>\s*\(
 function game(seed=1){let n=seed;const math=Object.create(Math);math.random=()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296};const c={console,Math:math,SaltmarrowDeaths:global.SaltmarrowDeaths,setTimeout,clearTimeout};vm.createContext(c);vm.runInContext(script,c);return c.G}
 function check(g){
  const {L,P}=g.S,d=g.bfsDist(g.TOWN_LAYOUT.spawnX,g.TOWN_LAYOUT.spawnY,false),ids=new Set();
- assert.equal(L.townLayout.version,6);assert.equal(L.townScene,6);assert.equal(L.townBridges.length,2);assert.ok(L.townStairs.length>=4);
+ assert.equal(L.townLayout.version,7);assert.equal(L.townScene,6);assert.equal(L.townBridges.length,2);assert.ok(L.townStairs.length>=4);
  for(const [x,y,w,h]of L.townBridges)for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++)assert.ok(d[g.I(xx,yy)]>=0,'bridge connected');
  for(const b of g.BUILDINGS){assert.ok(d[g.I(b.dx,b.dy)]>=0,`${b.key} approach reachable`);const o=L.objs.find(o=>o.type==='door'&&o.key===b.key);assert.ok(o);assert.equal(o.x,b.dx);assert.equal(o.y,b.dy-1);assert.equal(L.map[g.I(b.dx,b.dy)],1)}
  for(const o of L.objs){assert.ok(!ids.has(o.id),'unique object IDs');ids.add(o.id);if(o.type==='townRelic')assert.ok(d[g.I(o.x,o.y)]>=0,o.name+' story reachable');if(['house','liftgate','lotbox'].includes(o.type))assert.ok([[0,1],[0,-1],[1,0],[-1,0]].some(([dx,dy])=>d[g.I(o.x+dx,o.y+dy)]>=0),o.type+' accessible');if(['house','door','grave','lamp'].includes(o.type))assert.ok(L.map[g.I(o.x,o.y)]!==0,o.type+' not buried in a building')}
@@ -37,3 +37,17 @@ test('coastal module ships in web cache and both native offline bundles',()=>{
 });
 
 test('the authored coastline cannot be excavated into walkable sea',async()=>{const g=game();g.enterTown();Object.assign(g.S.P,{x:13,y:33,rx:13,ry:33});g.S.gear.weapon=g.genWeapon(1,'fine');g.S.gear.weapon.base='pick';const before=JSON.stringify(g.S.L.map);assert.equal(await g.exploreStep(-1,0),false);assert.equal(JSON.stringify(g.S.L.map),before);assert.equal(g.S.P.x,13);assert.equal(g.S.P.y,33)});
+
+test('covered terrace stairs use paired landings and never walk through retaining walls',async()=>{
+ const g=game();g.enterTown();const L=g.S.L;
+ assert.equal(L.townPassages.length,4);
+ for(const [x,y,w,h]of[[34,21,2,8],[44,21,2,8]])for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++)assert.equal(L.map[g.I(xx,yy)],0,'covered stair interior stays solid');
+ for(const p of L.townPassages){
+  assert.ok(L.townPassages.some(q=>q.x===p.toX&&q.y===p.toY&&q.toX===p.x&&q.toY===p.y));
+  Object.assign(g.S.P,{x:p.x,y:p.y,rx:p.x,ry:p.y});
+  assert.equal(await g.exploreStep(p.toX-p.x,p.toY-p.y),true);
+  assert.deepEqual([g.S.P.x,g.S.P.y,g.S.P.rx,g.S.P.ry],[p.toX,p.toY,p.toX,p.toY],'arrival snaps to paired landing without interpolating across masonry');
+  assert.equal(g.S.busy,false);assert.equal(g.S.P.townTransit,undefined);
+ }
+ Object.assign(g.S.P,{x:22,y:30,rx:22,ry:30});assert.equal(await g.exploreStep(10,0),false,'arbitrary long moves cannot skip walls');
+});

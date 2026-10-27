@@ -22,6 +22,13 @@ function changes(g,L){
  }
  // Physical progression stays sparse so it does not compete with the authored scene.
  if(L.townAct===4){g.fillStyle='rgba(12,39,49,.18)';for(const[x,y,w,h]of[[14,36,8,1],[22,33,8,1]])g.fillRect(x*32,y*32,w*32,h*32)}
+ // Discreet brass wayfinding marks identify stair landings without covering the authored masonry.
+ for(const p of L.townPassages||[]){const x=p.x*32,y=p.y*32;
+  g.fillStyle='rgba(13,23,27,.65)';g.fillRect(x+6,y+8,21,20);
+  g.fillStyle='#9e8d65';for(const [dx,dy]of[[5,7],[24,7],[5,26],[24,26]]){g.fillRect(x+dx,y+dy,4,1);g.fillRect(x+dx,y+dy,1,3)}
+  g.fillStyle='#747d77';for(let k=0;k<3;k++)g.fillRect(x+10,y+17+k*3,13,1);
+  const up=p.toY<p.y;g.fillStyle='#e1c583';g.fillRect(x+15,y+10,2,10);g.fillRect(x+12,y+(up?12:16),8,2);g.fillRect(x+14,y+(up?10:18),4,2);
+ }
  g.restore();
 }
 function hit(L,x,y){
