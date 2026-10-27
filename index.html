@@ -805,11 +805,13 @@ function los(x0,y0,x1,y1,noSmoke){
     if(!(x===x0&&y===y0)){const i=I(x,y);if(opaqueAt(i))return false;if(!noSmoke&&(S.L.smoke[i]>0||S.L.spore[i]>0))return false}
     const e2=2*err;if(e2>=dy){err+=dy;x+=sx}if(e2<=dx){err+=dx;y+=sy}}}
 const sees=(ax,ay,bx,by)=>los(ax,ay,bx,by)||los(bx,by,ax,ay);
+function townPassageAt(x,y){return S.L.townScene?(S.L.townPassages||[]).find(p=>p.x===x&&p.y===y):null}
+function routeDirs(x,y){const p=townPassageAt(x,y);return p?[...DIR8,[p.toX-x,p.toY-y]]:DIR8}
 function paths(e,sx,sy,max,opt){opt=opt||{};
   const dist=new Float32Array(W*H).fill(Infinity),prev=new Int32Array(W*H).fill(-1),B=[];const s=I(sx,sy);dist[s]=0;B[0]=[s];
   for(let c=0;c<=max;c++){const b=B[c];if(!b)continue;
     for(let k=0;k<b.length;k++){const n=b[k];if(dist[n]!==c)continue;const x=n%W,y=(n/W)|0;
-      for(const[dx,dy]of DIR8){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const ni=I(nx,ny);
+      for(const[dx,dy]of routeDirs(x,y)){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const ni=I(nx,ny);
         const cost=stepCost(S.L.map[ni],e,ni);if(cost===Infinity)continue;
         if(ni!==opt.goal&&(opt.ignoreMons?!!blockObjAt(nx,ny):occupied(nx,ny,e)))continue;
         const nd=c+cost;if(nd>max||nd>=dist[ni])continue;dist[ni]=nd;prev[ni]=n;(B[nd]||(B[nd]=[])).push(ni)}}}
@@ -817,7 +819,7 @@ function paths(e,sx,sy,max,opt){opt=opt||{};
 function pathTo(pr,goal){if(pr.dist[goal]===Infinity)return null;const out=[];let n=goal;while(pr.prev[n]!==-1){out.push(n);n=pr.prev[n]}return out.reverse()}
 function bfsDist(sx,sy,gatesOpen){const d=new Int32Array(W*H).fill(-1),q=[I(sx,sy)];d[q[0]]=0;const blk=new Uint8Array(W*H);
   if(S.L.objs)for(const o of S.L.objs)if(FEAT[o.type].block)blk[I(o.x,o.y)]=1;
-  for(let h=0;h<q.length;h++){const n=q[h],x=n%W,y=(n/W)|0;for(const[dx,dy]of DIR8){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const ni=I(nx,ny),t=S.L.map[ni];
+  for(let h=0;h<q.length;h++){const n=q[h],x=n%W,y=(n/W)|0;for(const[dx,dy]of routeDirs(x,y)){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const ni=I(nx,ny),t=S.L.map[ni];
     if(t===WALL||t===CRACK||t===PIT||(t===GATE&&!gatesOpen)||d[ni]>=0||blk[ni])continue;d[ni]=d[n]+1;q.push(ni)}}return d}
 function rebuildOpq(){const L=S.L;L.opq=new Uint8Array(W*H);for(const o of L.objs)if(FEAT[o.type].opaque)L.opq[I(o.x,o.y)]=1}
 
@@ -1368,13 +1370,14 @@ const BUILDINGS=[
  {key:'archive',name:'The Old Archive',npc:null,x:47,y:19,w:10,h:11,door:'s'},
  {key:'cottage',name:'Your Cottage',npc:null,x:25,y:24,w:9,h:6,door:'s'}
 ];
-const TOWN_LAYOUT={version:6,left:13,right:61,top:0,bottom:38,spawnX:22,spawnY:30};
+const TOWN_LAYOUT={version:7,left:13,right:61,top:0,bottom:38,spawnX:22,spawnY:30};
 function genTown(){
  const map=new Array(W*H).fill(WALL),N=W*H;
  const L=S.L={map,bio:'town',town:true,townScene:6,townAct:act(),townLayout:{...TOWN_LAYOUT},seen:new Array(N).fill(1),smoke:new Array(N).fill(0),spore:new Array(N).fill(0),fire:new Array(N).fill(0),light:new Uint8Array(N),opq:new Uint8Array(N),items:[],mons:[],objs:[],npcs:[],deco:new Uint8Array(N),bld:new Uint8Array(N),townLand:new Uint8Array(N),townElevation:new Uint8Array(N),townLanes:new Uint8Array(N)};
  const path=(x,y,w,h,z=2)=>{for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++){const i=I(xx,yy);map[i]=FLOOR;L.townLand[i]=1;L.townElevation[i]=z;L.townLanes[i]=1}};
  for(const[x,y,w,h,z]of[[24,12,34,2,3],[23,9,2,12,2],[15,20,30,2,2],[34,21,2,10,1],[51,13,2,5,2],[44,17,14,2,2],[44,18,2,12,1],[22,30,36,2,1],[13,32,10,2,1],[20,29,3,5,1],[21,34,2,4,1],[19,36,4,2,1],[38,11,1,2,3]])path(x,y,w,h,z);
- L.townStairs=[[23,9,2,11],[34,22,2,8],[51,13,2,4],[44,19,2,9],[21,31,2,7]];
+ L.townStairs=[[23,9,2,11],[34,20,2,2],[51,13,2,4],[44,19,2,2],[21,31,2,7]];
+ L.townPassages=[{x:34,y:29,toX:34,toY:20,name:'West stair passage',destination:'Middle terrace'},{x:34,y:20,toX:34,toY:29,name:'West stair passage',destination:'Lower terrace'},{x:45,y:29,toX:45,toY:20,name:'East stair passage',destination:'Middle terrace'},{x:45,y:20,toX:45,toY:29,name:'East stair passage',destination:'Lower terrace'}];
  L.townBridges=[[31,12,3,1],[38,30,4,1]];
  const obj=(type,x,y,ex={})=>{const o={type,x,y,id:S.nextId++,...ex};L.objs.push(o);return o};
  for(const b of BUILDINGS){
@@ -1387,7 +1390,7 @@ function genTown(){
  obj('townRelic',38,11,{name:'Deep Bell Tower',desc:bellTexts[act()-1]});
  obj('liftgate',14,31);map[I(14,31)]=FLOOR;L.townLand[I(14,31)]=1;
  // Attached homes are inspectable entrances in the painted stonework, with clear frontages.
- for(const[x,y,k]of[[36,18,0],[34,23,1],[61,11,2],[22,28,3]]){path(x,y+1,1,1);map[I(x,y)]=FLOOR;L.townLand[I(x,y)]=1;obj('house',x,y,{boarded:k<act()-1+(flag('bribed')?1:0)})}
+ for(const[x,y,k]of[[36,18,0],[57,29,1],[61,11,2],[22,28,3]]){path(x,y+1,1,1);map[I(x,y)]=FLOOR;L.townLand[I(x,y)]=1;obj('house',x,y,{boarded:k<act()-1+(flag('bribed')?1:0)})}
  // Residential niches join the painted side stairs rather than opening onto rock faces.
  path(36,19,1,2,2);path(61,12,1,6,3);path(57,16,5,2,2);path(22,29,1,2,1);
  const stories=[[21,30,'The Last Catch','Nets dry above a wreck whose name has been scraped away. The catch ledger ends with a drawing of a hand.'],[21,9,'Drowned Saint','Salt has grown over the saint’s face. Someone still replaces the candles.'],[54,31,'Unsent Letters','Rain swells bundles of letters addressed to ships that never returned.'],[30,30,'The Empty Chair','One cup, two hooks for coats, a mining helmet full of rain.'],[17,32,'Wharf Tide Gauge','The newest tide notch is above the winch keeper’s shoulder.']];
@@ -1395,6 +1398,9 @@ function genTown(){
  path(21,9,3,1,3);
  // Front parapets are not walkable pavement; register the inner road centres.
  for(const[y,x0,x1]of[[13,25,50],[21,15,33],[21,36,43],[31,23,50],[31,55,57]])for(let x=x0;x<=x1;x++){const i=I(x,y);if(!L.bld[i]){map[i]=WALL;L.townLand[i]=0;L.townLanes[i]=0;L.townElevation[i]=0}}
+ // Covered stairs pass behind masonry. Only the paired landings are walkable.
+ for(const[x,y,w,h]of[[34,21,2,8],[44,21,2,8]])for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++){const i=I(xx,yy);map[i]=WALL;L.townLand[i]=L.townLanes[i]=L.townElevation[i]=0}
+ for(const p of L.townPassages)path(p.x,p.y,1,1,p.y<25?2:1);
  const npc=(key,x,y,r=0)=>L.npcs.push({key,x,y,rx:x,ry:y,home:{x,y},r,fx:1,fy:0,id:S.nextId++});
  for(const b of BUILDINGS)if(b.npc&&(b.npc!=='nell'||flag('nellFreed'))){const at=[[b.dx-1,b.dy],[b.dx+1,b.dy],[b.dx,b.dy+1]].find(([x,y])=>map[I(x,y)]===FLOOR&&!L.objs.some(o=>o.x===x&&o.y===y&&FEAT[o.type].block)&&!L.npcs.some(n=>n.x===x&&n.y===y))||[b.dx,b.dy];npc(b.npc,at[0],at[1],0)}
  npc('mara',15,33,0);if(flag('pipFreed'))npc('pip',31,20,0);
@@ -1674,8 +1680,16 @@ function stalkerTick(){const L=S.L,P=S.P;if(L.town||S.depth>=MAXD)return;const t
   if(t>=430&&!L.stalker){L.stalker=1;const d=bfsDist(P.x,P.y,false);let best=-1,bd=0;for(let i=0;i<W*H;i++)if(d[i]>bd&&d[i]<70&&L.map[i]===FLOOR&&!occupied(i%W,(i/W)|0,null)){bd=d[i];best=i}
     if(best>=0){const M=MON.stalker,x=best%W,y=(best/W)|0;L.mons.push({id:S.nextId++,type:'stalker',x,y,rx:x,ry:y,stam:M.stam+S.depth*6,max:M.stam+S.depth*6,temp:0,conds:[],state:'sus',role:'hunter',fx:0,fy:1,sus:1,unseen:0,home:{x,y},inCombat:false,surprised:false,lost:0,inv:{x:P.x,y:P.y}});log('You hear it now. It knows exactly where you are.','dread');UI.toast('It is coming','Find the stairs')}}
   for(const m of L.mons)if(m.type==='stalker'&&!m.inCombat){m.state='sus';m.inv={x:P.x,y:P.y};m.look=0}}
+async function traverseTownPassage(p){
+ const P=S.P;S.busy=true;P.townTransit=true;UI.render();
+ try{await UI.sleep(160);P.x=P.rx=p.toX;P.y=P.ry=p.toY;if(!HEADLESS){camInit=false;ISO.camera.ready=false}computeFov();log(`You follow the covered stair to the ${p.destination.toLowerCase()}.`,'old');await UI.sleep(100)}
+ finally{delete P.townTransit;S.busy=false}UI.save();UI.render();return true
+}
 async function exploreStep(dx,dy){
   if(S.busy||S.over||S.mode!=='explore')return false;const P=S.P,nx=P.x+dx,ny=P.y+dy;
+  const passage=townPassageAt(P.x,P.y);
+  if(passage&&((nx===passage.toX&&ny===passage.toY)||(dx===0&&dy===Math.sign(passage.toY-P.y)&&tileAt(nx,ny)===WALL)))return traverseTownPassage(passage);
+  if(Math.abs(dx)>1||Math.abs(dy)>1)return false;
   if(!dx&&!dy){await exploreTick();UI.render();return true}
   if(!inb(nx,ny))return false;
   if(P.webbed>0){P.webbed--;log(P.webbed?'You struggle in the web.':'You tear free of the web.',P.webbed?'old':'good');noise(P.x,P.y,2,true);await exploreTick();UI.render();return true}
@@ -5189,7 +5203,7 @@ UI.stopWalk=()=>{walkQ=null};
 let walkQ=null,walkTalk=null;
 function startWalk(x,y){if(!S||S.busy||S.mode!=='explore')return;const P=S.P;const pr=paths(P,P.x,P.y,200);const p=pathTo(pr,I(x,y));if(!p||!p.length)return;walkQ=p;runWalk()}
 async function runWalk(){while(walkQ&&walkQ.length&&S.mode==='explore'&&!S.over){const n=walkQ.shift();const x=n%W,y=(n/W)|0;const P=S.P;const before=S.L.mons.filter(monVisible).length;const sus0=S.L.mons.filter(m=>m.state!=='idle').length;
-    if(cheb(x,y,P.x,P.y)!==1){walkQ=null;break}const ok=await exploreStep(x-P.x,y-P.y);if(!ok){walkQ=null;break}
+    if(cheb(x,y,P.x,P.y)!==1&&!(townPassageAt(P.x,P.y)?.toX===x&&townPassageAt(P.x,P.y)?.toY===y)){walkQ=null;break}const ok=await exploreStep(x-P.x,y-P.y);if(!ok){walkQ=null;break}
     const after=S.L.mons.filter(monVisible).length,sus1=S.L.mons.filter(m=>m.state!=='idle').length;if(after>before||sus1>sus0){walkQ=null;log('You stop. Something stirs.','old');UI.render();break}
     if(window.RT_STOP){window.RT_STOP=false;walkQ=null;break}await UI.sleep(0)}walkQ=null;if(walkTalk){const k=walkTalk;walkTalk=null;const n=S.L.npcs&&S.L.npcs.find(n=>n.key===k&&cheb(n.x,n.y,S.P.x,S.P.y)<=1);if(n)UI.talk(k)}}
 function tileFromEvent(ev){const r=cv.getBoundingClientRect();return{x:Math.floor(((ev.clientX-r.left)/ZOOM+camX)/T),y:Math.floor(((ev.clientY-r.top)/ZOOM+camY)/T)}}
@@ -5200,6 +5214,7 @@ function clickTile(x,y){if(!S||S.over||!$('overlay').hidden||!inb(x,y))return;
   if(S.mode==='combat'){if(S.C.phase!=='hero')return;const m=monAt(x,y);if(m&&monVisible(m)){const id=defaultAttack(x,y);if(id&&abUsable(id).ok){useAbility(id,x,y);return}}
     if(cheb(x,y,P.x,P.y)===1&&blockObjAt(x,y)){combatStep(x-P.x,y-P.y);return}
     if(x===P.x&&y===P.y)return;combatWalkTo(x,y);return}
+  const passage=townPassageAt(x,y);if(passage){if(x===P.x&&y===P.y)traverseTownPassage(passage);else if(cheb(x,y,P.x,P.y)<=1)startWalk(passage.toX,passage.toY);else startWalk(x,y);return}
   if(x===P.x&&y===P.y){exploreStep(0,0);return}
   if(cheb(x,y,P.x,P.y)===1){const n=S.L.townScene&&npcAt(x,y);if(n){UI.talk(n.key);return}walkQ=null;exploreStep(x-P.x,y-P.y);return}
   if(S.L.npcs&&npcAt(x,y)){const np=npcAt(x,y),a=nearestAdj(x,y);if(a){walkTalk=np.key;startWalk(a.x,a.y)}return}
@@ -7100,11 +7115,12 @@ function drawUnifiedTown(){
  if(!SaltmarrowCoast.loaded){ctx.fillStyle='#c8b68c';ctx.font='16px Georgia';ctx.fillText('Loading Saltmarrow…',c.x+24,c.y+40);ctx.restore();return}
  SaltmarrowCoast.changes(ctx,L);
  const people=[...(L.npcs||[]).map(e=>({e,npc:true})),{e:P,hero:true}].sort((a,b)=>ISO.depth(a.e)-ISO.depth(b.e));
- for(const {e,hero}of people){ctx.save();isoUpright(e,()=>drawSprite(hero?SPR[S.cls]:npcImg(e),hero?SPRW[S.cls]:null,e,T,hero&&P.hidden?.5:1));ctx.restore()}
+ for(const {e,hero}of people){if(hero&&P.townTransit)continue;ctx.save();isoUpright(e,()=>drawSprite(hero?SPR[S.cls]:npcImg(e),hero?SPRW[S.cls]:null,e,T,hero&&P.hidden?.5:1));ctx.restore()}
  for(const it of L.items){const im=SPR[it.kind==='gear'?gearSpr(it.item):it.kind];if(im)ctx.drawImage(im,it.x*T,it.y*T,T,T)}
  drawOverlays(0,W-1,0,H-1);
  // The authored lights establish the scene. A small lantern pool follows the live actor.
  if(P.lantern)isoPixelLight((P.rx+.5)*T,(P.ry+.5)*T,T*1.8,'#d5b17a',.075);
+ for(const p of L.townPassages||[])if(cheb(P.x,P.y,p.x,p.y)<=3)tag(ctx,(p.x+.5)*T,(p.y+1.35)*T,p.destination,'#d8c599');
  const near=BUILDINGS.filter(b=>cheb(P.x,P.y,b.dx,b.dy)<=3);
  for(const b of near)tag(ctx,(b.dx+.5)*T,(b.dy+1.1)*T,b.name,'#d8c599');
  ctx.restore();ctx.setTransform(dpr,0,0,dpr,0,0);drawAtmos(0,0);
