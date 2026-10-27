@@ -8,6 +8,7 @@
     "test:drowned": "node tests/drowned-browser.cjs",
     "test:art": "node tests/art-browser.cjs",
     "test:hollow": "node tests/hollow-browser.cjs",
+    "test:weapons": "node tests/weapons-browser.cjs",
     "test:environment": "node tests/environment-browser.cjs"
   },
   "devDependencies": {
