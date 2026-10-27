@@ -1,10 +1,10 @@
 name: Desktop environment art
 on:
   pull_request:
-    paths: ['index.html', 'environment-*.js', 'room-composition.js', 'assets/flat/room-focals.webp', 'tests/rooms*', 'assets/flat/workyards.webp', 'sw.js', 'tests/environment*', 'tests/town-layout*', 'tests/lighting*', '.github/workflows/environment.yml']
+    paths: ['index.html', 'environment-*.js', 'biome-art.js', 'tests/biomes*', 'room-composition.js', 'assets/flat/room-focals.webp', 'tests/rooms*', 'assets/flat/workyards.webp', 'sw.js', 'tests/environment*', 'tests/town-layout*', 'tests/lighting*', '.github/workflows/environment.yml']
   push:
     branches: [main]
-    paths: ['index.html', 'environment-*.js', 'room-composition.js', 'assets/flat/room-focals.webp', 'tests/rooms*', 'assets/flat/workyards.webp', 'sw.js', 'tests/environment*', 'tests/town-layout*', 'tests/lighting*', '.github/workflows/environment.yml']
+    paths: ['index.html', 'environment-*.js', 'biome-art.js', 'tests/biomes*', 'room-composition.js', 'assets/flat/room-focals.webp', 'tests/rooms*', 'assets/flat/workyards.webp', 'sw.js', 'tests/environment*', 'tests/town-layout*', 'tests/lighting*', '.github/workflows/environment.yml']
 jobs:
   environment:
     runs-on: ubuntu-latest
@@ -25,6 +25,9 @@ jobs:
       - run: node tests/rooms-browser.cjs
         env:
           SCREENSHOT_DIR: artifacts/rooms
+      - run: node tests/biomes-browser.cjs
+        env:
+          SCREENSHOT_DIR: artifacts/biomes
       - uses: actions/upload-artifact@v4
         if: always()
         with:
