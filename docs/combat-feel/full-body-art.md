@@ -46,3 +46,5 @@ Create a clean game-ready sprite atlas of ONLY THE RIGHT-FACING MAUL ATTACK from
 ## Integration evidence
 
 A separate local combination of the full-body game change (PR #30 tree matching `7850e44`) with weapon-art PR #31 through contact-hold fix `47d97f0` passes 78 unit/regression tests plus the WebKit full-body and feel suites. The combination preserves both pause-aware effect timing and per-ability `windFraction`, both asset/bundle entries, and both fixture whitelists. Neither branch was merged into the other. New full-body art still covers heavy maul only; the other families are explicitly routed to the weapon renderer.
+
+A stalled-render regression verifies that a completed free strike explicitly closes its held/body/effect state without waiting indefinitely for another paint. Recovery deadlines and actual damage remain unchanged; the pose clock cannot leave an already-completed action active.

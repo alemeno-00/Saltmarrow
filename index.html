@@ -7379,6 +7379,12 @@ async function feelFinish(att){
   // A death sequence can outlast a light attack. Keep its collapse readable.
   const deaths=DYING.filter(d=>d.level===S.L);const remaining=deaths.length?Math.max(...deaths.map(d=>780-(NOW-d.t0))):0;
   if(!REDUCE&&META.pace==='normal'&&remaining>0)await UI.sleep(Math.min(remaining,320));
+  // Completion is an event, not an inference from the last rendered timestamp.
+  // A hidden/stalled renderer may not advance NOW before the bounded wait returns.
+  const held=WEAPON_ACTIONS.get(att);if(held&&held.resolved!==false)held.end=Math.min(held.end,NOW);
+  att.pixelAction={t0:NOW-1,dur:1,impact:NOW-1,end:NOW};
+  att.lunge=null;att.windup=null;att.hop=null;att.cast=null;att.squash=null;
+  if(a.effect)FX.x=FX.x.filter(effect=>effect!==a.effect);
   FEEL.actions.delete(att);
 }
 for(const key of ['hero','monster','free']){
