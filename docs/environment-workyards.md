@@ -4,7 +4,7 @@ This expands the environment pass using two references as design principles: Cor
 
 ## What changed
 
-The town now separates worn cobbled streets, paved entrances, cinder-stained smithy frontage, damp verge drainage, packed-earth yards and grass margins. Wheel wear follows two continuous world-space tracks, rather than repeating within every tile. Stepped boundaries break up material transitions. The smithy has a roofed coal store and a quenching trough with a tool rack, positioned inside its existing blocked facade cells and away from its doorway.
+The town now separates worn cobbled streets, paved entrances, cinder-stained smithy frontage, damp verge drainage, packed-earth yards and grass margins. Wheel wear follows two continuous world-space tracks, rather than repeating within every tile. Stepped boundaries break up material transitions. Town outskirts use dark ground, grass tufts and low stone boundaries instead of dungeon masonry. The smithy has a roofed coal store and a quenching trough with a tool rack, positioned inside its existing blocked facade cells and away from its doorway.
 
 Mine floors distinguish compacted earth, exposed bedrock, working bays and scree along room rims. Solid surrounding rock is deliberately darker and quieter than exposed wall faces. Irregular wall fractures and spaced timber supports replace the uniform masonry finish; cracked walls retain their gameplay cues. Procedural rooms with suitable rear walls receive a survey/tool station or a winch for rail/storage rooms. A restrained lantern pool grounds the survey station.
 
@@ -21,7 +21,7 @@ Mine floors distinguish compacted earth, exposed bedrock, working bays and scree
 
 On current animation/weapon main `9bf5a8a`:
 
-- `npm test`: **71 passing**. Includes 80 seeded dungeon placement runs and 60 additional seeded mine landmark runs, immutable simulation data/RNG, entrance clearance, wall-bound placement, broken-wall/clue/fog suppression and material classification.
+- `npm test`: **72 passing**. Includes 80 seeded dungeon placement runs and 60 additional seeded mine landmark runs, immutable simulation data/RNG, entrance clearance, wall-bound placement, broken-wall/clue/fog suppression and material classification.
 - `node tests/environment-browser.cjs`: desktop town/mine/crypt/fungal/drowned generation; four workyard sprites load with bounded native sizes; matched frozen before/after renders differ; actual movement through decorated tiles succeeds; map data stays unchanged; no page errors; smoothing disabled.
 - `node tests/tactics-browser.cjs`, `node tests/weapons-browser.cjs`, `node tests/animation-browser.cjs`, `node tests/flat-browser.cjs`, `node tests/art-browser.cjs`: pass locally.
 - Local 1440×1000 Chromium full-scene draws averaged approximately **6–14 ms** over 30 warm draws per scene. This is a diagnostic, not a physical GPU or Safari performance guarantee.

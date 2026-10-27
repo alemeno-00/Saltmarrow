@@ -56,6 +56,13 @@ function get(L,t,x,y,{w,types,buildings=[]}){
  return tile(kind,hash(x,y,13)%8,edges);
 }
 function wall(g,L,x,y,front,w){
+ if(L.town&&!L.interior){
+  const i=y*w+x,edge=[L.map[i-w],L.map[i+w],L.map[i-1],L.map[i+1]].some(t=>t!==undefined&&t!==0);
+  g.save();g.fillStyle='#172622';g.fillRect(x*32,y*32,32,32);
+  g.fillStyle='#25372a';for(let j=0;j<4;j++){const n=hash(x+j,y,29);g.fillRect(x*32+n%27,y*32+(n>>>5)%26,2,4)}
+  if(edge){g.fillStyle='#303c34';g.fillRect(x*32,(y+1)*32-11,32,9);g.fillStyle='#56604b';g.fillRect(x*32+1,(y+1)*32-12,30,2);g.fillStyle='#172820';g.fillRect(x*32+hash(x,y)%21,(y+1)*32-9,2,7)}
+  g.restore();return true;
+ }
  if(L.bio!=='mine'||L.map[y*w+x]!==0)return false;
  const exposed=front||L.map[(y+1)*w+x]===1||L.map[y*w+x-1]===1||L.map[y*w+x+1]===1;
  if(!exposed){g.fillStyle='#152322';g.fillRect(x*32,y*32,32,32);const n=hash(Math.floor(x/2),Math.floor(y/2),91);g.fillStyle='#1c2b28';g.fillRect(x*32,y*32+4+n%9,32,11);return true;}

@@ -35,3 +35,6 @@ test('cracked mine walls retain their existing cues; new art ships offline',()=>
  const sw=fs.readFileSync('sw.js','utf8');for(const name of ['environment-art.js','environment-surfaces.js','environment-scenes.js','assets/flat/workyards.webp']){assert.ok(fs.existsSync(name));assert.ok(sw.includes("'"+name+"'"))}
  for(const m of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi))if(m[1].trim())new vm.Script(m[1]);
 });
+test('town outskirts use a low boundary and ground cover without changing collision',()=>{
+ const L={town:true,map:Array(25).fill(0)},before=JSON.stringify(L),calls=[],g={save(){},restore(){},fillRect(...a){calls.push(a)}};L.map[17]=1;const marked=JSON.stringify(L);assert.equal(surfaces.wall(g,L,2,2,false,5),true);assert.equal(JSON.stringify(L),marked);assert.ok(calls.some(c=>c[3]===9),'low boundary');assert.ok(calls.every(c=>c[3]<=32),'no tall dungeon wall');
+});

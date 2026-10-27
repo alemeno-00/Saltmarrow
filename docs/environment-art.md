@@ -23,7 +23,7 @@ The plan is intentionally stable for each level object: changes to terrain suppr
 
 On macOS, 1440×1000 Chromium desktop viewport, DPR 1:
 
-- `npm test`: **71 passing**, including 80 reproducible real dungeon generations (20 seeds at depths 1/3/5/7), immutability, no gameplay RNG consumption, corridor/entrance clearance, dynamic occupancy/hazard suppression, reduced-motion glow and renderer ordering.
+- `npm test`: **72 passing**, including 80 reproducible real dungeon generations (20 seeds at depths 1/3/5/7), immutability, no gameplay RNG consumption, corridor/entrance clearance, dynamic occupancy/hazard suppression, reduced-motion glow and renderer ordering.
 - `npm run test:environment`: five real game scenes, matched screenshots with only the two environment hooks toggled, actual keyboard-equivalent traversal into decorated cells, unchanged navigation data, smoothing disabled and no runtime errors. About **6–14 ms per full render** in this local run (30 synchronous draws per scene; diagnostic, not a universal frame-rate promise).
 - `npm run test:tactics`: desktop bomb inspect, round feedback, no wall-clock turn progression, immediate daze interruption; passes with the environment enabled.
 - `npm run test:weapons`: all equipment/unequip, real attacks, turn invariants and impact timing at three paces pass on the combined environment + merged weapons code.
