@@ -39,3 +39,11 @@ test('physical death context follows the held weapon while spells keep their ele
   assert.equal(A.weaponDeathKind('maul',{kind:'melee'},'fire','fire'),'fire');
   assert.equal(A.weaponDeathKind('knife',{kind:'melee',id:'headbutt'},null,'impact'),'impact');
 });
+
+test('a delayed damage event holds the contact pose until resolution then begins recovery',()=>{
+  const action={base:'knife',t0:100,impact:400,end:700,dx:1,dy:0,resolved:false};
+  assert.equal(A.weaponPose('knife',{fx:1},1200,action).phase,'strike');
+  action.impact=1200;action.end=1500;action.resolved=true;
+  assert.equal(A.weaponPose('knife',{fx:1},1250,action).phase,'recover');
+  assert.equal(A.weaponPose('knife',{fx:1},1501,action).phase,'idle');
+});

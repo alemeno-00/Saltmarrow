@@ -4363,7 +4363,7 @@ function arcTrail(cx,cy,r,a0,a1,c,w,alpha){const n=12;for(let k=0;k<n;k++){const
   ctx.strokeStyle=glow('#ffffff',alpha*0.9);ctx.lineWidth=Math.max(1,w*0.35);ctx.beginPath();ctx.arc(cx,cy,r,a0+(a1-a0)*0.7,a1);ctx.stroke()}
 function drawFlashy(){const A=FX.x;ctx.save();ctx.globalCompositeOperation='lighter';
   for(let i=A.length-1;i>=0;i--){const a=A[i];const t=(NOW-a.t0)/a.dur;if(t>1.05){A.splice(i,1);continue}if(t<0)continue;const w=ASTYLE[a.k][0]/ASTYLE[a.k][1];const imp=a.imp;
-    if(!a.hit&&t>=imp){a.hit=true;const tgt=a.k==='spin'?a.a:a.b;impactFX(tgt.x,tgt.y,a.c,a.big||a.k==='smash',a.crit)}
+    if(!a.hit&&!a.awaitHit&&t>=imp){a.hit=true;const tgt=a.k==='spin'?a.a:a.b;impactFX(tgt.x,tgt.y,a.c,a.big||a.k==='smash',a.crit)}
     const ang=Math.atan2(a.b.y-a.a.y,a.b.x-a.a.x)||0;const s=Math.max(0,Math.min(1,(t-w)/(imp-w)));const after=Math.max(0,(t-imp)/(1-imp));
     switch(a.k){
       case'slash':case'claw':{const cx=a.a.x+(a.b.x-a.a.x)*0.6,cy=a.a.y+(a.b.y-a.a.y)*0.6;
@@ -7226,6 +7226,14 @@ tileImg=function(TS,t,x,y,wf){
   return artTileBase(TS,t,x,y,wf);
 };
 const WEAPON_ACTIONS=new WeakMap();
+function weaponContact(source,target){
+  const action=WEAPON_ACTIONS.get(source);if(!action||action.resolved!==false)return;
+  const recovery=Math.max(1,action.end-action.impact);action.impact=NOW;action.end=NOW+recovery;action.resolved=true;
+  const effect=action.effect;if(effect){effect.awaitHit=false;effect.imp=(NOW-effect.t0)/effect.dur;
+    if(target&&!effect.hit){effect.hit=true;const p=wpos(target);impactFX(p.x,p.y,effect.c,effect.big||effect.k==='smash',effect.crit)}
+  }
+}
+
 {const original=flashAttack;flashAttack=function(att,tgt,style,col){
   if(att!==S.P)return original(att,tgt,style,col);
   const weapon=wpn(),ab=WEAPON_ABILITY;
@@ -7236,20 +7244,21 @@ const WEAPON_ACTIONS=new WeakMap();
   if(effect&&effect.att===att&&!UI.quiet&&!REDUCE){
     // heroAttack resolves damage after wind-up plus its existing 170 ms roll pause.
     effect.imp=Math.min(.9,(wind+170)*PF()/effect.dur);
-    if(weapon)WEAPON_ACTIONS.set(att,{base:weapon.base,style,t0:NOW,impact:NOW+(wind+170)*PF(),end:NOW+effect.dur,dx,dy});
+    if(weapon&&ab){effect.awaitHit=true;WEAPON_ACTIONS.set(att,{base:weapon.base,style,t0:NOW,impact:NOW+(wind+170)*PF(),end:NOW+effect.dur,dx,dy,resolved:false,effect})}
   }
   return wind;
 }}
 let WEAPON_ABILITY=null;
-{const original=heroAttack;heroAttack=async function(id,tx,ty){WEAPON_ABILITY={...AB[id],id};try{return await original(id,tx,ty)}finally{WEAPON_ABILITY=null}}}
+{const original=heroAttack;heroAttack=async function(id,tx,ty){WEAPON_ABILITY={...AB[id],id};try{return await original(id,tx,ty)}finally{weaponContact(S.P,null);WEAPON_ABILITY=null}}}
 {const original=freeStrike;freeStrike=async function(att,tgt){
   if(att!==S.P||!wpn())return original(att,tgt);
   const prior=WEAPON_ABILITY;WEAPON_ABILITY={kind:'melee',id:'freeStrike'};
   const dx=Math.sign(tgt.x-att.x),dy=Math.sign(tgt.y-att.y);att.fx=dx;att.fy=dy;
-  if(!REDUCE&&!UI.quiet)WEAPON_ACTIONS.set(att,{base:wpn().base,t0:NOW,impact:NOW+110*PF(),end:NOW+300*PF(),dx,dy});
-  try{return await original(att,tgt)}finally{WEAPON_ABILITY=prior}
+  if(!REDUCE&&!UI.quiet)WEAPON_ACTIONS.set(att,{base:wpn().base,t0:NOW,impact:NOW+110*PF(),end:NOW+300*PF(),dx,dy,resolved:false});
+  try{return await original(att,tgt)}finally{weaponContact(att,null);WEAPON_ABILITY=prior}
 }}
 {const original=damage;damage=function(e,amt,src,hit){
+  if(src===S.P&&WEAPON_ABILITY&&amt>0&&!e.dead&&!S.over)weaponContact(src,e);
   if(src===S.P&&WEAPON_ABILITY?.id==='freeStrike')hit={...hit,kind:hit?.kind||'impact'};
   if(src===S.P&&hit&&WEAPON_ABILITY&&wpn())hit={...hit,kind:ART.weaponDeathKind(wpn().base,WEAPON_ABILITY,WEAPON_ABILITY.el||weaponEl(),hit.kind)};
   return original(e,amt,src,hit);

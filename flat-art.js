@@ -45,8 +45,9 @@
     const moving=Math.abs((e.rx??e.x)-e.x)+Math.abs((e.ry??e.y)-e.y)>.04;
     let x=side*9,y=-21,angle=-1.15,phase='idle',off=0;
     if(moving&&!reduced){y+=Math.floor(now/130)%2;angle+=Math.sin(now/130)*.08;phase='walk'}
-    if(action&&action.base===base&&now>=action.t0&&now<action.end&&!reduced){
-      const t=(now-action.t0)/(action.impact-action.t0),recover=Math.max(0,(now-action.impact)/(action.end-action.impact));
+    if(action&&action.base===base&&now>=action.t0&&(now<action.end||action.resolved===false)&&!reduced){
+      const clock=action.resolved===false?Math.min(now,action.impact-.01):now;
+      const t=(clock-action.t0)/Math.max(.01,action.impact-action.t0),recover=Math.max(0,(clock-action.impact)/Math.max(.01,action.end-action.impact));
       const power=t<1?Math.max(0,(t-.65)/.35):1-recover;
       phase=t<.65?'windup':t<1?'strike':kind==='ranged'?'reload':'recover';
       if(['dagger','spear','ranged'].includes(kind)){x+=side*(power*(kind==='spear'?13:8)-(t<.65?3*t:0));angle=kind==='ranged'?0:-.15;y-=kind==='ranged'?4:0;if(phase==='reload'){y+=Math.sin(recover*Math.PI)*5;angle+=Math.sin(recover*Math.PI)*.55}}
