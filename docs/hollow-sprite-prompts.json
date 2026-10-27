@@ -1,0 +1,51 @@
+[
+  {
+    "id": "ashenPenitent",
+    "prompt": "Use case: stylized-concept. Create a production game sprite animation atlas, reference image supplied ONLY for design identity. Subject Ashen Penitent: bone hooded wounded zealot, crimson tatters, brass spiked halo, long chained flail. Attack swings flail. Match the approved Hollow Faith faction in reference. EXACT layout 4 columns by 5 rows, 20 equally sized cells on transparent background, no text labels, borders or scenery. Row 1 four idle breathing poses. Row 2 four walking cycle frames with alternating feet. Row 3 four attack anticipation, windup, strike, recovery. Row 4 four recoil hurt frames. Row 5 four death frames from kneeling through collapse to flat corpse. Each cell fully isolated, ample blank margins, identical foot anchor except falling death, consistent scale and three-quarter south-east view. Crisp low resolution hand placed pixel-art aesthetic, hard stepped edges, limited bone/crimson/brass palette, dark outline, no smoothing. All characters fully inside cells. Output square 1024x1024. Each cell is 256x204.8, so maintain uniform 4x5 grid exactly.",
+    "generator": "built-in image_gen",
+    "source": "exec-a3fb5196-408e-4fc7-831c-fbe84414ad4b.png",
+    "sourceSha256": "154545bccdf9b0ce602deaa061d77bcf094573f33920612682b2ad0bb481f3a4"
+  },
+  {
+    "id": "censerWitch",
+    "prompt": "Use case: stylized-concept. Create a production game sprite animation atlas, reference image supplied ONLY for design identity. Subject Censer Witch: crimson hood, skull mask, brass censer on chain, cursed burgundy smoke. Attack throws smoke. Match the approved Hollow Faith faction in reference. EXACT layout 4 columns by 5 rows, 20 equally sized cells on transparent background, no text labels, borders or scenery. Row 1 four idle breathing poses. Row 2 four walking cycle frames with alternating feet. Row 3 four attack anticipation, windup, strike, recovery. Row 4 four recoil hurt frames. Row 5 four death frames from kneeling through collapse to flat corpse. Each cell fully isolated, ample blank margins, identical foot anchor except falling death, consistent scale and three-quarter south-east view. Crisp low resolution hand placed pixel-art aesthetic, hard stepped edges, limited bone/crimson/brass palette, dark outline, no smoothing. All characters fully inside cells. Output square 1024x1024. Each cell is 256x204.8, so maintain uniform 4x5 grid exactly.",
+    "generator": "built-in image_gen",
+    "source": "exec-95f6ab55-3732-4ef4-a448-7e881aedcf8d.png",
+    "sourceSha256": "7695d49d810dfba74d53bde08c7f5f3dbe3d304645eb45506d5ee30fc02551c8"
+  },
+  {
+    "id": "reliquaryKeeper",
+    "prompt": "Use case: stylized-concept. Create a production game sprite animation atlas, reference image supplied ONLY for design identity. Subject Reliquary Keeper: bone robes, crimson sash, huge candle-covered gold reliquary on back, brass crozier. Attack raises ward. Match the approved Hollow Faith faction in reference. EXACT layout 4 columns by 5 rows, 20 equally sized cells on transparent background, no text labels, borders or scenery. Row 1 four idle breathing poses. Row 2 four walking cycle frames with alternating feet. Row 3 four attack anticipation, windup, strike, recovery. Row 4 four recoil hurt frames. Row 5 four death frames from kneeling through collapse to flat corpse. Each cell fully isolated, ample blank margins, identical foot anchor except falling death, consistent scale and three-quarter south-east view. Crisp low resolution hand placed pixel-art aesthetic, hard stepped edges, limited bone/crimson/brass palette, dark outline, no smoothing. All characters fully inside cells. Output square 1024x1024. Each cell is 256x204.8, so maintain uniform 4x5 grid exactly.",
+    "generator": "built-in image_gen",
+    "source": "exec-4515dd76-9469-42bf-b80c-7fdce5412e98.png",
+    "sourceSha256": "2c1599ed2ca41da8950fb46c830e207dd7d8bd5162f516fea91369012695beb6"
+  },
+  {
+    "id": "hollowCantor",
+    "prompt": "Use case: stylized-concept. Create a production game sprite animation atlas, reference image supplied ONLY for design identity. Subject Hollow Cantor: bone hood, crimson stole, brass halo, open ritual book and hanging bell. Attack chants with red summoning circle. Match the approved Hollow Faith faction in reference. EXACT layout 4 columns by 5 rows, 20 equally sized cells on transparent background, no text labels, borders or scenery. Row 1 four idle breathing poses. Row 2 four walking cycle frames with alternating feet. Row 3 four attack anticipation, windup, strike, recovery. Row 4 four recoil hurt frames. Row 5 four death frames from kneeling through collapse to flat corpse. Each cell fully isolated, ample blank margins, identical foot anchor except falling death, consistent scale and three-quarter south-east view. Crisp low resolution hand placed pixel-art aesthetic, hard stepped edges, limited bone/crimson/brass palette, dark outline, no smoothing. All characters fully inside cells. Output square 1024x1024. Each cell is 256x204.8, so maintain uniform 4x5 grid exactly.",
+    "generator": "built-in image_gen",
+    "source": "exec-75b6983b-1fe3-48b4-9716-6d293a358c59.png",
+    "sourceSha256": "8c157900a61c53a8d2feaa79068138cd84d7ed0e5699cc8ac627309df9185f54"
+  },
+  {
+    "id": "facelessSaint",
+    "prompt": "Use case: stylized-concept. Create a production game sprite animation atlas, reference image supplied ONLY for design identity. Subject The Saint Without a Face: towering faceless black hood, ivory robes, crimson inner cloth, huge spiked golden halo, hanging censers. Attack spreads arms with red revelation tendrils. Match the approved Hollow Faith faction in reference. EXACT layout 4 columns by 5 rows, 20 equally sized cells on transparent background, no text labels, borders or scenery. Row 1 four idle breathing poses. Row 2 four walking cycle frames with alternating feet. Row 3 four attack anticipation, windup, strike, recovery. Row 4 four recoil hurt frames. Row 5 four death frames from kneeling through collapse to flat corpse. Each cell fully isolated, ample blank margins, identical foot anchor except falling death, consistent scale and three-quarter south-east view. Crisp low resolution hand placed pixel-art aesthetic, hard stepped edges, limited bone/crimson/brass palette, dark outline, no smoothing. All characters fully inside cells. Output square 1024x1024. Each cell is 256x204.8, so maintain uniform 4x5 grid exactly.",
+    "generator": "built-in image_gen",
+    "source": "exec-842eaad3-bbdd-47a6-8159-e29a54dae9c8.png",
+    "sourceSha256": "23cbdb533b85e17323baaba65b98f43bcd2cfdfff7fba98c886d18e6b26f59cb"
+  },
+  {
+    "id": "facelessSaint2",
+    "prompt": "Use case: stylized-concept. Production transparent pixel game animation atlas, one character in a precise 4 columns x 5 rows grid, exactly 20 isolated poses. Reference is DESIGN ONLY, never copy the concept sheet. Character THE SAINT WITHOUT A FACE, Hollow Faith boss from supplied reference, phase 2. UNMASKING: ivory crimson robes opened, faceless black cavity exposed, broken brass halo and crimson tendrils growing from shoulders, skeletal reaching hands, more aggressive hunched silhouette. Fixed size within every cell, low resolution crisp hard-edged limited palette pixel art. Four idle breathing poses in row1, four walk cycle poses row2, four attack windup strike recovery poses row3, four hurt recoil poses row4, four kneel-collapse-flat corpse death poses row5. Three-quarter southeast view, identical foot baseline, generous transparent cell padding for long tendrils and arms. No text, no labels, no scenery, no borders. Square image 4x5 equal grid. Transparent background.",
+    "generator": "built-in image_gen",
+    "source": "exec-43b6f4fd-4dba-4019-b162-7fde4f135420.png",
+    "sourceSha256": "232a6268164932ef1841482828bf376817e69454a15c45499099b282ef1654fa"
+  },
+  {
+    "id": "facelessSaint3",
+    "prompt": "Use case: stylized-concept. Production transparent pixel game animation atlas, one character in a precise 4 columns x 5 rows grid, exactly 20 isolated poses. Reference is DESIGN ONLY, never copy the concept sheet. Character THE SAINT WITHOUT A FACE, Hollow Faith boss from supplied reference, phase 3. REVELATION: enormous crimson spectral tendrils spread from the faceless black hood, torn ivory ceremonial robes, floating broken golden halo fragments, long skeletal hands, radiant blood-red ritual aura. Keep humanoid body legible. Fixed size within every cell, low resolution crisp hard-edged limited palette pixel art. Four idle breathing poses in row1, four walk cycle poses row2, four attack windup strike recovery poses row3, four hurt recoil poses row4, four kneel-collapse-flat corpse death poses row5. Three-quarter southeast view, identical foot baseline, generous transparent cell padding for long tendrils and arms. No text, no labels, no scenery, no borders. Square image 4x5 equal grid. Transparent background.",
+    "generator": "built-in image_gen",
+    "source": "exec-5d625749-98f7-48d0-a5dc-6ad947fd5983.png",
+    "sourceSha256": "c93e371db73759552cb9bc7183e47fb6cc9739add1292d9947fbd8bb76e4aef2"
+  }
+]

@@ -528,6 +528,8 @@ body.mob .mhead{display:none}
 <script src="death-effects.js"></script>
 <script src="drowned-sprites.js"></script>
 <script src="isometric-art.js"></script>
+<script src="hollow-faith.js"></script>
+<script src="hollow-sprites.js"></script>
 <script>
 (function(){
 'use strict';
@@ -2113,12 +2115,13 @@ function bombCenter(m,ab){const P=S.P;const keg=S.L.objs.find(o=>o.type==='keg'&
   return best}
 async function monsterTurn(m){const M=MT(m),P=S.P;
   if(m.surprised)return;
+  if(HOLLOW)HOLLOW.beginTurn(m);
   if(m.primed){const c=m.primed;m.primed=null;const ab=M.ab.find(a=>a.kind==='area');if(ab){faceTo(m,c.x,c.y);await monsterAttack(m,ab,c);if(!m.dead)endConds(m);checkCombatEnd();return}}
   if(hasC(m,'bleeding')){damage(m,rr(2,4),null);if(m.dead){checkCombatEnd();return}}
   let see=combatSees(m);
   if(M.ai==='stalker'||m.mut==='eyes')see=true;
   if(see&&P.hidden){P.hidden=false;log(`${The(m)} finds you!`,'bad')}
-  if(!see){m.drownedIntent=null;m.burrowed=false;m.lost=(m.lost||0)+1;
+  if(!see){m.drownedIntent=null;m.burrowed=false;delete m.hollowChant;delete m.hollowMark;m.lost=(m.lost||0)+1;
     if(M.ai!=='lurker'&&m.lastKnown&&!(m.x===m.lastKnown.x&&m.y===m.lastKnown.y))await chase(m,m.lastKnown.x,m.lastKnown.y,speedOf(m));
     if(P.hidden&&cheb(m.x,m.y,P.x,P.y)<=1){P.hidden=false;log(`${The(m)} stumbles onto you!`,'bad')}
     else if(m.lost>=3){m.inCombat=false;m.state='sus';m.inv=m.lastKnown;m.look=0;m.sus=1;log(`${The(m)} loses your trail.`,'good')}
@@ -2127,6 +2130,7 @@ async function monsterTurn(m){const M=MT(m),P=S.P;
   await UI.sleep(120);
   if(shouldFlee(m)){await flee(m);if(!m.dead)endConds(m);checkCombatEnd();return}
   m.fleeing=false;
+  if(HOLLOW&&await HOLLOW.turn(m)){m.attackT=HEADLESS?0:NOW;if(!m.dead)endConds(m);checkCombatEnd();return}
   const mal=chooseMalice(m);if(mal){await doMalice(m,mal);if(m.dead||!S.C||S.over)return}
   switch(M.ai){
     case'burrow':case'bellsupport':case'brineassassin':case'admiral':await drownedTurn(m);break;
@@ -3213,8 +3217,29 @@ async function drownedTurn(m){const P=S.P,M=MT(m);m.drownedTurn=(m.drownedTurn||
 {const g0=genLevel;genLevel=function(){g0();if(S.depth!==7||S.inSewer||S.L.town||S.L.mons.some(m=>m.type==='admiral'))return;const stairs=S.L.map.indexOf(STAIRS);if(stairs<0)return;const d=bfsDist(S.P.x,S.P.y,true),sx=stairs%W,sy=(stairs/W)|0,opts=[];for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++)if(d[I(x,y)]>=10&&cheb(x,y,sx,sy)<=5&&[FLOOR,WATER,RUBBLE,BONES].includes(tileAt(x,y))&&!occupied(x,y,null)&&!S.L.objs.some(o=>o.x===x&&o.y===y))opts.push({x,y});opts.sort((a,b)=>cheb(a.x,a.y,sx,sy)-cheb(b.x,b.y,sx,sy));if(opts.length)spawnMon('admiral',opts[0].x,opts[0].y)}}
 {const e0=endCombat;endCombat=function(){for(const m of S.L.mons){m.drownedIntent=null;m.burrowed=false}return e0()}}
 
+/* ================= Hollow Faith integration ================= */
+const HF=typeof SaltmarrowHollowFaith==='undefined'?null:SaltmarrowHollowFaith;
+const HOLLOW=HF&&HF.create({state:()=>S,log,damage:(...a)=>damage(...a),dazed:m=>hasC(m,'dazed'),sees:combatSees,fx:(kind,mark)=>{
+ if(mark.kind==='smoke'){for(let dy=-mark.radius;dy<=mark.radius;dy++)for(let dx=-mark.radius;dx<=mark.radius;dx++){const x=mark.x+dx,y=mark.y+dy;if(inb(x,y)&&!solid(tileAt(x,y)))S.L.smoke[I(x,y)]=Math.max(S.L.smoke[I(x,y)],4)}rebuildOpq();computeFov()}
+ UI.fx(kind,{...mark,r:mark.radius});
+},summon:(m,type,n)=>{
+ const before=new Set(S.L.mons.map(o=>o.id));const made=bossMinion(m,type,n);for(const o of S.L.mons)if(!before.has(o.id))o.hollowSummoned=true;return made;
+}});
+if(HF){
+ Object.assign(MON,HF.definitions);for(const k of HF.ids)FACTION[k]='cult';
+ for(const [d,keys]of [[3,['ashenPenitent']],[4,['ashenPenitent','censerWitch']],[5,['censerWitch','reliquaryKeeper']],[6,['reliquaryKeeper','hollowCantor']],[7,['hollowCantor']]])for(const key of keys)if(!POOL[d].includes(key))POOL[d].push(key);
+ const damage0=damage;damage=function(e,amt,src,hit){return damage0(e,HOLLOW.hit(e,amt),src,hit)};
+ const heal0=heal;heal=function(amt){return heal0(HOLLOW.healing(amt))};
+ const kill0=killMon;killMon=function(m,...args){if(!m.dead)HOLLOW.death(m);return kill0(m,...args)};
+ const end0=endCombat;endCombat=function(){HOLLOW.cleanup();return end0()};
+ const gen0=genLevel;genLevel=function(){gen0();if(S.depth!==5||S.inSewer||S.L.town)return;
+  const dm=bfsDist(S.P.x,S.P.y,false),cells=[];for(let i=0;i<W*H;i++)if(dm[i]>12&&dm[i]<Infinity&&S.L.map[i]===FLOOR&&freeFloor(i%W,(i/W)|0))cells.push(i);
+  if(cells.length){const i=cells[Math.floor(cells.length/2)];spawnMon('facelessSaint',i%W,(i/W)|0,{state:'idle',role:'guard'});log('A false sermon echoes from a forgotten chapel.','dread');}
+ };
+}
+
 /* ================= export for tests ================= */
-if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,spawnMon:(...a)=>spawnMon(...a),startCombat:(...a)=>startCombat(...a),gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems,damage,killMon,heroAttack,drownedTurn,drownedPhase,drownedFlood,drownedSummon,monsterTurn,endCombat,POOL,hasC,addC};return}
+if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,spawnMon:(...a)=>spawnMon(...a),startCombat:(...a)=>startCombat(...a),gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems,damage,killMon,heroAttack,HOLLOW,HF,heal:(...a)=>heal(...a),drownedTurn,drownedPhase,drownedFlood,drownedSummon,monsterTurn,endCombat,POOL,hasC,addC};return}
 /* =====================================================================
    BROWSER: sprites, rendering, animation, UI
    ===================================================================== */
@@ -7295,6 +7320,45 @@ window.__art={ready:ART?.ready,plan:()=>townArtPlan(S.L),placement:artBuildingPl
 }
 @media(max-height:620px){#overlay.ttov:has(>.ttl)>.ttl{gap:12px;padding-top:12px;padding-bottom:12px}.ttl .ttsub{margin-top:9px}.ttl .ttorn{margin-top:8px}.ttl .tt1{font-size:44px}.ttl .tt2{font-size:18px}.ttl .gmb{padding:5px 10px}}
 `;document.head.appendChild(st)}
+/* Hollow Faith sprite and telegraph hooks share the existing upright projection. */
+const HFA=typeof SaltmarrowHollowSprites==='undefined'?null:SaltmarrowHollowSprites;
+const HFDYING=[];
+if(HFA){
+ const masks=new WeakMap();
+ const pick0=tileFromEvent;tileFromEvent=function(ev){
+  const base=pick0(ev);if(!S?.L)return base;
+  const r=cv.getBoundingClientRect(),mx=(ev.clientX-r.left)*VW/r.width+ISO.camera.x,my=(ev.clientY-r.top)*VH/r.height+ISO.camera.y;
+  const candidates=[];for(const e of S.L.mons){if(e.dead||!HFA.ids.includes(e.type)||!monVisible(e))continue;
+   const frame=HFA.frame(e,NOW,REDUCE);if(!frame)continue;if(!masks.has(frame))masks.set(frame,frame.getContext('2d').getImageData(0,0,128,128).data);
+   const p=wpos(e),q=ISO.project(p.x,p.y),sz=MT(e).boss?T*4:T*3;
+   let x=Math.floor((mx-(q.x-sz/2))/sz*128),y=Math.floor((my-(q.y-sz*110/128))/sz*128);if(e.fx<0)x=127-x;
+   if(x>=0&&x<128&&y>=0&&y<128&&masks.get(frame)[(y*128+x)*4+3])candidates.push(e);
+  }
+  candidates.sort((a,b)=>ISO.depth(b)-ISO.depth(a));const target=candidates[0],other=monAt(base.x,base.y);
+  return target&&(!other||ISO.depth(target)>=ISO.depth(other))?{x:target.x,y:target.y}:base;
+ };
+ HFA.ready.then(()=>{for(const k of HFA.ids){SPR[k]=HFA.frames[k][0][0];SPRW[k]=null}}).catch(e=>console.error(e));
+ const sprite0=drawSprite;drawSprite=function(img,imgW,e,size,alpha,flipOk){
+  if(!HFA.ids.includes(e.type))return sprite0(img,imgW,e,size,alpha,flipOk);
+  const frame=HFA.frame(e,NOW,REDUCE);if(!frame)return;const p=wpos(e),sz=MT(e).boss?T*4:T*3;
+  ctx.save();ctx.imageSmoothingEnabled=false;if(alpha!=null)ctx.globalAlpha*=alpha;
+  ctx.translate(Math.round(p.x),Math.round(p.y+T/2));if(e.fx<0)ctx.scale(-1,1);
+  ctx.drawImage(frame,-sz/2,-sz*110/128,sz,sz);
+  if(e.hollowWard){ctx.strokeStyle='#e4ba6b';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(0,-10,sz*.28,sz*.35,0,0,Math.PI*2);ctx.stroke()}
+  if(e.type==='facelessSaint'){const phase=HF.phase(e);ctx.fillStyle=phase===3?'#e14d60':phase===2?'#a9344a':'#e4ba6b';for(let i=0;i<phase;i++)ctx.fillRect(-5+i*5,-sz*.8,3,3)}
+  ctx.restore();
+ };
+ const overlay0=drawOverlays;drawOverlays=function(...args){overlay0(...args);if(!S?.L)return;
+  ctx.save();ctx.lineWidth=2;for(const m of S.L.mons){const mark=m.hollowMark;if(!mark||!m.inCombat||m.dead)continue;
+   for(let dy=-mark.radius;dy<=mark.radius;dy++)for(let dx=-mark.radius;dx<=mark.radius;dx++){const x=mark.x+dx,y=mark.y+dy;if(!inb(x,y)||!vis[I(x,y)])continue;
+    ctx.fillStyle=mark.kind==='revelation'?'rgba(225,50,80,.35)':'rgba(130,48,95,.35)';ctx.fillRect(x*T+2,y*T+2,T-4,T-4);ctx.strokeStyle='#f3c182';ctx.strokeRect(x*T+2,y*T+2,T-4,T-4);
+    ctx.beginPath();ctx.moveTo(x*T+8,y*T+8);ctx.lineTo((x+1)*T-8,(y+1)*T-8);ctx.moveTo((x+1)*T-8,y*T+8);ctx.lineTo(x*T+8,(y+1)*T-8);ctx.stroke();
+   }
+  }ctx.restore();
+ };
+ const kill0=killMon;killMon=function(m,...args){const fresh=!m.dead&&HFA.ids.includes(m.type);const r=kill0(m,...args);if(fresh){for(let i=DYING.length-1;i>=0;i--)if(DYING[i].img===SPR[m.type])DYING.splice(i,1);HFDYING.push({m:{...m,hollowDeathAt:NOW},level:S.L,t0:NOW});if(HFDYING.length>20)HFDYING.shift()}return r};
+ const anim0=drawAnims;drawAnims=function(){anim0();for(let i=HFDYING.length-1;i>=0;i--){const d=HFDYING[i];if(d.level!==S.L||NOW-d.t0>800){HFDYING.splice(i,1);continue}if(!vis[I(d.m.x,d.m.y)])continue;ctx.save();ctx.transform(.5,-.5,1/(2*ISO.rise),1/(2*ISO.rise),0,0);isoUpright(d.m,()=>drawSprite(null,null,d.m));ctx.restore()}};
+}
 
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
