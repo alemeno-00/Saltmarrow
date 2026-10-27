@@ -33,7 +33,7 @@ const server=http.createServer((req,res)=>{const name=decodeURIComponent(req.url
      await page.waitForFunction(key=>window.__environment.interior()===key,key,{timeout:5000});
      const exit=await page.evaluate(()=>window.__environment.exit());assert.equal(exit.x,exit.expectedX);assert.equal(exit.y,exit.expectedY);
     }
-    const migration=await page.evaluate(()=>window.__environment.migration());assert.deepEqual(migration,{version:6,passable:true,gold:123});
+    const migration=await page.evaluate(()=>window.__environment.migration());assert.deepEqual(migration,{version:7,passable:true,gold:123});
    }
    assert.deepEqual(errors,[]);await page.close();
    console.log(`PASS desktop ${bio}: ${stats.count} clusters, ${stats.scenes} landmarks, ${result.surfaces} cached surfaces; ${result.ms.toFixed(2)} ms/full render; navigation unchanged`);
