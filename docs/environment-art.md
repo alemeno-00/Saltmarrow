@@ -1,5 +1,7 @@
 # Flat environment density pass
 
+The current version includes the [smithy street and mining benchmark](environment-workyards.md), with a material kit, four original workyard sprites and refreshed screenshots. See that document for current validation and asset provenance.
+
 This pass adds native canvas pixel art around the existing flat atlas assets. The square projection, actor/weapon renderer, turn resolution, collision map, object interactions, procedural gameplay RNG and navigation are unchanged. No mobile changes are included.
 
 - Town: continuous street gutters, drainage grates, worn thresholds and short foundation shadows. Wall-side clusters echo the nearby smithy, chapel, archive and residential buildings: timber, tools, votives, books and planters.
@@ -21,8 +23,8 @@ The plan is intentionally stable for each level object: changes to terrain suppr
 
 On macOS, 1440×1000 Chromium desktop viewport, DPR 1:
 
-- `npm test`: **61 passing**, including 80 reproducible real dungeon generations (20 seeds at depths 1/3/5/7), immutability, no gameplay RNG consumption, corridor/entrance clearance, dynamic occupancy/hazard suppression, reduced-motion glow and renderer ordering.
-- `npm run test:environment`: five real game scenes, matched screenshots with only the two environment hooks toggled, actual keyboard-equivalent traversal into decorated cells, unchanged navigation data, smoothing disabled and no runtime errors. About **7–13 ms per full render** in this local run (30 synchronous draws per scene; diagnostic, not a universal frame-rate promise).
+- `npm test`: **71 passing**, including 80 reproducible real dungeon generations (20 seeds at depths 1/3/5/7), immutability, no gameplay RNG consumption, corridor/entrance clearance, dynamic occupancy/hazard suppression, reduced-motion glow and renderer ordering.
+- `npm run test:environment`: five real game scenes, matched screenshots with only the two environment hooks toggled, actual keyboard-equivalent traversal into decorated cells, unchanged navigation data, smoothing disabled and no runtime errors. About **6–14 ms per full render** in this local run (30 synchronous draws per scene; diagnostic, not a universal frame-rate promise).
 - `npm run test:tactics`: desktop bomb inspect, round feedback, no wall-clock turn progression, immediate daze interruption; passes with the environment enabled.
 - `npm run test:weapons`: all equipment/unequip, real attacks, turn invariants and impact timing at three paces pass on the combined environment + merged weapons code.
 - `npm run test:art`: atlas loading, dimensions, native sprite sizes and unknown-actor fallback pass.

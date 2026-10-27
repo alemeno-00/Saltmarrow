@@ -70,6 +70,7 @@ function draw(g,L,tiles,options){
   // Low-contrast contiguous patches, never animated noise on every floor tile.
   const patch=hash(Math.floor(x/3),Math.floor(y/3),p.seed);
   if(patch%4===0&&n%3===0){g.globalAlpha*=.4;rect(xx+4+n%5,yy+21,15,2,pal[0]);rect(xx+8,yy+23,10,1,pal[1])}
+  if(L.bio==='town'&&!L.interior&&(y===16||y===17)){g.globalAlpha=visible[i]?.3:.15;rect(xx,yy+(y===16?7:22),32,3,'#252c28');rect(xx,yy+(y===16?10:25),32,1,'#6b6752')}
   if(L.bio==='town'&&!L.interior&&y>=15&&y<=18){
    // A worn main street: continuous gutters and inset center paving, no new obstacles.
    if(y===15||y===18){rect(xx,yy+(y===15?2:28),32,2,'#50554c');rect(xx,yy+(y===15?4:27),32,1,'#111e23');if(x%4===0)for(let k=0;k<4;k++)rect(xx+9+k*3,yy+(y===15?0:29),1,3,'#111a20')}
@@ -100,7 +101,7 @@ function drawWall(g,L,x,y,{w,types,front=false,now=0,reduced=false}){
  // Broken strata and broad damp courses distinguish geology from cut tomb stone.
  g.globalAlpha*=.55;r(1,8,30,2,pal[0]);r(3,10,25,1,pal[1]);
  if(L.bio==='mine'){
-  if(n%3===0){r(3,0,4,47,'#453a2c');r(4,0,1,44,'#8b7150');r(25,0,4,47,'#453a2c');r(26,0,1,44,'#8b7150');r(2,3,28,4,'#68543b');for(let j=0;j<3;j++){r(3,14+j*12,4,2,'#202c30');r(25,14+j*12,4,2,'#202c30')}}
+  if(n%3===0){r(3,0,4,47,'#453a2c');r(4,0,1,44,'#8b7150');r(2,3,28,4,'#68543b');for(let j=0;j<3;j++){r(3,14+j*12,4,2,'#202c30');r(4,14+j*12,1,1,'#87927b')}}
   else if(n%3===1){for(let j=0;j<4;j++){r(6+j*4,16+j*3,5,2,'#8e8c6e');r(7+j*4,15+j*3,2,1,'#b8b194')}}
  }else if(L.bio==='fungal'){
   for(let j=0;j<3;j++){const a=5+j*9,b=20+(n>>>j)%9;r(a,b,2,24-b,'#59725c');r(a-3,b-2,8,3,'#578277');r(a-2,b-2,5,1,'#97b2a0');r(a+1,b+3,1,13,'#394e48')}
