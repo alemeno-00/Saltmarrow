@@ -7,10 +7,14 @@ on:
     paths: ['index.html', 'flat-art.js', 'animation-art.js', 'tests/**', 'package*.json', '.github/workflows/combat-feel.yml']
 jobs:
   feel:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        browser: [chromium, webkit]
+        include:
+          - browser: chromium
+            os: ubuntu-latest
+          - browser: webkit
+            os: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
