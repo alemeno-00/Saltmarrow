@@ -528,6 +528,7 @@ body.mob .mhead{display:none}
 <script src="death-effects.js"></script>
 <script src="drowned-sprites.js"></script>
 <script src="flat-art.js"></script>
+<script src="animation-art.js"></script>
 <script src="hollow-faith.js"></script>
 <script src="hollow-sprites.js"></script>
 <script>
@@ -3388,7 +3389,7 @@ function mk(rows,pal){const c=document.createElement('canvas');c.width=16;c.heig
 function white(c){const w=document.createElement('canvas');w.width=c.width;w.height=c.height;const g=w.getContext('2d');g.drawImage(c,0,0);g.globalCompositeOperation='source-in';g.fillStyle='#fff';g.fillRect(0,0,w.width,w.height);return w}
 function corpseOf(c){const w=document.createElement('canvas');w.width=16;w.height=16;const g=w.getContext('2d');g.translate(8,10);g.rotate(Math.PI/2);g.scale(0.8,0.8);g.drawImage(c,-8,-8);g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-atop';g.fillStyle='rgba(30,10,10,.55)';g.fillRect(0,0,16,16);return w}
 for(const k in SPR_DATA){SPR[k]=mk(SPR_DATA[k][0],SPR_DATA[k][1]);SPRW[k]=white(SPR[k])}
-const CORPSE={};const corpseSpr=mt=>mt&&SPR[mt]?(CORPSE[mt]||(CORPSE[mt]=corpseOf(SPR[mt]))):SPR.corpse;
+const CORPSE={};const corpseSpr=mt=>ART?.corpseAsset?.(mt)?.image||(mt&&SPR[mt]?(CORPSE[mt]||(CORPSE[mt]=corpseOf(SPR[mt]))):SPR.corpse);
 for(const k of['gold','draught','charge','ink','oil','trinket','riptide','shadow','storm'])ICON[k]=SPR[k].toDataURL();
 const ICONS={};function iconURL(name,color){const key=name+color;if(ICONS[key])return ICONS[key];const m=ICON_MASK[name];if(!m)return'';const c=document.createElement('canvas');c.width=12;c.height=12;const g=c.getContext('2d');g.fillStyle=color;m.forEach((r,j)=>{for(let i=0;i<12;i++)if(r[i]==='#')g.fillRect(i,j,1,1)});return ICONS[key]=c.toDataURL()}
 /* ---------- biome tiles ---------- */
@@ -3891,7 +3892,7 @@ UI.fx=(type,d)=>{
     case'hit':{d.e.flashT=NOW;const p=wpos(d.e);FX.floats.push({x:p.x,y:p.y-T*0.4,text:'-'+d.amt,c:isP(d.e)?'#ff8a70':'#fff4dc',t0:NOW,big:true});burst(p.x,p.y,6,isP(d.e)?['#c2533e','#ff8a70']:['#e8dcc4','#c2533e'],70,0.4,200,2);break}
     case'lunge':{const e=d.e;e.lunge={dx:Math.sign(d.tx-e.x),dy:Math.sign(d.ty-e.y),t0:NOW};break}
     case'bolt':{const a=wpos(d.from),b={x:d.to.x*T+T/2,y:d.to.y*T+T/2};FX.bolts.push({a,b,c:d.color,t0:NOW,dur:170});break}
-    case'death':{if(tileAt(d.e.x,d.e.y)===PIT)break;const result=DEATHS.emit(S.L,d.e,d.hit||{},REDUCE);if(deathVisible(d.e.x,d.e.y)){const p=wpos(d.e);const label={x:p.x,y:p.y-T*.7,text:result.label+(result.variant==='normal'?'':' · '+result.variant.toUpperCase()),c:SaltmarrowDeaths.COLORS[result.kind],t0:NOW,death:true};const prior=FX.floats.find(f=>f.death&&f.x===label.x&&f.y===label.y&&NOW-f.t0<180);if(prior)Object.assign(prior,label);else FX.floats.push(label);if(FX.floats.length>48)FX.floats.splice(0,FX.floats.length-48);}break}
+    case'death':{if(tileAt(d.e.x,d.e.y)===PIT)break;const result=DEATHS.emit(S.L,d.e,{...(d.hit||{}),fragments:ART?.deathFragments?.(d.e.type,d.e,NOW)},REDUCE);if(deathVisible(d.e.x,d.e.y)){const p=wpos(d.e);const label={x:p.x,y:p.y-T*.7,text:result.label+(result.variant==='normal'?'':' · '+result.variant.toUpperCase()),c:SaltmarrowDeaths.COLORS[result.kind],t0:NOW,death:true};const prior=FX.floats.find(f=>f.death&&f.x===label.x&&f.y===label.y&&NOW-f.t0<180);if(prior)Object.assign(prior,label);else FX.floats.push(label);if(FX.floats.length>48)FX.floats.splice(0,FX.floats.length-48);}break}
     case'explosion':{const x=d.x*T+T/2,y=d.y*T+T/2;burst(x,y,50,['#fff2b0','#ffb347','#ff7a2a','#c2533e','#3a3a3a'],260*(d.r||1)/1.5,0.9,120,3);burst(x,y,24,['#2a2a2a','#555','#3a5751'],120,1.6,-20,4);FX.lights.push({x,y,r:T*(d.r+3),t0:NOW,dur:600,c:'#ffb347'});break}
     case'debris':{const x=d.x*T+T/2,y=d.y*T+T/2;burst(x,y,26,d.c==='crystal'?['#f0c8e0','#ffffff','#c890b8']:['#6a625a','#3a342e','#8a8278','#5a3a1a'],140,0.8,300,3);if(d.c==='crystal')FX.lights.push({x,y,r:T*3,t0:NOW,dur:400,c:'#f0c8e0'});break}
     case'fire':{const x=d.x*T+T/2,y=d.y*T+T/2;burst(x,y,40,['#fff2b0','#f2b14a','#ff7a2a','#c2533e'],150,0.9,-60,3);FX.lights.push({x,y,r:T*4,t0:NOW,dur:700,c:'#ff9a3a'});break}
@@ -4339,7 +4340,7 @@ const BITERS=new Set(['rat','wolf','direwolf','ghoul','eel','bat','gaunt','deepo
 FX.x=[];FX.imp=[];
 const PF=()=>META.pace==='fast'?0.35:META.pace==='instant'?0.08:1;
 const ASTYLE={slash:[200,620,0.6],smash:[300,800,0.6],thrust:[150,540,0.6],spin:[200,640,0.58],whip:[220,640,0.61],hook:[180,620,0.565],cast:[340,820,0.62],throw:[140,560,0.55],claw:[180,560,0.62],bite:[180,560,0.62],mcast:[200,600,0.62]};
-function flashAttack(att,tgt,style,col){if(UI.quiet||REDUCE)return 0;const P=ASTYLE[style]||ASTYLE.slash,pf=PF();const a=wpos(att),b={x:tgt.x*T+T/2,y:tgt.y*T+T/2};
+function flashAttack(att,tgt,style,col){const timing=ASTYLE[style]||ASTYLE.slash;att.pixelAction={t0:NOW,dur:Math.max(80,timing[1]*PF())};if(UI.quiet||REDUCE)return 0;const P=ASTYLE[style]||ASTYLE.slash,pf=PF();const a=wpos(att),b={x:tgt.x*T+T/2,y:tgt.y*T+T/2};
   const dx=Math.sign(tgt.x-att.x),dy=Math.sign(tgt.y-att.y);if(style!=='spin'&&style!=='cast'&&style!=='mcast')att.windup={t0:NOW,dur:P[0]*pf,dx,dy};if(style==='smash')att.hop={t0:NOW+P[0]*pf*0.2,dur:P[0]*pf*1.4,h:14};
   FX.x.push({k:style,a,b,att,c:col||'#f4ecd8',t0:NOW,dur:P[1]*pf,imp:P[2],hit:false,crit:false,seed:Math.random()*6});FX.lastSwing={x:att.x,y:att.y,t:NOW+P[0]*pf};
   try{sfx('windup',{style})}catch(e){}return P[0]}
@@ -6942,26 +6943,16 @@ const FLOATERS=new Set(['wraith','bat','choir','harp']);
   if(e&&e.cast&&!isP(e)){const t=(NOW-e.cast.t0)/e.cast.dur;if(t<1){const p=wpos(e);const g=ctx.createRadialGradient(p.x,p.y+T*0.35,1,p.x,p.y+T*0.35,T*0.7);g.addColorStop(0,`rgba(180,138,232,${0.5*Math.sin(t*Math.PI)})`);g.addColorStop(1,'rgba(180,138,232,0)');ctx.fillStyle=g;ctx.fillRect(p.x-T,p.y-T*0.4,T*2,T*1.6)}else e.cast=null}
   return d0(img,imgW,e,size,alpha,flipOk)}}
 
-/* --- and they die in their own way --- */
-const DEATHK={skeleton:'crumble',gaunt:'crumble',knight:'topple',wraith:'fade',choir:'fade',saint:'spore',shambler:'spore',host:'spore',deepone:'sink',eel:'sink',horror:'sink',harp:'sink',sailor:'sink',bat:'drop',rat:'drop',spider:'curl',abbot:'sink'};
+/* Native death poses replace the old rotated/squashed square sprites. */
 const DYING=[];
-{const k0=killMon;killMon=function(m,how,src){if(m.dead)return;const p=m.rx!=null?{x:m.rx*T+T/2,y:m.ry*T+T/2}:{x:m.x*T+T/2,y:m.y*T+T/2};const r=k0(m,how,src);
-  try{if(!REDUCE&&SPR[m.type]){const M=MT(m);DYING.push({img:ART?.frameAsset?.(m.type,m,NOW,REDUCE)?.image||SPR[m.type],x:p.x,y:p.y,k:({ice:'crumble',occult:'fade',slash:'sever',piercing:'sever',fire:'burn',water:'sink',spores:'spore',lightning:'shock'})[m.lastHit&&m.lastHit.kind]||DEATHK[m.type]||'topple',t0:NOW,sz:DROWNED_TYPES.has(m.type)?(m.type==='admiral'?72:48):M.boss?T*1.5:T,dir:src&&src.x!=null&&src.x>m.x?-1:1,seed:Math.random()*6});if(DYING.length>24)DYING.splice(0,DYING.length-24)}}catch(e){}return r}}
-{const a0=drawAnims;drawAnims=function(){a0();if(!DYING.length)return;try{for(let i=DYING.length-1;i>=0;i--){const d=DYING[i],dur=d.k==='fade'?900:d.k==='crumble'?700:620,t=(NOW-d.t0)/dur;if(t>1){DYING.splice(i,1);continue}if(t<0)continue;
-  const sz=d.sz;let x=d.x,y=d.y;ctx.save();if(typeof ISO!=='undefined'){const p=ISO.project(x,y);x=p.x;y=p.y-T/2}ctx.globalCompositeOperation='source-over';
-  switch(d.k){
-    case'burn':{ctx.globalAlpha=1-t;ctx.filter='brightness('+Math.max(.08,1-t*2)+')';ctx.translate(x,y+sz*.3);ctx.scale(1-t*.35,1-t*.75);ctx.drawImage(d.img,-sz/2,-sz*.8,sz,sz);break}
-    case'shock':{ctx.globalAlpha=1-t;ctx.filter='brightness('+(.3+Math.max(0,1-t*5)*1.7)+')';ctx.translate(x,y);ctx.rotate(d.dir*Math.min(1,t*2)*1.3);ctx.drawImage(d.img,-sz/2,-sz/2,sz,sz);break}
-    case'sever':{ctx.globalAlpha=1-t;const h=d.img.height/3;for(let k=0;k<3;k++){const shift=(k===0?1:-1)*d.dir*t*T*.5;ctx.drawImage(d.img,0,k*h,d.img.width,h,x-sz/2+shift,y-sz/2+k*sz/3+t*t*T*.4,sz,sz/3)}break}
-    case'topple':{const a=Math.min(1,t*1.6)*Math.PI/2*d.dir;ctx.globalAlpha=1-Math.max(0,t-0.6)/0.4;ctx.translate(x,y+sz/2);ctx.rotate(a);ctx.drawImage(d.img,-sz/2,-sz,sz,sz);break}
-    case'crumble':{const n=4;for(let k=0;k<n;k++){const sy=d.img.height/n,dy=Math.pow(t,2)*T*0.5*(k+1)/n,dx=Math.sin(d.seed+k*2)*t*10;ctx.globalAlpha=1-Math.max(0,t-0.5)*2;ctx.drawImage(d.img,0,k*sy,d.img.width,sy,x-sz/2+dx,y-sz/2+k*sz/n+dy,sz,sz/n)}
-      if(!d.b){d.b=1;burst(x,y+T*0.3,14,['#e4dcc4','#a89c80'],90,0.6,300,2)}break}
-    case'fade':{ctx.globalAlpha=1-t;ctx.globalCompositeOperation='lighter';ctx.drawImage(d.img,x-sz/2*(1+t*0.4),y-sz/2-t*T*0.8,sz*(1+t*0.4),sz*(1+t*0.2));break}
-    case'spore':{ctx.globalAlpha=1-t;const k=1+t*0.35;ctx.drawImage(d.img,x-sz/2*k,y-sz/2*(2-k),sz*k,sz*(2-k)*0.9);if(!d.b&&t>0.3){d.b=1;burst(x,y,24,['#c8d8a0','#8aa860','#e8f0c8'],70,1,-30,3)}break}
-    case'sink':{const h=sz*Math.min(1,t*1.2);ctx.beginPath();ctx.rect(x-sz,y-sz,sz*2,sz*1.5-h*0.9);ctx.clip();ctx.drawImage(d.img,x-sz/2,y-sz/2+h*0.9,sz,sz);ctx.restore();ctx.save();ctx.strokeStyle=`rgba(160,200,230,${0.7*(1-t)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y+sz*0.45,T*(0.3+t*0.8),T*(0.1+t*0.25),0,0,7);ctx.stroke();break}
-    case'drop':{const fy=Math.min(1,t*2);ctx.globalAlpha=1-Math.max(0,t-0.6)/0.4;ctx.translate(x,y+fy*T*0.2);ctx.scale(1,1-fy*0.5);ctx.rotate(fy*Math.PI*d.dir);ctx.drawImage(d.img,-sz/2,-sz/2,sz,sz);break}
-    case'curl':{const k=1-Math.min(1,t*1.4)*0.5;ctx.globalAlpha=1-Math.max(0,t-0.6)/0.4;ctx.translate(x,y+sz*0.3);ctx.scale(k,-k);ctx.drawImage(d.img,-sz/2,-sz*0.8,sz,sz);break}}
-  ctx.restore()}}catch(e){}}}
+{const k0=killMon;killMon=function(m,how,src){if(m.dead)return;const asset=ART?.frameAsset?.(m.type,m,NOW,false)||ART?.actor(m.type),snapshot={...m};const r=k0(m,how,src);const corpse=S.L.objs.find(o=>o.type==='corpse'&&o.mt===m.type&&o.x===m.x&&o.y===m.y);if(corpse)corpse.visualKind=m.lastHit?.kind;
+ if(!REDUCE&&asset&&tileAt(m.x,m.y)!==PIT){DYING.push({e:snapshot,img:asset.image,level:S.L,t0:NOW,duration:SaltmarrowAnimations.duration,kind:m.lastHit?.kind||'impact',scale:MT(m).boss?1.5:m.mut==='hulking'?1.2:1});if(DYING.length>24)DYING.shift()}return r}}
+function drawPixelDeath(d){if(!vis[I(d.e.x,d.e.y)])return;const elapsed=NOW-d.t0,frame=ART?.deathAsset?.(d.e.type,elapsed,REDUCE),p=wpos(d.e),q=ISO.project(p.x,p.y),im=elapsed<110?d.img:frame?.image||d.img;
+ const w=Math.round(im.width*d.scale),h=Math.round(im.height*d.scale);ctx.save();ctx.imageSmoothingEnabled=false;
+ if(d.kind==='occult'||d.kind==='water')ctx.globalAlpha*=Math.max(0,1-elapsed/d.duration);
+ if(d.kind==='fire'){ctx.filter='brightness('+Math.max(.25,1-elapsed/1200)+')'}
+ ctx.translate(Math.round(q.x),Math.round(q.y));if(d.e.fx<0)ctx.scale(-1,1);ctx.drawImage(im,-Math.round(w/2),-h,w,h);ctx.restore();
+}
 {const fx0=UI.fx;UI.fx=function(type,d){const out=fx0(type,d);if(REDUCE){FX.shake.m=0;FX.stop=0;FX.flash=null;if(type==='hit'&&d&&d.e){d.e.kb=null;d.e.lunge=null;FX.parts.length=0;FX.imp.length=0}}return out}}
 setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{DYING,HEARD,STEPR,killMon:(...a)=>killMon(...a),noise:(...a)=>noise(...a)})}catch(e){}},470);
 /* ---------- music: slow generated pads and a far-off melody, thickening with Dread; a pulse for fights ---------- */
@@ -7088,6 +7079,7 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
   let shakeX=0,shakeY=0;if(FX.shake.m){const t=(NOW-FX.shake.t)/350;if(t<1&&!REDUCE){shakeX=Math.round((Math.random()-.5)*FX.shake.m*(1-t));shakeY=Math.round((Math.random()-.5)*FX.shake.m*(1-t))}else FX.shake.m=0}
   ctx.save();ctx.translate(-c.x+shakeX,-c.y+shakeY);
   const tiles=[],standing=[],townPlan=townArtPlan(L);
+  for(let i=DYING.length-1;i>=0;i--){const d=DYING[i];if(d.level!==L||NOW-d.t0>=d.duration)DYING.splice(i,1);else standing.push({death:d,depth:ISO.depth(d.e)+1})}
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=I(x,y);if(!L.seen[i])continue;const q=ISO.project((x+.5)*T,(y+.5)*T);if(q.x<c.x-T*3||q.x>c.x+VW+T*3||q.y<c.y-T*3||q.y>c.y+VH+T*3)continue;tiles.push({x,y,i});
     if((L.map[i]===WALL||L.map[i]===CRACK)&&!townPlan?.covered.has(i))standing.push({x,y,depth:y+1,wall:true})}
   isoGround(()=>{for(const{x,y,i}of tiles){ctx.globalAlpha=vis[i]?1:.45;ctx.drawImage(isoFloorArt(tileImg(TS,L.map[i],x,y,wf),L.map[i],x,y),x*T,y*T,T,T);
@@ -7107,7 +7099,7 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
   if(townPlan)for(const b of townPlan.entries)standing.push({building:b,depth:b.y+b.h});
   standing.push({e:P,depth:ISO.depth(P)+1,hero:true});
   standing.sort((a,b)=>a.depth-b.depth||(a.wall?-1:1)-(b.wall?-1:1));
-  for(const entry of standing){ctx.save();if(entry.building){drawArtBuilding(entry.building)}else if(entry.wall){ctx.globalAlpha=vis[I(entry.x,entry.y)]?1:.45;
+  for(const entry of standing){ctx.save();if(entry.death){drawPixelDeath(entry.death)}else if(entry.building){drawArtBuilding(entry.building)}else if(entry.wall){ctx.globalAlpha=vis[I(entry.x,entry.y)]?1:.45;
       // Cut away nearby foreground masonry so the hero and target remain readable.
       if(entry.depth>P.y+1&&Math.abs(entry.x-P.x)<=2&&Math.abs(entry.y-P.y)<=2)ctx.globalAlpha*=.3;
       isoWall(TS,entry.x,entry.y,wf);
@@ -7231,13 +7223,14 @@ drawSprite=function(img,imgW,e,size,alpha,flipOk){
   const footX=Math.round(p.x+ox),footY=Math.round(p.y+T/2+oy);
   ctx.save();if(alpha!=null)ctx.globalAlpha*=alpha;
   ctx.fillStyle='rgba(0,5,9,.48)';ctx.fillRect(footX-Math.round(w*.3),footY-2,Math.round(w*.6),3);
-  ctx.translate(footX,footY+bob-hop);const motion=bodyMotion(e);if(motion){ctx.rotate(motion.tilt);ctx.scale(motion.sx,motion.sy)}
-  if(e.squash&&!REDUCE){const t=(NOW-e.squash.t0)/e.squash.dur;if(t>=0&&t<1){const k=Math.sin(t*Math.PI)*.18;ctx.scale(1+k,1-k)}else if(t>=1)e.squash=null}
+  ctx.translate(footX,footY+(asset.posed?0:bob)-hop);
+  if(e.squash&&!REDUCE&&!asset.posed){const t=(NOW-e.squash.t0)/e.squash.dur;if(t>=0&&t<1){const k=Math.sin(t*Math.PI)*.18;ctx.scale(1+k,1-k)}else if(t>=1)e.squash=null}
   ctx.scale(!asset.directional&&flipOk!==false&&e.fx<0?-1:1,1);ctx.drawImage(im,-Math.round(w/2),-h,w,h);
   if(e.flashT&&NOW-e.flashT<140){ctx.globalAlpha*=.7;ctx.drawImage(ART.white(asset),-Math.round(w/2),-h,w,h)}ctx.restore();
 };
 const artObjBase=drawObj;
 drawObj=function(o){
+  if(o.type==='corpse'){if(DYING.some(d=>d.level===S.L&&d.e.x===o.x&&d.e.y===o.y))return;const a=ART?.corpseAsset?.(o.mt);if(a){const p=wpos(o),scale=MON[o.mt]?.boss?1.5:1,w=Math.round(a.image.width*scale),h=Math.round(a.image.height*scale);ctx.save();if(o.visualKind==='fire')ctx.filter='brightness(.45)';ctx.drawImage(a.image,Math.round(p.x-w/2),Math.round(p.y+T/2-h),w,h);ctx.restore();return}}
   const plan=townArtPlan(S.L);if(plan&&['door','house'].includes(o.type)&&plan.covered.has(I(o.x,o.y)))return;
   let key=o.type;if(key==='chest'||key==='coffin')key+=o.open?'Open':'';if(key==='brazier'&&!o.lit)key='brazierCold';if(key==='lever'&&o.on)key='leverOn';
   const a=ART?.get('props',key);if(!a)return artObjBase(o);
