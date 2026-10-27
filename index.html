@@ -7248,6 +7248,8 @@ function weaponContact(source,target){
 }}
 let WEAPON_ABILITY=null;
 async function weaponRecovery(actor){
+  // The concurrent combat-feel clock owns the combined max deadline when present.
+  if(typeof FEEL!=='undefined'&&FEEL.actions?.get(actor))return;
   const action=WEAPON_ACTIONS.get(actor);if(!action||UI.quiet||REDUCE)return;
   // Wait for the painted recovery boundary, including slow desktop frames. A hidden
   // tab may suspend painting, so wall time also provides a bounded completion path.
