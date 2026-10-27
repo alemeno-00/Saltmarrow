@@ -35,6 +35,9 @@ jobs:
       - run: node tests/flat-browser.cjs
         env:
           SCREENSHOT_DIR: test-results
+      - run: npm run test:tactics
+        env:
+          SCREENSHOT_DIR: test-results
       - run: npm run test:browser
         env:
           SCREENSHOT_DIR: test-results
