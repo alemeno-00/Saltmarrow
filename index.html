@@ -7277,7 +7277,7 @@ async function weaponRecovery(actor){
   if(att!==S.P||!wpn())return original(att,tgt);
   const prior=WEAPON_ABILITY;WEAPON_ABILITY={kind:'melee',id:'freeStrike'};
   const dx=Math.sign(tgt.x-att.x),dy=Math.sign(tgt.y-att.y);att.fx=dx;att.fy=dy;
-  if(!REDUCE&&!UI.quiet)WEAPON_ACTIONS.set(att,{base:wpn().base,t0:NOW,impact:NOW+110*PF(),end:NOW+300*PF(),dx,dy,resolved:false});
+  if(!REDUCE&&!UI.quiet)WEAPON_ACTIONS.set(att,{base:wpn().base,id:'freeStrike',style:'thrust',profile:SaltmarrowWeapons.profile(WEAPON_ABILITY),t0:NOW,impact:NOW+110*PF(),end:NOW+300*PF(),dx,dy,resolved:false});
   try{return await original(att,tgt)}finally{weaponContact(att,null);WEAPON_ABILITY=prior}
 }}
 {const original=damage;damage=function(e,amt,src,hit){

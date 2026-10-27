@@ -77,14 +77,22 @@ const rows=[
 ['autoexp','gust',200,260,[-3,2,-1.4],[4,3,-.8],[0,1,-1.1]],
 ['freeStrike','thrust',240,360,[-5,-1,-1.8],[11,1,0],[5,3,.5]]
 ];
-for(const [id,style,wind,recovery,windPose,hit,follow] of rows)profiles[id]={id,style,wind,recovery,windPose,hit,follow};
+// Body-family is a selection hint, never permission to replace a named hand track.
+const utility=new Set(['inkcloud','eelstep','penance','martyr','veil','bloodrage','seafog','offering','shift','hide','defend','dash','breath','escape','draught','charge','ink','tea','stone','oil','shadowstep','clapper','camp','autoexp']);
+const heavy=new Set(['undertow','redtide','ironwake','quake','caveblow','judgement']);
+const thrust=new Set(['gaff','knife','fishhook','headbutt','chainlash','garrote','venomdart','brand','brandofsalt','shove','freeStrike']);
+const sweep=new Set(['breakwater','gutter','scourge','flurry','caltrops','vanish']);
+for(const [id,style,wind,recovery,windPose,hit,follow] of rows){
+ const bodyFamily=utility.has(id)?'utility':heavy.has(id)?'heavy':thrust.has(id)?'thrust':sweep.has(id)?'sweep':'cast';
+ profiles[id]={id,style,bodyFamily,wind,recovery,windPose,hit,follow};
+}
 const elements=['fire','frost','lightning','holy','void','blood'];
 function profile(ab){if(!ab)return null;if(!ab.tome)return profiles[ab.id]||null;
  const shape=ab.ward?'ward':ab.blink?'blink':({ranged:'bolt',area:'area',burst:'burst'}[ab.kind]);
  const index=elements.indexOf(ab.el),i=Math.max(0,index);
  const style={fire:'pillar',frost:'hail',lightning:'fork',holy:'nova',void:'rift',blood:'leech'}[ab.el]||'cast';
  const poses={bolt:[[-5,-8,-2],[14,-6,-.2],[7,-3,-.7]],area:[[0,-18,-1.7],[7,-21,-1],[4,-9,-1.3]],burst:[[-12,1,-3],[12,-9,3],[2,-5,4.5]],ward:[[-3,4,-2],[0,-12,-1.5],[0,-8,-1.4]],blink:[[10,3,0],[-10,-9,-3],[-4,0,-2]]}[shape];
- if(!poses)return null;return{id:'tome_'+ab.el+'_'+shape,style,wind:420+i*25+(shape==='area'?100:0),recovery:500+i*20,windPose:poses[0],hit:poses[1].map((v,k)=>v+(k===1?-i:0)),follow:poses[2]};
+ if(!poses)return null;return{id:'tome_'+ab.el+'_'+shape,style,bodyFamily:ab.ward||ab.blink?'utility':'cast',wind:420+i*25+(shape==='area'?100:0),recovery:500+i*20,windPose:poses[0],hit:poses[1].map((v,k)=>v+(k===1?-i:0)),follow:poses[2]};
 }
 function track(p,t,recover){const ease=q=>q*q*(3-2*q),lerp=(a,b,q)=>a.map((v,i)=>v+(b[i]-v)*ease(q));
  if(t<.68)return lerp([0,0,-1.15],p.windPose,Math.max(0,t/.68));

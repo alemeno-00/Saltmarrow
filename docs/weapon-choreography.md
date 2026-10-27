@@ -24,7 +24,7 @@ Render hookups:
 - `flat-art.js`: original `weaponKind`, `weaponStyle`, `weaponDeathKind`, `weaponPose`, `drawWeapon` remain the compatibility entry points. The new module decorates the pose/drawing functions without changing their signatures.
 - `index.html` final `drawSprite`: selects equipped weapon for idle, walk and actions, then composes behind/in front of `ART.heroBody`. Existing `animation-art.js` body and hit/death frame selection remain authoritative.
 - `SPR.weapon_<base>`, `SPRW`, `ICON`, `gearSpr`, `itemImg`: shared source supplies pack grid, paper doll, gear sidebar, shops, comparisons/tooltips and dropped world gear, including both legacy and flat world renderer paths. Existing DOM equipment hooks remain intact.
-- `flashAttack` → `WEAPON_ACTIONS` → `weaponContact` → `weaponRecovery`: profile timing and hand track use the same resolution clock; actual damage/effect application owns contact. Area damage resolves contact once. Delays hold the contact pose/effect and extend recovery. Existing `S.busy` remains held until the action returns. No turn, resource, target, balance or hit-rule changes.
+- `flashAttack` → `WEAPON_ACTIONS` → `weaponContact` → `weaponRecovery`: profile timing and hand track use the same resolution clock; each profile exposes `bodyFamily` (`heavy`, `thrust`, `sweep`, `cast`, `utility`) for the separate body renderer, and actions retain `id`, `style` and `profile`; actual damage/effect application owns contact. Area damage resolves contact once. Delays hold the contact pose/effect and extend recovery. Existing `S.busy` remains held until the action returns. No turn, resource, target, balance or hit-rule changes.
 - `doUtility`: utility anticipation precedes its authoritative implementation; self effects and movement resolve through existing code, then recovery completes. Reduced motion and quiet simulation bypass added waits.
 - `freeStrike`: retains existing short opportunity-strike timing and death context. It is an implicit reaction, not an extra player action.
 - `sw.js`, Mac and existing offline bundle copy lists include the new runtime.
@@ -113,7 +113,7 @@ Every tome is a combination of six elements (fire, frost, lightning, holy, void,
 
 ## Verification and concurrent work
 
-63 unit/regression checks pass. Chromium browser audit executes all 47 offensive static abilities and 11 representative utilities, checks authored profile selection, recovery completion, impact timestamps, delayed damage, all nine equipment bases, unequip, accessibility, speed settings and unchanged turn counters. Tactical browser regression passes. The same full audit passes in WebKit on macOS.
+64 unit/regression checks pass. Chromium browser audit executes all 47 offensive static abilities and 11 representative utilities, checks authored profile selection, recovery completion, impact timestamps, delayed damage, all nine equipment bases, unequip, accessibility, speed settings and unchanged turn counters. Tactical browser regression passes. The same full audit passes in WebKit on macOS.
 
 ![Before: main weapon art](reference/weapon-before.png)
 

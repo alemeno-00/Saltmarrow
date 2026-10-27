@@ -18,3 +18,9 @@ test('equipped choreography holds contact during delayed resolution and preserve
 test('new weapon runtime ships in offline web and native bundles',()=>{
  assert.ok(html.includes('src="weapon-art.js"'));for(const path of ['sw.js','.github/workflows/mac.yml','.github/workflows/apk.yml'])assert.ok(fs.readFileSync(path,'utf8').includes('weapon-art.js'),path);
 });
+test('body-family selection preserves named choreography and keeps tome utility shapes separate',()=>{
+ const families=new Set(['heavy','thrust','sweep','cast','utility']);for(const p of Object.values(W.profiles))assert.ok(families.has(p.bodyFamily),p.id);
+ for(const [id,family] of [['undertow','heavy'],['knife','thrust'],['breakwater','sweep'],['brinebolt','cast'],['draught','utility']]){const p=W.profile({id});assert.equal(p.bodyFamily,family);assert.equal(p.id,id);assert.ok(p.style&&p.hit&&p.follow)}
+ for(const el of ['fire','frost','lightning','holy','void','blood'])for(const kind of ['ranged','area','burst','ward','blink'])assert.equal(W.profile({tome:'i1',kind,el,ward:kind==='ward',blink:kind==='blink'}).bodyFamily,['ward','blink'].includes(kind)?'utility':'cast');
+ assert.match(html,/id:'freeStrike',style:'thrust',profile:SaltmarrowWeapons.profile/);
+});
