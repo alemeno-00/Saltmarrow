@@ -1,0 +1,234 @@
+{
+  "id": "ashenPenitent",
+  "width": 512,
+  "height": 640,
+  "cell": 128,
+  "columns": 4,
+  "rows": 5,
+  "anchor": [
+    64,
+    110
+  ],
+  "frames": [
+    {
+      "state": "idle",
+      "frame": 0,
+      "bounds": [
+        40,
+        63,
+        95,
+        110
+      ],
+      "pixels": 1163
+    },
+    {
+      "state": "idle",
+      "frame": 1,
+      "bounds": [
+        38,
+        63,
+        87,
+        110
+      ],
+      "pixels": 1094
+    },
+    {
+      "state": "idle",
+      "frame": 2,
+      "bounds": [
+        41,
+        63,
+        93,
+        111
+      ],
+      "pixels": 1145
+    },
+    {
+      "state": "idle",
+      "frame": 3,
+      "bounds": [
+        42,
+        63,
+        88,
+        111
+      ],
+      "pixels": 1115
+    },
+    {
+      "state": "move",
+      "frame": 0,
+      "bounds": [
+        39,
+        63,
+        94,
+        110
+      ],
+      "pixels": 1134
+    },
+    {
+      "state": "move",
+      "frame": 1,
+      "bounds": [
+        41,
+        63,
+        95,
+        110
+      ],
+      "pixels": 1125
+    },
+    {
+      "state": "move",
+      "frame": 2,
+      "bounds": [
+        41,
+        62,
+        97,
+        110
+      ],
+      "pixels": 1142
+    },
+    {
+      "state": "move",
+      "frame": 3,
+      "bounds": [
+        45,
+        61,
+        90,
+        110
+      ],
+      "pixels": 1081
+    },
+    {
+      "state": "attack",
+      "frame": 0,
+      "bounds": [
+        37,
+        67,
+        83,
+        110
+      ],
+      "pixels": 1098
+    },
+    {
+      "state": "attack",
+      "frame": 1,
+      "bounds": [
+        40,
+        61,
+        92,
+        110
+      ],
+      "pixels": 1196
+    },
+    {
+      "state": "attack",
+      "frame": 2,
+      "bounds": [
+        39,
+        68,
+        121,
+        109
+      ],
+      "pixels": 1165
+    },
+    {
+      "state": "attack",
+      "frame": 3,
+      "bounds": [
+        55,
+        63,
+        95,
+        110
+      ],
+      "pixels": 1042
+    },
+    {
+      "state": "hurt",
+      "frame": 0,
+      "bounds": [
+        45,
+        64,
+        95,
+        107
+      ],
+      "pixels": 1139
+    },
+    {
+      "state": "hurt",
+      "frame": 1,
+      "bounds": [
+        43,
+        61,
+        95,
+        106
+      ],
+      "pixels": 1159
+    },
+    {
+      "state": "hurt",
+      "frame": 2,
+      "bounds": [
+        39,
+        70,
+        93,
+        106
+      ],
+      "pixels": 997
+    },
+    {
+      "state": "hurt",
+      "frame": 3,
+      "bounds": [
+        37,
+        77,
+        93,
+        106
+      ],
+      "pixels": 800
+    },
+    {
+      "state": "death",
+      "frame": 0,
+      "bounds": [
+        37,
+        63,
+        96,
+        102
+      ],
+      "pixels": 1020
+    },
+    {
+      "state": "death",
+      "frame": 1,
+      "bounds": [
+        35,
+        68,
+        95,
+        102
+      ],
+      "pixels": 910
+    },
+    {
+      "state": "death",
+      "frame": 2,
+      "bounds": [
+        34,
+        79,
+        95,
+        101
+      ],
+      "pixels": 780
+    },
+    {
+      "state": "death",
+      "frame": 3,
+      "bounds": [
+        32,
+        82,
+        94,
+        102
+      ],
+      "pixels": 834
+    }
+  ]
+}

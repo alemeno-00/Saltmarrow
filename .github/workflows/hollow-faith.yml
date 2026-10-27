@@ -1,0 +1,26 @@
+name: Hollow Faith regression
+on:
+  pull_request:
+    paths: ['index.html', 'hollow-*.js', 'assets/hollow-faith/**', 'tests/hollow*', 'sw.js', '.github/workflows/hollow-faith.yml']
+  push:
+    branches: [main]
+    paths: ['index.html', 'hollow-*.js', 'assets/hollow-faith/**', 'tests/hollow*', 'sw.js']
+jobs:
+  hollow-faith:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - run: node --test tests/*.test.cjs
+      - run: node tests/hollow-browser.cjs
+        env:
+          SCREENSHOT_DIR: test-results/hollow-faith
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hollow-faith-screenshots
+          path: test-results/hollow-faith
