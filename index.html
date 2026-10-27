@@ -496,7 +496,7 @@ body.mob .mhead{display:none}
   <div class="game">
     <div class="left">
       <div class="stage" id="stage">
-        <canvas id="cv" aria-label="Dungeon map. Left-click to move or attack, right-click to inspect."></canvas>
+        <canvas id="cv" tabindex="0" aria-label="Dungeon map. Left-click to move or attack, right-click to inspect."></canvas>
         <div class="hud-tl" id="hudTl"></div>
         <div class="tracker" id="tracker" hidden></div>
         <div id="toastHost"></div>
@@ -4825,7 +4825,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 function tierLine(ab,ch){if(!ab.t)return'';const bands=['≤11','12–16','17+'];
   return ab.t.map((t,i)=>{const parts=[];if(t.d>0)parts.push(`${t.d+ch} dmg`);if(t.push)parts.push(`push ${t.push}`);if(t.pull)parts.push(`pull ${t.pull}`);if(t.out)parts.push(`hurl ${t.out}`);if(t.cond)parts.push(t.cond);return`<span class="t">${bands[i]}</span> ${parts.join(', ')||'no damage'}`}).join('<br>')}
 function abTip(id){const ab=AB[id];const c=abCost(id);const what=ab.act==='main'?'Main action':ab.act==='maneuver'?'Maneuver':'Move';
-  const rng=ab.kind==='melee'?`melee ${ab.range}`:ab.kind==='ranged'?`ranged ${ab.range}`:ab.kind==='area'?`3×3 area within ${ab.range}`:ab.kind==='burst'?'all adjacent':ab.kind==='point'?`within ${ab.range}`:ab.kind==='step'?`up to ${ab.range} squares`:'';
+  const rng=ab.kind==='melee'?`melee ${ab.range}`:ab.kind==='ranged'?`ranged ${ab.range+gearSum('range')}`:ab.kind==='area'?`${2*(ab.radius||1)+1}×${2*(ab.radius||1)+1} area within ${ab.range}`:ab.kind==='burst'?'all adjacent':ab.kind==='point'?`within ${ab.range}`:ab.kind==='step'?`up to ${ab.range} squares`:'';
   const u=abUsable(id);const ch=ab.stat?S.P.chars[ab.stat]:0;
   return `<b>${ab.name}</b><br><span class="s">${what}${rng?' · '+rng:''}${c?` · ${c} ${cls().res}`:''}${ab.stat&&ab.t?` · 2d10 + ${{M:'Might',A:'Agility',R:'Reason'}[ab.stat]} (${ch>=0?'+':''}${ch})`:''}</span><br>${esc(ab.desc)}${ab.t?'<br>'+tierLine(ab,ch):''}${u.ok?'':`<br><span style="color:#e88a74">${esc(u.why)}</span>`}`}
 function forecast(id,x,y){const ab=AB[id];if(!ab.t)return'';const m=monAt(x,y);const{e,b}=heroEdges(ab,m);const ch=S.P.chars[ab.stat]||0;
@@ -4925,7 +4925,7 @@ function contextHint(){const P=S.P;const t=tileAt(P.x,P.y);if(t===STAIRS)return'
 function slot(id,key,opt){opt=opt||{};const ab=AB[id];const u=opt.ok!=null?{ok:opt.ok}:abUsable(id);const c=ab?abCost(id):0;const act=ab?ab.act:'man';
   const cl=act==='main'?'main':act==='maneuver'?'man':'move';const icon=opt.icon||(ab&&ab.item?ICON[ab.item]:iconURL(ab.icon,ACT_COLOR[act]||'#e2d9c6'));
   const q=opt.q!=null?`<span class="q n">${opt.q}</span>`:c?`<span class="q">${c}</span>`:'';
-  return`<button class="sl ${cl}${SEL.id===id?' sel':''}" data-ab="${id}" ${u.ok&&!S.busy?'':'disabled'} aria-label="${esc(opt.name||ab.name)}">${key!=null?`<span class="k">${key}</span>`:''}${q}<img src="${icon}" alt=""><span class="nm">${esc(opt.short||(opt.name||ab.name).split(' ').slice(-1)[0])}</span></button>`}
+  return`<button class="sl ${cl}${SEL.id===id?' sel':''}" data-ab="${id}" tabindex="0" aria-disabled="${!u.ok||S.busy}" aria-label="${esc((opt.name||ab.name)+(key!=null?' · shortcut '+key:'')+(!u.ok?' · '+u.why:''))}">${key!=null?`<span class="k">${key}</span>`:''}${q}<img src="${icon}" alt=""><span class="nm">${esc(opt.short||(opt.name||ab.name).split(' ').slice(-1)[0])}</span></button>`}
 const SHORT={shadowstep:'Shadow',camp:'Camp',autoexp:'Explore',clapper:'Clapper',scourge:'Scourge',smite:'Smite',penance:'Penance',litany:'Litany',martyr:'Martyr',mindspike:'Spike',gaze:'Gaze',veil:'Veil',unravel:'Unravel',rend:'Rend',tea:'Tea',undertow:'Maul',gaff:'Hook',breakwater:'Whirl',redtide:'Break',gutter:'Strike',fishhook:'Dart',knife:'Knife',inkcloud:'Smoke',eelstep:'Tumble',brinebolt:'Bolt',squall:'Squall',grasp:'Undertow',staticlash:'Lash',waterspout:'Geyser',breath:'Breathe',escape:'Break free',stone:'Stone',draught:'Draught',charge:'Charge',ink:'Smoke',oil:'Firepot'};
 function renderBar(){const c=cls(),P=S.P,top=$('barTop'),sl=$('slots');if(S.over){top.innerHTML='';sl.innerHTML='';return}
   if(S.L.town){top.innerHTML=`<div class="prompt"><b>Saltmarrow.</b> <span class="s">Walk into a door or a person to go in or talk. The lift head is at the east end of the street.</span></div>`;sl.innerHTML='';return}
@@ -4938,15 +4938,15 @@ function renderBar(){const c=cls(),P=S.P,top=$('barTop'),sl=$('slots');if(S.over
   const g2=(S.mode==='explore'?slot('autoexp','O',{short:'Explore'})+slot('camp','K',{short:'Camp'}):'')+(S.mode==='combat'&&!early?[['shift',6],['shove',7],['hide',8],['defend',9],['dash',0]].map(([id,k])=>slot(id,k)).join(''):'')+slot('breath','B',{short:'Breathe',q:P.recov})+slot('stone','T',{short:'Stone'})+(hasC(P,'grabbed')?slot('escape',null,{short:'Break free'}):'');
   const g3=[['draught','R'],['charge','X'],['ink','V'],['oil','F']].map(([id,k])=>slot(id,k,{short:SHORT[id],q:S.inv[id]||0})).join('');
   sl.innerHTML=`<div class="grp">${g1}</div><div class="grp">${g2}</div><div class="grp">${g3}</div>`;
-  sl.querySelectorAll('[data-ab]').forEach(b=>{b.onclick=()=>selectAb(b.dataset.ab);
-    b.onmouseenter=()=>{const r=b.getBoundingClientRect();showTip(abTip(b.dataset.ab),r.left+r.width/2,$('stage').getBoundingClientRect().bottom+4,true)};b.onmouseleave=hideTip});
+  sl.querySelectorAll('[data-ab]').forEach(b=>{b.onclick=()=>{if(b.getAttribute('aria-disabled')!=='true'){selectAb(b.dataset.ab);if(SEL.id)cv.focus({preventScroll:true})}};
+    b.onmouseenter=()=>{const r=b.getBoundingClientRect();showTip(abTip(b.dataset.ab),r.left+r.width/2,$('stage').getBoundingClientRect().bottom+4,true)};b.onmouseleave=hideTip;b.onfocus=b.onmouseenter;b.onblur=hideTip;b.setAttribute('aria-describedby','tip')});
   const et=$('endTurn');if(et)et.onclick=()=>endHeroTurn();const lb=$('lanternBtn');if(lb)lb.onclick=toggleLantern;const db=$('descBtn');if(db)db.onclick=()=>descend(false);const cs=$('cancelSel');if(cs)cs.onclick=cancelSel}
 function renderHud(){const L=S.L;$('hudTl').innerHTML=L.town?`<span class="chip"><b>Saltmarrow</b> · act ${act()} of 4</span>`:`<span class="chip"><b>${S.depth===MAXD?'The Chapel':'Depth '+S.depth}</b> · ${BIOMES[L.bio].name}</span>${(S.L.turns||0)>300&&!S.L.stalker?'<span class="chip bad">Something is coming</span>':''}`;
   const tr=$('tracker');if(S.mode!=='combat'||!S.C){tr.hidden=true;return}tr.hidden=false;const C=S.C,P=S.P;
-  const foes=S.L.mons.filter(m=>m.inCombat).sort((a,b)=>cheb(a.x,a.y,P.x,P.y)-cheb(b.x,b.y,P.x,P.y));
-  const heroTok=`<div class="tok hero${C.phase==='hero'?' now':''}" title="You"><img src="${ICON[S.cls]}" alt=""><i><b style="width:${Math.max(0,P.stam)/P.max*100}%"></b></i></div>`;
-  const foeToks=foes.slice(0,12).map(m=>`<div class="tok${C.phase==='enemy'?' now':''}${monVisible(m)?'':' dim'}" title="${esc(MT(m).name)}"><img src="${monIcon(m.type)}" alt=""><i><b style="width:${Math.max(0,m.stam)/m.max*100}%"></b></i></div>`).join('');
-  tr.innerHTML=`<span class="chip rnd">Round <b>${C.round}</b> · ${C.phase==='hero'?'<b>Your turn</b>':'<span class="foe">Enemy turn</span>'} · Malice <span class="foe">${C.malice}</span></span><div class="order">${C.heroFirst?heroTok+foeToks:foeToks+heroTok}</div>`}
+  const foes=S.L.mons.filter(m=>m.inCombat&&!m.dead).sort((a,b)=>cheb(a.x,a.y,P.x,P.y)-cheb(b.x,b.y,P.x,P.y));
+  const heroTok=`<div class="tok hero${C.phase==='hero'?' now':''}" title="You · ${C.phase==='hero'?'acting now':'waiting'}"><img src="${ICON[S.cls]}" alt=""><i><b style="width:${Math.max(0,P.stam)/P.max*100}%"></b></i></div>`;
+  const foeToks=foes.slice(0,12).map(m=>`<div class="tok${C.phase==='enemy'?' now':''}${monVisible(m)?'':' dim'}" title="${esc(monVisible(m)?MT(m).name+' · '+intentText(m):'Unseen enemy')}"><img src="${monIcon(m.type)}" alt=""><i><b style="width:${Math.max(0,m.stam)/m.max*100}%"></b></i></div>`).join('');
+  tr.innerHTML=`<span class="chip rnd">Round <b>${C.round}</b> · ${C.phase==='hero'?'<b>Your turn</b>':'<span class="foe">Enemy turn</span>'} · Malice <span class="foe">${C.malice}</span></span><div class="order" aria-label="Phase order; enemies act nearest first, then may act again if their ability allows">${C.heroFirst?heroTok+foeToks:foeToks+heroTok}</div>`}
 UI.render=()=>{if(!S||!S.L)return;refreshOverlays();renderHero();renderGear();renderSatchel();renderBar();renderHud();UI.log();$('padMid').textContent=S.mode==='combat'?'end':'wait'};
 
 
@@ -5210,7 +5210,7 @@ cv.addEventListener('contextmenu',ev=>{ev.preventDefault();if(!S||!S.L||!$('over
 let lastHover='';
 cv.addEventListener('mousemove',ev=>{if(!S||!S.L)return;const t=tileFromEvent(ev);
   if(SEL.id){if(isValid(t.x,t.y)){SEL.cursor=t;const m=monAt(t.x,t.y);const f=m?forecast(SEL.id,t.x,t.y):'';if(f)showTip(f,ev.clientX,ev.clientY);else hideTip()}else hideTip();return}
-  SEL.hover=t;const key=t.x+','+t.y;if(key!==lastHover){lastHover=key;SEL.walk=null;
+  SEL.hover=t;if(S.mode==='combat')renderGear();const key=t.x+','+t.y;if(key!==lastHover){lastHover=key;SEL.walk=null;
     if(S.mode==='explore'&&inb(t.x,t.y)&&S.L.seen[I(t.x,t.y)]&&cheb(t.x,t.y,S.P.x,S.P.y)<=24&&!blockObjAt(t.x,t.y)){const pr=paths(S.P,S.P.x,S.P.y,40);SEL.walk=pathTo(pr,I(t.x,t.y))}}
   const s=insp.hidden?tileSummary(t.x,t.y):null;if(s)showTip(s,ev.clientX,ev.clientY);else hideTip()});
 cv.addEventListener('mouseleave',()=>{SEL.hover=null;SEL.walk=null;lastHover='';hideTip()});
@@ -5218,6 +5218,8 @@ document.addEventListener('mousedown',ev=>{if(!insp.hidden&&!insp.contains(ev.ta
 const MOVE={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0],q:[-1,-1],e:[1,-1],z:[-1,1],c:[1,1],Home:[-1,-1],PageUp:[1,-1],End:[-1,1],PageDown:[1,1]};
 function doMove(dx,dy){closeInspect();if(S.mode==='combat')combatStep(dx,dy);else{walkQ=null;exploreStep(dx,dy)}}
 document.addEventListener('keydown',ev=>{if(AUTO.on&&ev.key!=='o'){AUTO.on=false}if(ev.metaKey||ev.ctrlKey||ev.altKey||!S||!S.L)return;
+  if(ev.target.closest?.('input,textarea,select,[contenteditable=true]'))return;
+  if(ev.target.closest?.('button,[role=button]')&&['Enter',' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(ev.key))return;
   const k=ev.key.length===1?ev.key.toLowerCase():ev.key;
   if(!$('overlay').hidden){if(k==='Escape'){if($('helpBack'))$('helpBack').click();else if(ov.querySelector('[data-close]'))closeModal()}return}
   if(menuOpen()){if(k==='Escape'||k==='m'){ev.preventDefault();toggleMenu(false)}return}
@@ -5227,7 +5229,7 @@ document.addEventListener('keydown',ev=>{if(AUTO.on&&ev.key!=='o'){AUTO.on=false
   if(k==='Escape'){if(!insp.hidden){closeInspect();return}if(SEL.id){cancelSel();return}toggleMenu(true);return}
   if(SEL.id){
     if(k==='Enter'||k===' '){ev.preventDefault();confirmSel();return}
-    if(k==='Tab'){ev.preventDefault();const v=SEL.valid.filter(t=>monAt(t.x,t.y)||blockObjAt(t.x,t.y));const list=v.length?v:SEL.valid;const i=list.findIndex(t=>t.x===SEL.cursor.x&&t.y===SEL.cursor.y);SEL.cursor=list[(i+1)%list.length];UI.render();return}
+    if(k==='Tab'&&ev.target===cv){ev.preventDefault();const v=SEL.valid.filter(t=>monAt(t.x,t.y)||blockObjAt(t.x,t.y));const list=v.length?v:SEL.valid;if(!list.length)return;const i=list.findIndex(t=>t.x===SEL.cursor.x&&t.y===SEL.cursor.y);SEL.cursor=list[(i+(ev.shiftKey?-1:1)+list.length)%list.length];UI.render();return}
     const d=MOVE[k];if(d){ev.preventDefault();const c=SEL.cursor||{x:S.P.x,y:S.P.y};SEL.cursor={x:c.x+d[0],y:c.y+d[1]};UI.render();return}}
   if(S.busy||S.over)return;
   const d=MOVE[k];if(d){ev.preventDefault();doMove(d[0],d[1]);return}
@@ -6617,11 +6619,12 @@ function pkCW(){const m=isMob();return m?Math.max(26,Math.min(36,Math.floor((inn
 function itemImg(it,w,h,inSlotBox){const spr=gearSpr(it),src=ICON[spr]||'';let rot=it.kind==='weapon'?(W_ROT[spr]||0):0;
   const tall=h>w*1.4;let sz=Math.min(w,h)*0.86;if(rot&&tall)sz=h/1.42;else if(tall&&!rot)sz=Math.min(w*1.1,h*0.9);
   return`<img src="${src}" alt="" draggable="false" style="width:${sz|0}px;height:${sz|0}px;${rot?`transform:rotate(${rot}deg)`:''}">`}
-function pkInfo(it,where){if(!it)return'<div class="pk-hint">Hover or tap an item to see it. Drag it onto your delver to wear it, or right-click to equip.</div>';const R=RARITY[it.rar]||RARITY.fine;const lines=itemLines(it);
+function pkInfo(it,where){if(!it)return'<div class="pk-hint">Hover or focus an item to compare. Enter selects it; Tab reaches Equip or Take off. Gear cannot change during combat.</div>';const R=RARITY[it.rar]||RARITY.fine;const lines=itemLines(it);
   const k=eqKind(it),cur=where==='bag'&&k?(k==='tome'?null:inSlot(k)):null;
+  const comparison=cur&&it.ident!==false&&cur.ident!==false?uiCompare(it,cur):'';
   const ttl=it.kind==='armor'?`${R.name} ${ABASE[it.base].name} · ${ASLOT_N[it.slot]}`:`${R.name} ${kindName(it)}`;
   return`<div class="pk-it"><b style="color:${it.ident===false?'var(--bone)':R.col}">${esc(itemTitle(it))}</b><div class="pk-sub">${esc(ttl)} · depth ${it.d||1}</div><ul>${lines.map(l=>`<li${l.startsWith('Curse')?' class="cur"':''}>${esc(l)}</li>`).join('')}</ul></div>`+
-    (cur?`<div class="pk-it pk-cur"><div class="pk-sub">Wearing now</div><b style="color:${(RARITY[cur.rar]||R).col}">${esc(itemTitle(cur))}</b><ul>${itemLines(cur).map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`:'')}
+    comparison+(cur?`<div class="pk-it pk-cur"><div class="pk-sub">Wearing now</div><b style="color:${(RARITY[cur.rar]||R).col}">${esc(itemTitle(cur))}</b><ul>${itemLines(cur).map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`:'')}
 function noiseWord(){let r=1;try{r=stepNoise()}catch(e){}return r<=0?['Silent','good']:r===1?['Quiet','good']:r<=3?['Normal','']:['Loud','bad']}
 UI.gear=()=>{if(S.L&&S.L.town){UI.cottage();return}bagSettle();const inC=S.mode==='combat',CW=pkCW(),mob=isMob();
   const sel=pkSel&&(S.bag.includes(pkSel)||slotOfEquipped(pkSel))?pkSel:null;pkSel=sel;
@@ -6632,14 +6635,14 @@ UI.gear=()=>{if(S.L&&S.L.town){UI.cottage();return}bagSettle();const inC=S.mode=
   const items=S.bag.filter(it=>it.bx>=0).map(it=>{const[w,h]=itSize(it),R=RARITY[it.rar]||RARITY.fine;return`<div class="pk-item pk-bi${sel===it?' sel':''}${it.ident===false?' unid':''}" data-iid="${it.id}" data-from="bag" style="left:${it.bx*CW}px;top:${it.by*CW}px;width:${w*CW}px;height:${h*CW}px;--rc:${R.col}">${itemImg(it,w*CW,h*CW)}</div>`}).join('');
   const over=S.bag.filter(it=>it.bx<0);
   const belt=[['draught','Draught'],['charge','Charge'],['ink','Smoke'],['oil','Firepot'],['tea','Tea'],['ration','Ration']].filter(([k])=>k!=='tea'||S.inv.tea).map(([k,n])=>`<div class="pk-pouch" title="${esc((AB[k]&&AB[k].desc)||n)}"><img src="${ICON[k]||''}" alt=""><b>${S.inv[k]||0}</b><span>${n}</span></div>`).join('');
-  const el=modal(`<div class="pk"><button data-close hidden></button>
+  const el=modal(`<div class="pk"><button class="btn pk-close" data-close aria-label="Close pack">Close · Esc</button>
     <div class="pk-top"><div class="gmt">${esc(CLASSES[S.cls].name)}</div><div class="pk-note">${inC?'You cannot change gear mid-fight.':mob?'Tap to inspect · drag to move or wear':'Drag to move or wear · right-click to equip or take off'}</div></div>
     <div class="pk-main">
       <div class="pk-doll">
         ${slotHtml('weapon')}<div class="pk-hero"><img src="${heroURL}" alt="" draggable="false"></div>${slotHtml('relic')}${slotHtml('tome0')}${slotHtml('tome1')}
         <div class="pk-kit${S.kit?' has':''}" title="${esc(S.kit?KITS[S.kit].desc:'Buy kits from Tobias the smith, then pick one at the lift head.')}"><span>Kit</span><b>${S.kit?esc(KITS[S.kit].name):'None'}</b>${S.kit?`<i>${esc(KITS[S.kit].desc)}</i>`:'<i>Chosen at the lift head</i>'}</div>
         <div class="pk-stats"><div><span>Stamina</span><b>${P.stam}/${P.max}</b></div><div><span>Speed</span><b>${speedOf(P)}</b></div><div><span>Footsteps</span><b class="${nw[1]}">${nw[0]}</b></div></div>
-        <div class="pk-belt">${belt}</div>
+        <div class="pk-belt">${belt}</div>${!mob?`<div class="pk-armour">${ASLOTS.map(slotHtml).join('')}</div>`:''}
       </div>
       <div class="pk-bag"><div class="pk-flap"><div class="pk-buckle"></div></div>
         <div class="pk-body"><div class="pk-grid" style="width:${BAG_W*CW}px;height:${BAG_H*CW}px;--cw:${CW}px">${items}<div class="pk-shadow" hidden></div></div>
@@ -6654,7 +6657,7 @@ UI.gear=()=>{if(S.L&&S.L.town){UI.cottage();return}bagSettle();const inC=S.mode=
     acts.innerHTML=eq?`<button class="btn" data-a="un">Take off</button>`:`${eqKind(it)?`<button class="btn primary" data-a="eq">${it.kind==='armor'?'Wear':it.kind==='tome'?'Ready':'Equip'}</button>`:''}<button class="btn" data-a="drop">Drop</button>`;
     acts.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const a=b.dataset.a;if(a==='eq')equipItem(it);else if(a==='un')unequip(eq);else if(a==='drop'){dropItem(it);pkSel=null}UI.save();UI.render();UI.gear()})};
   showActs(sel);
-  el.querySelectorAll('.pk-item').forEach(n=>{const it=byId(n.dataset.iid);n.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&!pkDrag)info.innerHTML=pkInfo(it,n.dataset.from)});
+  el.querySelectorAll('.pk-item').forEach(n=>{const it=byId(n.dataset.iid);n.tabIndex=0;n.setAttribute('role','button');n.setAttribute('aria-label',itemTitle(it));n.addEventListener('focus',()=>{info.innerHTML=pkInfo(it,n.dataset.from)});n.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();pkSel=it;info.innerHTML=pkInfo(it,n.dataset.from);showActs(it);el.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));n.classList.add('sel')}});n.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&!pkDrag)info.innerHTML=pkInfo(it,n.dataset.from)});
     n.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'&&!pkDrag)info.innerHTML=pkInfo(pkSel,pkSel&&S.bag.includes(pkSel)?'bag':'slot')});
     n.addEventListener('contextmenu',e=>{e.preventDefault();if(inC)return;if(n.dataset.from==='slot')unequip(n.dataset.slot);else if(eqKind(it))equipItem(it);UI.save();UI.render();UI.gear()});
     n.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();pkDrag={it,from:n.dataset.from,slot:n.dataset.slot,n,sx:e.clientX,sy:e.clientY,on:false,id:e.pointerId}})});
@@ -7397,7 +7400,7 @@ if(HFA){
   const enemies=S.L.mons.filter(m=>!m.dead&&m.stam>0&&monVisible(m));
   const m=enemies.find(m=>SEL.hover&&m.x===SEL.hover.x&&m.y===SEL.hover.y)||enemies.sort((a,b)=>Math.hypot(a.x-S.P.x,a.y-S.P.y)-Math.hypot(b.x-S.P.x,b.y-S.P.y))[0];if(!m)return;
   const el=$('gearBox'),a=ART?.frameAsset?.(m.type,m,NOW,true)||ART?.actor(m.type)||(HFA?.ids.includes(m.type)?{image:HFA.frame(m,NOW,true)}:null);
-  el.innerHTML=`<p class="label"><span>${esc(MT(m).name)}</span><button class="btn" id="targetPack">Pack</button></p><div class="target-detail">${a?'<img alt="">':''}<div><div class="bar2"><i style="width:${Math.max(0,Math.min(100,m.stam/m.max*100))}%;background:#a6372e"></i></div><p>Stamina ${Math.max(0,m.stam)} / ${m.max}</p><small>${esc((m.conds||[]).map(c=>c.id).join(' · ')||AI_TXT[MT(m).ai]||'Hostile')}</small></div></div>`;
+  el.innerHTML=`<p class="label"><span>${SEL.hover&&m.x===SEL.hover.x&&m.y===SEL.hover.y?'Target':'Nearest foe'} · ${esc(MT(m).name)}</span><button class="btn" id="targetPack">Pack</button></p><div class="target-detail">${a?'<img alt="">':''}<div><div class="bar2"><i style="width:${Math.max(0,Math.min(100,m.stam/m.max*100))}%;background:#a6372e"></i></div><p>Stamina ${Math.max(0,m.stam)} / ${m.max}</p><small>${esc((m.conds||[]).map(c=>c.id).join(' · ')||AI_TXT[MT(m).ai]||'Hostile')}</small><p class="enemy-intent"><b>Intent</b> · ${esc(intentText(m))}</p></div></div>`;
   if(a)el.querySelector('img').src=a.image.toDataURL();el.querySelector('#targetPack').onclick=UI.gear;
 }}
 
@@ -7420,6 +7423,59 @@ body.full.bot .bar .slots{flex-wrap:nowrap}.full.bot .bar-top{max-width:200px;fl
 body.full.bot .log p{font-size:11px;line-height:1.3}.full.bot .who h2{color:#d4b879}
 @media(max-width:1100px){body.full.bot .game,body.tzon.full.bot .game{grid-template-columns:210px minmax(200px,1fr) 90px 190px}}
 `;document.head.appendChild(st)}
+
+
+/* Desktop UI presentation: state adapters only; combat rules and art remain unchanged. */
+function uiCompare(item,current){
+  const stats=[['armor','Armour',1],['dmg','Damage bonus',1],['t3','Tier 3 damage bonus',2],['roll','Power roll bonus',1],['stam','Max stamina bonus',4],['speed','Speed bonus',1],['stab','Stability bonus',1],['light','Lantern radius bonus',1],['recov','Recoveries bonus',1]];
+  const values=it=>{const base=it.kind==='armor'?ABASE[it.base]?.base:it.kind==='weapon'?WBASE[it.base]?.base:null;return Object.fromEntries(stats.map(([k,,scale])=>[k,((base?.[k]||0)+(it.aff?.[k]||0))*scale]))};
+  const a=values(item),b=values(current),rows=stats.filter(([k])=>a[k]||b[k]);
+  return rows.length?`<table class="gear-compare"><caption>Item contributions · compared with equipped</caption><thead><tr><th>Stat</th><th>Equipped</th><th>Selected</th><th>Change</th></tr></thead><tbody>${rows.map(([k,label])=>{const d=a[k]-b[k];return`<tr><th>${label}</th><td>${b[k]}</td><td>${a[k]}</td><td class="${d>0?'good':d<0?'bad':''}">${d>0?'+':''}${d}</td></tr>`}).join('')}</tbody></table>`:'';
+}
+{const original=renderBar;renderBar=function(){original();if(!S?.L||S.L.town||S.over)return;
+  const top=$('barTop');if(S.C){const phase=document.createElement('div');phase.className='turn-state';phase.setAttribute('role','status');phase.textContent=`Round ${S.C.round} · ${S.C.phase==='hero'?(S.busy?'Resolving action':'Your turn'):'Enemy phase'} · ${S.C.heroFirst?'You act first':'Enemies act first'}`;top.prepend(phase)}
+  if(SEL.id){const legend=document.createElement('div');legend.className='preview-key';legend.textContent='Brass outline: valid target · filled tiles: affected area · red: invalid · Tab on map: cycle targets';top.append(legend)}
+  else if(S.C){const legend=document.createElement('div');legend.className='preview-key';legend.textContent='Green tiles: movement reach · dashed line: route · Enter / Space: end turn';top.append(legend)}
+  top.querySelectorAll('.pip').forEach(n=>{const used=n.classList.contains('used');n.setAttribute('aria-label',n.textContent+(used?' · spent':' · available'));if(!n.classList.contains('move'))n.append(document.createTextNode(used?' · spent':' · ready'))});
+}}
+{const original=selectAb;selectAb=function(...args){const result=original(...args);if(SEL.id&&!isMob())cv.focus({preventScroll:true});return result}}
+tipEl.setAttribute('role','tooltip');
+// Focus remains inside open dialogs; restoring it never triggers a game action.
+{let returnFocus=null;const observer=new MutationObserver(()=>{if(ov.hidden){if(returnFocus)(returnFocus.isConnected?returnFocus:cv).focus({preventScroll:true});returnFocus=null;return}const dialog=ov.firstElementChild;if(!dialog)return;
+  if(!dialog.hasAttribute('role')){returnFocus ||= document.activeElement===document.body||ov.contains(document.activeElement)?cv:document.activeElement;dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-label',dialog.querySelector('h2,.gmt,.tt1')?.textContent||'Saltmarrow menu');dialog.tabIndex=-1;if(!ov.contains(document.activeElement))(dialog.querySelector('button:not([hidden]):not(:disabled),input,textarea')||dialog).focus({preventScroll:true})}});
+ observer.observe(ov,{childList:true,attributes:true,attributeFilter:['hidden']});
+ document.addEventListener('keydown',e=>{if(ov.hidden||e.key!=='Tab')return;const all=[...ov.querySelectorAll('button:not(:disabled),a[href],input,textarea,select,[tabindex="0"]')].filter(n=>n.getClientRects().length&&!n.hidden);if(!all.length){e.preventDefault();ov.firstElementChild?.focus();return}const i=all.indexOf(document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();all.at(-1).focus()}else if(!e.shiftKey&&(i<0||i===all.length-1)){e.preventDefault();all[0].focus()}},true);
+}
+{const style=document.createElement('style');style.textContent=`
+@media(min-width:901px){
+body:not(.mob){--bone:#e9ddc2;--dim:#b7ad98;--line:#66563e;--lantern:#e3bd75}
+body:not(.mob) .box,body:not(.mob) .bar{border-radius:0!important;background:linear-gradient(180deg,#141a1d,#0b1115)!important;border-color:#776143!important;box-shadow:inset 0 0 0 2px #080c0e,inset 0 3px #a2854c22}
+body:not(.mob) .label{color:#d7b77d;letter-spacing:.08em;border-bottom:1px solid #66563e;padding-bottom:5px;margin-bottom:7px}
+body.full.bot .game,body.tzon.full.bot .game{grid-template-columns:minmax(240px,.9fr) minmax(220px,1.2fr) 86px minmax(290px,1fr);grid-template-rows:minmax(0,1fr) 154px 138px!important}
+body.full.bot .bar{align-items:stretch;flex-direction:column;gap:5px;padding:8px 10px;overflow:auto}
+body.full.bot .bar .bar-top{max-width:none;display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-shrink:0}
+body.full.bot .bar .slots{min-height:49px;overflow-x:auto;flex-shrink:0;gap:8px}
+body.full.bot .bar .sl{min-width:48px;width:48px;height:48px;border-radius:0;flex-shrink:0}
+body.full.bot .reference-health{position:static;width:auto;margin:6px 0;font-size:12px}
+body.full.bot #heroBox .who{padding-right:0;min-height:0}body.full.bot #heroBox .chars{margin:5px 0}
+body.full.bot #gearBox{overflow:auto}body.full.bot #gearBox .label{font-size:11px;letter-spacing:0}
+body.full.bot #logBox .log p{font-size:12px;line-height:1.4}
+body.full.bot .bar-top .prompt .s{display:inline}.turn-state{font:700 12px var(--mono);color:#efd5a2;flex:1 1 260px}
+.preview-key{font-size:11px;color:#c0b7a4;flex:1 0 100%}.econ{gap:6px}.pip.used{color:#aaa18e;text-decoration:line-through;opacity:.8}
+.enemy-intent{color:#f0ca8d;line-height:1.4;font-size:12px!important;margin:5px 0!important}.target-detail img{width:48px;height:48px}.target-detail{align-items:flex-start;gap:8px}
+#tracker{max-width:65%;gap:3px}#tracker .order{max-width:100%;overflow:hidden}#tracker .tok{border-radius:0}
+#tip{max-width:360px;font-size:13px;line-height:1.5;border:1px solid #b1945f;border-radius:0;background:#10161a;color:#e9ddc2;box-shadow:0 4px 12px #0009;z-index:20}
+#toastHost,.toast,.hud-tl,.tracker,.feed{pointer-events:none}
+#overlay .mdl.wide:has(.pk){width:1120px;max-width:calc(100vw - 40px);max-height:calc(100vh - 40px);overflow:auto;box-sizing:border-box}.pk-main{flex-wrap:nowrap}.pk-doll{flex:0 0 420px;box-sizing:border-box}.pk-bag{flex:0 0 auto}
+.pk-close{float:right;margin:0 0 8px 12px}.pk-armour{grid-column:1/-1;display:flex;gap:10px;justify-content:center}.pk-armour .pk-slot{width:56px!important;height:52px!important}.pk-armour img{max-width:48px;max-height:46px;object-fit:contain}.pk-armour .pk-slot>span{font-size:10px}
+.pk-body,.pk-doll,.pk-slot,.pk-item,.btn,.sl{border-radius:0!important}.pk-slot>span{color:#b7ad98}.pk-sub,.pk-note{color:#b7ad98}
+.gear-compare{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}.gear-compare caption{text-align:left;color:#d7b77d;padding:6px 0}.gear-compare th,.gear-compare td{padding:5px 8px;border-bottom:1px solid #4d4433;text-align:right}.gear-compare th:first-child{text-align:left}.gear-compare .good{color:#b2d8ad}.gear-compare .bad{color:#f4a38e}
+.sl[aria-disabled=true]{filter:grayscale(.75);opacity:.55;cursor:help}.sl[aria-disabled=true]:focus-visible{opacity:1}
+}
+:where(button,a,input,textarea,select,[tabindex]):focus-visible{outline:2px solid #f5d18a!important;outline-offset:3px;box-shadow:0 0 0 5px #10161a!important}
+#cv:focus-visible{outline-offset:-3px;box-shadow:none!important}
+@media(prefers-reduced-motion:reduce){.tok,.sl,.btn{animation:none!important;transition:none!important}}
+`;document.head.appendChild(style)}
 
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
