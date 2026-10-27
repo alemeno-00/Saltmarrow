@@ -48,15 +48,16 @@ The stronger survival rate reflects readable counterplay rather than extra HP. I
 - A separate local combination with UI PR #29 and environment PR #28 passes 80 tests plus feel, UI and environment browser suites. Gameplay/rendering hunks merge cleanly after moving this branch's hooks beside actor rendering. Shared `sw.js` cache revision and the UI/environment package-script additions require mechanical reconciliation; retain all environment CORE assets and all test scripts. The independent feel CI workflow avoids edits to their renderer workflow.
 - Combat PR #25 and weapons PR #27 were already merged into the base. The compatibility combination was tested separately; neither pending branch was modified or incorporated into this PR.
 
-Safari and physical keyboard/mouse feel review remain outstanding. No native desktop build, deployment or merge is claimed. Human review should especially assess heavy-enemy threat frequency, the substantially improved survival rate, held-key feel and whether normal recovery is too long in larger encounters.
+The follow-up suite also passes in Playwright WebKit 26.5 on macOS, including normal/reduced motion, actual arrow-key presses, repeated keydown/release, turning, projected mouse clicks and path cancellation. This is Safari-engine coverage, not verification of the installed Safari application. Human keyboard/mouse feel review remains outstanding. No native desktop build, deployment or merge is claimed. Human review should especially assess heavy-enemy threat frequency, the substantially improved survival rate, held-key feel and whether normal recovery is too long in larger encounters.
 
 ## Reproduce
 
 ```sh
 npm ci
-npx playwright install chromium --only-shell
+npx playwright install chromium webkit
 npm test
 SCREENSHOT_DIR=test-results/feel npm run test:feel
+BROWSER=webkit SCREENSHOT_DIR=test-results/webkit npm run test:feel
 npm run test:weapons
 npm run test:tactics
 node tests/animation-browser.cjs
@@ -66,3 +67,9 @@ FEEL_REPORT=test-results/encounters.json node --test tests/feel.test.cjs
 ```
 
 For baseline comparison, save `git show 9bf5a8a:index.html` as `before-feel.html`, with `before-flat-art.js` and `before-animation-art.js` alongside it from the same commit. Set `FEEL_BASELINE` to that HTML when running `tests/feel-browser.cjs`; set it for the `seeded mixed` test to generate baseline balance data. `CHROME_PATH` can select an installed Chromium executable.
+
+## Follow-up: input and final-frame validation
+
+The actual-input checks exposed a timer/render boundary: a recovery wait could return just before the last animation frame. Input release now waits for the next rendered frame when necessary, with a 50 ms fallback so a hidden or stalled renderer cannot create an indefinite wait. Opportunity strikes are checked to return with the weapon in its idle pose.
+
+Both macOS browser engines passed the expanded suite. The repeat-key fixture advanced four tiles, stopped on key release without queued movement, and Escape stopped a projected mouse path after its first tile. [Chromium capture](chromium-input-metrics.json) / [WebKit capture](webkit-metrics.json). CI now runs this suite on both engines and saves each recording separately.

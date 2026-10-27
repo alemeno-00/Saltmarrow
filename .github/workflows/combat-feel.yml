@@ -8,6 +8,9 @@ on:
 jobs:
   feel:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        browser: [chromium, webkit]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -15,13 +18,14 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium --only-shell
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
       - run: npm test
       - run: npm run test:feel
         env:
+          BROWSER: ${{ matrix.browser }}
           SCREENSHOT_DIR: test-results/feel
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: combat-feel-playtest
+          name: combat-feel-playtest-${{ matrix.browser }}
           path: test-results/feel

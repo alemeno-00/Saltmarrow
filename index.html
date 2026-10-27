@@ -7364,6 +7364,8 @@ function feelContact(att,target){
 async function feelFinish(att){
   feelContact(att,null);const a=FEEL.actions.get(att);if(!a||UI.quiet)return;a.end=Math.max(a.end,WEAPON_ACTIONS.get(att)?.end||0);
   const left=a.end-NOW;if(left>0)await UI.sleep(left/PF());
+  // Timers can finish between paints. Present the final pose before releasing input.
+  if(NOW<a.end&&!document.hidden)await new Promise(resolve=>{const frame=requestAnimationFrame(()=>{clearTimeout(timer);resolve()});const timer=setTimeout(()=>{cancelAnimationFrame(frame);resolve()},50)});
   // A death sequence can outlast a light attack. Keep its collapse readable.
   const deaths=DYING.filter(d=>d.level===S.L);const remaining=deaths.length?Math.max(...deaths.map(d=>780-(NOW-d.t0))):0;
   if(!REDUCE&&META.pace==='normal'&&remaining>0)await UI.sleep(Math.min(remaining,320));
