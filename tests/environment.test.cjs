@@ -13,7 +13,7 @@ test('80 seeded real dungeon generations retain identical navigation and legal p
   for(const d of p.deposits){assert.equal(L.map[d.i],1);assert.equal(L.map[d.i-g.W],0);assert.equal(L.map[d.i+g.W],1);assert.equal(L.map[d.i-1],1);assert.equal(L.map[d.i+1],1);assert.ok(!L.decal[d.i]);assert.ok(!L.objs.some(o=>o.x===d.x&&o.y===d.y))}
  }
 });
-test('environment sits below telegraphs and actors; wall hook inherits depth and cutaway',()=>{const start=html.indexOf('draw=function(){const L=S.L,P=S.P,TS=tilesFor');const s=html.slice(start);assert.ok(s.indexOf('SaltmarrowEnvironment?.draw(')<s.indexOf('drawOverlays('));assert.ok(s.indexOf('SaltmarrowEnvironment?.draw(')<s.indexOf('standing.sort'));assert.match(s,/isoWall\(TS,entry.x,entry.y,wf\);\s*window.SaltmarrowEnvironment\?\.drawWall/);assert.match(fs.readFileSync('sw.js','utf8'),/'environment-art.js'/)});
+test('environment sits below telegraphs and actors; wall hook inherits depth and cutaway',()=>{const start=html.indexOf('draw=function(){if(S?.L?.townScene)');assert.ok(start>=0);const s=html.slice(start);assert.ok(s.indexOf('SaltmarrowEnvironment?.draw(')<s.indexOf('drawOverlays('));assert.ok(s.indexOf('SaltmarrowEnvironment?.draw(')<s.indexOf('standing.sort'));assert.match(s,/isoWall\(TS,entry.x,entry.y,wf\);\s*window.SaltmarrowEnvironment\?\.drawWall/);assert.match(fs.readFileSync('sw.js','utf8'),/'environment-art.js'/)});
 test('live actors, loot, hazards and changed terrain suppress cached ground clusters',()=>{
  const {L,w,h}=fixture(),p=E.plan(L,w,h,types),d=p.deposits[0],calls=[];
  global.document={createElement:()=>({getContext:()=>({fillRect(){}})})};

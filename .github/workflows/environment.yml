@@ -1,10 +1,10 @@
 name: Desktop environment art
 on:
   pull_request:
-    paths: ['index.html', 'environment-*.js', 'town-coast.js', 'tests/coast*', 'room-composition.js', 'assets/flat/room-focals.webp', 'tests/rooms*', 'assets/flat/workyards.webp', 'sw.js', 'tests/environment*', 'tests/town-layout*', 'tests/lighting*', '.github/workflows/environment.yml']
+    paths: ['index.html', 'environment-*.js', 'town-coast.js', 'assets/town-v6/**', 'tests/coast*', 'room-composition.js', 'assets/flat/room-focals.webp', 'tests/rooms*', 'assets/flat/workyards.webp', 'sw.js', 'tests/environment*', 'tests/town-layout*', 'tests/lighting*', '.github/workflows/environment.yml']
   push:
     branches: [main]
-    paths: ['index.html', 'environment-*.js', 'town-coast.js', 'tests/coast*', 'room-composition.js', 'assets/flat/room-focals.webp', 'tests/rooms*', 'assets/flat/workyards.webp', 'sw.js', 'tests/environment*', 'tests/town-layout*', 'tests/lighting*', '.github/workflows/environment.yml']
+    paths: ['index.html', 'environment-*.js', 'town-coast.js', 'assets/town-v6/**', 'tests/coast*', 'room-composition.js', 'assets/flat/room-focals.webp', 'tests/rooms*', 'assets/flat/workyards.webp', 'sw.js', 'tests/environment*', 'tests/town-layout*', 'tests/lighting*', '.github/workflows/environment.yml']
 jobs:
   environment:
     runs-on: ubuntu-latest
