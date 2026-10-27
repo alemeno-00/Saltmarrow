@@ -3514,7 +3514,8 @@ Object.assign(ICON_MASK,{
 });
 for(const k in SPR_DATA)if(!SPR[k]){SPR[k]=mk(SPR_DATA[k][0],SPR_DATA[k][1]);SPRW[k]=white(SPR[k])}
 for(const k of['flag','occult','page','quest','tea','tome','w_blunt','w_hook','w_blade','w_ranged','w_focus'])ICON[k]=SPR[k].toDataURL();
-for(const base of Object.keys(WBASE)){const c=document.createElement('canvas');c.width=c.height=48;SaltmarrowWeapons.drawSprite(c.getContext('2d'),base,8,34,-.85);SPR['weapon_'+base]=c;SPRW['weapon_'+base]=white(c);ICON['weapon_'+base]=c.toDataURL()}
+function installWeaponIcons(){for(const base of Object.keys(WBASE)){let c=SaltmarrowWeapons.inventory[base];if(!c){c=document.createElement('canvas');c.width=c.height=48;SaltmarrowWeapons.drawSprite(c.getContext('2d'),base,8,34,-.85)}SPR['weapon_'+base]=c;SPRW['weapon_'+base]=white(c);ICON['weapon_'+base]=c.toDataURL()}}
+installWeaponIcons();SaltmarrowWeapons.ready?.then(installWeaponIcons);
 const gearSpr=it=>it.kind==='weapon'?'weapon_'+it.base:it.kind==='tome'?'tome':it.kind==='relic'?'relic':it.kind==='armor'?'a_'+it.base:WBASE[it.base].spr;
 /* ---------- the town ---------- */
 BPAL.town={w:'#24242a',wl:'#34343c',wd:'#121216',acc:'#ffd890',acc2:'#6a5a4a',f:'#26282c',fa:'#2e3034',fl:'#17181b',fd:'#383a40',wa:['#0e1a22','#1e3040','#6a8aa0'],beam:'#3a2a1a',beamd:'#20160c'};
@@ -6617,6 +6618,9 @@ function armSpec(){const out={};let any=false;for(const s of ASLOTS){const a=S&&
 let pkSel=null,pkDrag=null;
 function pkCW(){const m=isMob();return m?Math.max(26,Math.min(36,Math.floor((innerWidth-56)/BAG_W))):40}
 function itemImg(it,w,h,inSlotBox){const spr=gearSpr(it),src=ICON[spr]||'';let rot=it.kind==='weapon'?(W_ROT[spr]||0):0;
+  if(it.kind==='weapon'&&SaltmarrowWeapons.inventory[it.base]){const aspect=SaltmarrowWeapons.aspects[it.base],tall=h>w*1.4;
+    const size=tall?Math.min(h/.854*.9,w*aspect/.854*.9):Math.min(w,h)*.95;
+    return`<img src="${src}" alt="" draggable="false" style="width:${Math.round(size)}px;height:${Math.round(size)}px;image-rendering:pixelated;${tall?'transform:rotate(-90deg)':''}">`}
   const tall=h>w*1.4;let sz=Math.min(w,h)*0.86;if(rot&&tall)sz=h/1.42;else if(tall&&!rot)sz=Math.min(w*1.1,h*0.9);
   return`<img src="${src}" alt="" draggable="false" style="width:${sz|0}px;height:${sz|0}px;${rot?`transform:rotate(${rot}deg)`:''}">`}
 function pkInfo(it,where){if(!it)return'<div class="pk-hint">Hover or tap an item to see it. Drag it onto your delver to wear it, or right-click to equip.</div>';const R=RARITY[it.rar]||RARITY.fine;const lines=itemLines(it);

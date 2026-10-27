@@ -101,7 +101,7 @@ function track(p,t,recover){const ease=q=>q*q*(3-2*q),lerp=(a,b,q)=>a.map((v,i)=
  return lerp(p.follow,[0,0,-1.15],Math.min(1,(recover-.35)/.65));
 }
 // Each rectangle is rasterized before direction transforms: no canvas rotation or blur.
-function drawSprite(g,base,x=0,y=0,angle=0,side=1,phase='idle'){
+function fallbackSprite(g,base,x=0,y=0,angle=0,side=1,phase='idle'){
  const D='#111c25',S='#425867',M='#91a9ae',E='#e0e8d7',W='#765037',L='#ba8751',G='#b89b59',B='#645843',R='#743d40';
  const p=(u,v,w,h,c)=>{g.fillStyle=c;for(let a=0;a<w;a++)for(let b=0;b<h;b++)g.fillRect(Math.round(x+side*(Math.cos(angle)*(u+a)-Math.sin(angle)*(v+b))),Math.round(y+Math.sin(angle)*(u+a)+Math.cos(angle)*(v+b)),1,1)};
  const handle=(length)=>{p(-5,-2,length,4,D);p(-4,-1,length-2,2,W);p(-4,-1,length-2,1,L);for(let i=-3;i<5;i+=2)p(i,-1,1,2,B);p(-5,-2,2,4,G)};
@@ -118,9 +118,46 @@ function drawSprite(g,base,x=0,y=0,angle=0,side=1,phase='idle'){
  case'fetish':p(3,-4,4,9,D);p(4,-3,2,7,R);p(7,-6,13,13,D);p(8,-5,11,11,B);p(9,-5,9,4,'#c7b893');p(9,0,9,5,'#a7987d');p(10,-2,3,3,D);p(15,-2,3,3,D);p(13,1,1,2,D);for(let i=10;i<18;i+=2)p(i,4,1,3,E);p(7,-9,3,5,E);p(18,-9,3,5,E);p(12,-7,4,2,G);p(13,-6,2,1,'#ad7ecd');break;
  }
 }
-const api={profiles,profile,track,drawSprite,bases:['maul','hook','pick','knife','xbow','rod','censer','scourge','fetish']};
+const sprites={},inventory={},aspects={};
+const atlas={url:'assets/flat/weapons-v2.png',cols:3,rows:3,order:['maul','hook','pick','knife','xbow','rod','censer','scourge','fetish']};
+// Sample the authored pixels backwards into the destination grid: solid silhouettes,
+// hard alpha, exact mirrored anchors and no resampled/blurred canvas rotations.
+function drawSprite(g,base,x=0,y=0,angle=0,side=1,phase='idle'){
+ const sprite=sprites[base];if(!sprite)return fallbackSprite(g,base,x,y,angle,side,phase);
+ const {w,h,grip,data}=sprite,c=Math.cos(angle),s=Math.sin(angle);
+ const corners=[[0,0],[w,0],[0,h],[w,h]].map(([u,v])=>[x+side*(c*(u-grip[0])-s*(v-grip[1])),y+s*(u-grip[0])+c*(v-grip[1])]);
+ const left=Math.floor(Math.min(...corners.map(v=>v[0]))),right=Math.ceil(Math.max(...corners.map(v=>v[0]))),top=Math.floor(Math.min(...corners.map(v=>v[1]))),bottom=Math.ceil(Math.max(...corners.map(v=>v[1])));
+ for(let yy=top;yy<=bottom;yy++)for(let xx=left;xx<=right;xx++){
+  const dx=(xx-x)*side,dy=yy-y,u=Math.round(c*dx+s*dy+grip[0]),v=Math.round(-s*dx+c*dy+grip[1]);
+  if(u<0||v<0||u>=w||v>=h)continue;
+  if(base==='xbow'&&phase==='reload'&&u>w*.38&&Math.abs(v-h*.45)<1)continue;
+  const colour=data[v*w+u];if(colour){g.fillStyle=colour;g.fillRect(xx,yy,1,1)}
+ }
+}
+const api={profiles,profile,track,drawSprite,atlas,sprites,inventory,aspects,bases:['maul','hook','pick','knife','xbow','rod','censer','scourge','fetish']};
 if(typeof module==='object'&&module.exports)module.exports=api;root.SaltmarrowWeapons=api;
 const art=root.SaltmarrowArt;if(!art)return;
+if(typeof document==='object'){
+ const baseReady=art.ready;
+ api.ready=new Promise(resolve=>{
+  const im=new Image();im.onload=()=>{
+   const widths=[40,40,42,27,36,40,40,42,29];
+   atlas.order.forEach((base,i)=>{
+    const cell=document.createElement('canvas');cell.width=Math.floor(im.width/3);cell.height=Math.floor(im.height/3);
+    const cg=cell.getContext('2d');cg.drawImage(im,Math.floor(i%3*im.width/3),Math.floor(Math.floor(i/3)*im.height/3),cell.width,cell.height,0,0,cell.width,cell.height);
+    const raw=cg.getImageData(0,0,cell.width,cell.height).data;let x0=cell.width,y0=cell.height,x1=-1,y1=-1;
+    for(let y=0;y<cell.height;y++)for(let x=0;x<cell.width;x++)if(raw[(y*cell.width+x)*4+3]>96){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y)}
+    if(x1<x0){art.errors.push('Empty weapon sprite '+base);return}
+    const sw=x1-x0+1,sh=y1-y0+1,w=widths[i],h=Math.max(1,Math.round(sh/sw*w));
+    aspects[base]=sw/sh;const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(cell,x0,y0,sw,sh,0,0,w,h);
+    const pixels=g.getImageData(0,0,w,h).data,data=[];for(let n=0;n<w*h;n++)data.push(pixels[n*4+3]>96?'#'+[pixels[n*4],pixels[n*4+1],pixels[n*4+2]].map(v=>v.toString(16).padStart(2,'0')).join(''):null);
+    const grip=[Math.round(w*(base==='xbow'?.17:.12)),Math.round(h*(base==='xbow'?.6:base==='censer'?.3:.5))];sprites[base]={w,h,grip,data};
+    const icon=document.createElement('canvas');icon.width=icon.height=96;const ig=icon.getContext('2d');ig.imageSmoothingEnabled=false;const factor=82/Math.max(sw,sh),iw=Math.round(sw*factor),ih=Math.round(sh*factor);ig.drawImage(cell,x0,y0,sw,sh,Math.round((96-iw)/2),Math.round((96-ih)/2),iw,ih);inventory[base]=icon;
+   });resolve(api);
+  };im.onerror=()=>{art.errors.push('Unable to load '+atlas.url);resolve(api)};im.src=atlas.url;
+ });
+ art.ready=Promise.all([baseReady,api.ready]).then(()=>art);
+}
 const oldPose=art.weaponPose,oldDraw=art.drawWeapon;
 art.weaponPose=function(base,e,now,action,reduced){const pose=oldPose(base,e,now,action,reduced);if(!pose||reduced||!action||action.base!==base||now<action.t0||(now>=action.end&&action.resolved!==false))return pose;
  const p=action.profile||profiles[action.id];if(!p)return pose;

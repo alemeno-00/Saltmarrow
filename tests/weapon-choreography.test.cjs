@@ -24,3 +24,6 @@ test('body-family selection preserves named choreography and keeps tome utility 
  for(const el of ['fire','frost','lightning','holy','void','blood'])for(const kind of ['ranged','area','burst','ward','blink'])assert.equal(W.profile({tome:'i1',kind,el,ward:kind==='ward',blink:kind==='blink'}).bodyFamily,['ward','blink'].includes(kind)?'utility':'cast');
  assert.match(html,/id:'freeStrike',style:'thrust',profile:SaltmarrowWeapons.profile/);
 });
+test('authored replacement atlas is transparent PNG, precached, and every weapon has a source cell',()=>{
+ assert.equal(W.atlas.order.length,9);assert.deepEqual(new Set(W.atlas.order),new Set(W.bases));const png=fs.readFileSync(W.atlas.url);assert.equal(png.subarray(1,4).toString(),'PNG');assert.equal(png[25],6,'RGBA source preserves transparency');assert.ok(fs.readFileSync('sw.js','utf8').includes(W.atlas.url));
+});

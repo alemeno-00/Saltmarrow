@@ -2,6 +2,10 @@
 
 Base: main `9bf5a8a` (2026-10-27). Flat 2D pixel art, turn-based rules and Mac desktop browser input retained. No merge or deployment is implied.
 
+## Revised artwork after visual feedback
+
+The first procedural art pass was rejected by the user. The replacement is an authored transparent sprite atlas, `assets/flat/weapons-v2.png`, generated against the actual miner artwork. It provides textured steel bevels, leather, grain, brass fittings and bone carving. The atlas is the shipped source, not a concept sheet. Equipped sprites use per-weapon native dimensions, hard alpha, inverse nearest-pixel sampling and anchored mirrored grips; inventory uses separately extracted 96px source sprites, with upright sizing for tall pack slots. Ability profiles and the full-body integration contract are retained. See [source prompt](weapon-art-v2-prompt.md).
+
 ## Implemented weapons and render paths
 
 | Weapon | Actual family | New pixels |
@@ -20,7 +24,7 @@ Base: main `9bf5a8a` (2026-10-27). Flat 2D pixel art, turn-based rules and Mac d
 
 Render hookups:
 
-- `weapon-art.js`: shared native-pixel drawing for equipped and item variants; authored three-pose tracks with smooth interpolation into anticipation, contact, follow-through and rest. Integer pixels and mirrored hand anchors; north behind body, other directions in front, sleeve and support hand connect grips.
+- `weapon-art.js`: shared authored sprite pixels for equipped and item variants; authored three-pose tracks with smooth interpolation into anticipation, contact, follow-through and rest. Integer pixels and mirrored hand anchors; north behind body, other directions in front, sleeve and support hand connect grips.
 - `flat-art.js`: original `weaponKind`, `weaponStyle`, `weaponDeathKind`, `weaponPose`, `drawWeapon` remain the compatibility entry points. The new module decorates the pose/drawing functions without changing their signatures.
 - `index.html` final `drawSprite`: selects equipped weapon for idle, walk and actions, then composes behind/in front of `ART.heroBody`. Existing `animation-art.js` body and hit/death frame selection remain authoritative.
 - `SPR.weapon_<base>`, `SPRW`, `ICON`, `gearSpr`, `itemImg`: shared source supplies pack grid, paper doll, gear sidebar, shops, comparisons/tooltips and dropped world gear, including both legacy and flat world renderer paths. Existing DOM equipment hooks remain intact.
@@ -113,7 +117,7 @@ Every tome is a combination of six elements (fire, frost, lightning, holy, void,
 
 ## Verification and concurrent work
 
-64 unit/regression checks pass. Chromium browser audit executes all 47 offensive static abilities and 11 representative utilities, checks authored profile selection, recovery completion, impact timestamps, delayed damage, all nine equipment bases, unequip, accessibility, speed settings and unchanged turn counters. Tactical browser regression passes. The same full audit passes in WebKit on macOS.
+65 unit/regression checks pass. Chromium browser audit executes all 47 offensive static abilities and 11 representative utilities, checks authored profile selection, recovery completion, impact timestamps, delayed damage, all nine equipment bases, unequip, accessibility, speed settings and unchanged turn counters. Tactical browser regression passes. The same full audit passes in WebKit on macOS.
 
 ![Before: main weapon art](reference/weapon-before.png)
 
