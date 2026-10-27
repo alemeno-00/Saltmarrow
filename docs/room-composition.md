@@ -20,6 +20,7 @@ Both phases generate the same seed in fresh browser contexts; the before phase d
 ## Validation
 
 - 84 Node tests pass, including 80 seeded composition runs (284 safe prop moves), deterministic output without RNG consumption, idempotence/serialization, unchanged terrain/population/non-position prop data, connectivity, objective access, exclusions, actor/fog/damage/clue suppression and offline packaging.
+- CI exposed an unseeded Hollow Faith side-boss fixture that could randomly generate an unsuitable map. Its game fixtures now use a deterministic local RNG and the reachability test retains all assertions across 12 explicit seeds. No faction or generation rules changed for this test repair.
 - Desktop Chromium room comparisons verify unchanged terrain, enemy/item/trap placement and prop identity across phases; repeated drawing preserves simulation state and disables smoothing. Representative renders measured roughly 8–15 ms on this machine, not a Safari/GPU guarantee.
 - Desktop lighting, tactics, weapons and flat-reference browser suites pass. CI also captures fresh room comparisons.
 - No mobile changes. No merge or deployment performed.
