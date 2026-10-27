@@ -19,7 +19,7 @@ function buildWorld(L,w,h){if(worlds.has(L))return worlds.get(L);const c=make(w*
 function ground(g,L,{w,h}){if(!eligible(L))return false;g.save();g.imageSmoothingEnabled=false;g.drawImage(buildWorld(L,w,h),0,0);g.restore();return true}
 function memory(L,w){const out=Array.from(L.seen),modules=L.deepLayout.modules;for(let i=0;i<out.length;i++)if(L.map[i]===5)out[i]=1;
  for(const m of modules){let discovered=false;for(let y=m.floorY;y<m.floorY+3&&!discovered;y++)for(let x=3;x<=20;x++)if(L.seen[(m.y+y)*w+m.x+x]){discovered=true;break}if(!discovered)continue;for(let y=m.y;y<m.y+16;y++)for(let x=m.x;x<m.x+24;x++){const i=y*w+x;if(L.map[i]===0)out[i]=2}}return out}
-function tile(L,t,x,y,wf,{w=63}={}){if(!eligible(L))return null;const c=make(32,32),g=c.getContext('2d'),bio=art(L);g.imageSmoothingEnabled=false;g.drawImage(floorTile(L,x,y),0,0);
+function tile(L,t,x,y,wf,{w=63}={}){if(!eligible(L))return null;const bio=art(L),key='material:'+bio+':'+t+':'+(x&1)+':'+(y&1);if(tiles.has(key))return tiles.get(key);const c=make(32,32),g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(floorTile(L,x,y),0,0);
  if(t===4){const water=images.get('sewer');if(water){g.save();g.globalAlpha=.76;g.drawImage(water,1100+(x&1)*16,721+(y&1)*4,32,24,0,0,32,32);g.restore()}else{g.fillStyle='rgba(23,58,69,.65)';g.fillRect(0,0,32,32)}}
  if(t===5){g.fillStyle='#07131d';g.fillRect(0,0,32,32)}
  if(t===6){g.fillStyle='#07131d';g.fillRect(3,3,26,26);stamp(g,bio,13,1,1,30,30)}
@@ -28,7 +28,7 @@ function tile(L,t,x,y,wf,{w=63}={}){if(!eligible(L))return null;const c=make(32,
  if(t===0||t===7){g.fillStyle='#21333d';g.fillRect(0,0,32,32);g.fillStyle='#4e6067';g.fillRect(0,0,32,2);if(t===7){g.fillStyle='#080f17';for(let j=0;j<8;j++)g.fillRect(13+j%3,j*4,2,4)}}
  if(t===8)stamp(g,bio,12,5,8,24,22);if(t===9)stamp(g,bio,14,1,0,30,32);
  if(t===10){g.strokeStyle='#a4b8b2';g.lineWidth=1;for(const[a,b]of[[2,2],[30,3],[29,30],[3,29]]){g.beginPath();g.moveTo(16,16);g.lineTo(a,b);g.stroke()}g.strokeRect(7,7,18,18)}
- if(t===13){g.fillStyle='#b1aa8d';g.fillRect(6,20,20,2);g.fillRect(10,11,2,16)}return c}
+ if(t===13){g.fillStyle='#b1aa8d';g.fillRect(6,20,20,2);g.fillRect(10,11,2,16)}if(loaded)tiles.set(key,c);return c}
 function changedTile(g,L,x,y,{w}){const i=y*w+x,t=L.map[i],base=L.deepLayout.base?.[i];if(t===base&&[0,1,5].includes(t))return;if(t===5){const bg=images.get('backgrounds'),k=keys.indexOf(art(L)),h=L.map.length/w;g.fillStyle='#07121d';g.fillRect(x*32,y*32,32,32);if(bg){g.drawImage(bg,k%2*768+x/w*768,Math.floor(k/2)*512+y/h*512,768/w,512/h,x*32,y*32,32,32);g.fillStyle='rgba(2,8,15,.45)';g.fillRect(x*32,y*32,32,32)}return}g.drawImage(tile(L,t,x,y,0,{w}),x*32,y*32)}
 const human=new Set(['corpse','captive','merchant','rival','dying']),ids={crate:2,barrel:3,keg:3,cart:2,coffin:6,chest:0,lever:8,plever:8,bell:10,lamp:11,brazier:4,support:12,jack:12,shaft:13,sewergrate:13,passage:13,crystal:14,shroom:14,pod:15,shrine:6,statue:12,cabinet:0,urn:3,sack:3,reliquary:6,ritualcandle:4,vaultdoor:12,valve:8,plaque:0,chandelier:11,sluice:12,boulder:12,trap:13,remains:6,charge:2};
 function objectCell(o){if(o.type==='coffin')return o.open?7:6;if(o.type==='chest')return o.open||o.searched?1:0;if(o.type==='lever'||o.type==='plever')return o.on?9:8;if(o.type==='brazier'||o.type==='ritualcandle')return o.lit?4:5;return ids[o.type]??2}

@@ -39,6 +39,7 @@ The desktop/mobile images are actual browser captures with the normal game rende
 - deep-browser.cjs: all four biomes at desktop and mobile sizes; actual movement to every room, bridge traversal, two different seeds, save restoration, old dungeon migration, unchanged simulation/FOV during drawing, and a guard rejecting legacy environment art calls.
 - gameplay.cjs: pointer and keyboard movement, wall collision, zoom/pan, targeting, combat and town entry on desktop/mobile.
 - coast-browser.cjs, environment-browser.cjs and lighting-browser.cjs: finished town composition, service entrances, migration and presentation-only lighting.
+- feel-browser.cjs: Chromium and WebKit held input, movement arrival, combat contact/recovery, input locks and reduced motion pass; WebKit repeated with video recording. Dynamic terrain uses bounded phase/material caches to avoid allocating canvases per tile per frame.
 - Offline and native bundle manifests checked by unit tests. Native APK/macOS installers were not built locally.
 
 ## Art provenance
