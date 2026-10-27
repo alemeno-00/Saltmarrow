@@ -24,6 +24,61 @@
   function cellRect(width,height,spec,index){const w=width/spec.cols,h=height/spec.rows;return{x:index%spec.cols*w,y:Math.floor(index/spec.cols)*h,w,h}}
   function actorHeight(key){return short.has(key)?25:['shift','choir','saint','stalker','abbot','horror'].includes(key)?64:48}
   const api={specs,cellRect,actorHeight,errors:[],atlases:{},loaded:false};
+  // Equipment is composed in native pixels; no rotated/resampled weapon bitmaps.
+  const weaponKinds={maul:'mace',pick:'axe',hook:'hook',knife:'dagger',xbow:'ranged',rod:'staff',censer:'censer',scourge:'whip',fetish:'focus',sword:'sword',axe:'axe',spear:'spear',dagger:'dagger',bow:'ranged',staff:'staff',shield:'shield',mace:'mace'};
+  api.weaponKind=base=>weaponKinds[base]||null;
+  api.weaponStyle=(base,ability,style)=>{
+    if(!weaponKinds[base])return style;
+    // Keep spell, unarmed and signature area effects; equipment drives physical attacks.
+    if(ability.kind==='melee'&&!['headbutt','garrote','vanish'].includes(ability.id))return {mace:'smash',axe:'smash',dagger:'thrust',spear:'thrust',ranged:'thrust',staff:'thrust',censer:'whip',focus:'cast',hook:'hook',whip:'whip',shield:'smash',sword:'slash'}[weaponKinds[base]];
+    if(ability.kind==='ranged'&&base==='xbow'&&!ability.tome&&!ability.el)return 'thrust';
+    return style;
+  };
+  api.weaponDeathKind=(base,ab,element,fallback)=>{
+    if(element||ab.kind!=='melee'||['headbutt','garrote','vanish'].includes(ab.id))return fallback;
+    const k=api.weaponKind(base);
+    return ['dagger','spear','ranged','hook'].includes(k)?'piercing':['mace','shield','staff','censer'].includes(k)?'impact':k==='focus'?'occult':k? 'slash':fallback;
+  };
+  api.weaponPose=(base,e,now,action,reduced=false)=>{
+    const kind=api.weaponKind(base);if(!kind)return null;
+    const north=Math.abs(e.fy||0)>Math.abs(e.fx||0)&&e.fy<0,side=e.fx<0?-1:1;
+    const moving=Math.abs((e.rx??e.x)-e.x)+Math.abs((e.ry??e.y)-e.y)>.04;
+    let x=side*9,y=-21,angle=-1.15,phase='idle',off=0;
+    if(moving&&!reduced){y+=Math.floor(now/130)%2;angle+=Math.sin(now/130)*.08;phase='walk'}
+    if(action&&action.base===base&&now>=action.t0&&(now<action.end||action.resolved===false)&&!reduced){
+      const clock=action.resolved===false?Math.min(now,action.impact-.01):now;
+      const t=(clock-action.t0)/Math.max(.01,action.impact-action.t0),recover=Math.max(0,(clock-action.impact)/Math.max(.01,action.end-action.impact));
+      const power=t<1?Math.max(0,(t-.65)/.35):1-recover;
+      phase=t<.65?'windup':t<1?'strike':kind==='ranged'?'reload':'recover';
+      if(['dagger','spear','ranged'].includes(kind)){x+=side*(power*(kind==='spear'?13:8)-(t<.65?3*t:0));angle=kind==='ranged'?0:-.15;y-=kind==='ranged'?4:0;if(phase==='reload'){y+=Math.sin(recover*Math.PI)*5;angle+=Math.sin(recover*Math.PI)*.55}}
+      else if(['axe','mace','shield'].includes(kind)){y-=t<.65?Math.sin(t/.65*Math.PI/2)*14:(1-power)*9;angle=t<.65?-1.15-t*2.3:-2.65+power*3.4}
+      else if(['staff','focus','censer'].includes(kind)){y-=Math.sin(Math.min(1,t)*Math.PI/2)*8*(1-recover);angle=-1.4+power*.5}
+      else{angle=t<.65?-1.15-t*2:-2.45+power*3.5;x+=side*power*5}
+      // The same snapped directional aim is used for hands and weapon.
+      if(Math.abs(action.dy)>Math.abs(action.dx)){x=side*(6+power*3);y+=action.dy*power*8;angle=action.dy<0?-1.57:1.25}
+    }
+    return{kind,x:Math.round(x),y:Math.round(y),angle,side,back:north,phase};
+  };
+  api.drawWeapon=(g,pose,base,now=0)=>{
+    if(!pose)return;const {kind,x,y,angle,side}=pose;
+    const pixel=(u,v,w,h,c)=>{g.fillStyle=c;for(let a=0;a<w;a++)for(let b=0;b<h;b++){const dx=u+a,dy=v+b;g.fillRect(Math.round(x+side*(Math.cos(angle)*dx-Math.sin(angle)*dy)),Math.round(y+Math.sin(angle)*dx+Math.cos(angle)*dy),1,1)}};
+    const wood='#785332',metal='#99adb3',edge='#d9e4db',dark='#17242c',gold='#b69a57';
+    // Draw the sleeve from the shoulder to the moving grip before the held object.
+    const shoulder={x:side*5,y:-25};
+    for(let i=0;i<=12;i++){const q=i/12;g.fillStyle=i<8?'#304759':'#c08c60';g.fillRect(Math.round(shoulder.x+(x-shoulder.x)*q)-1,Math.round(shoulder.y+(y-shoulder.y)*q)-1,3,3)}
+    const shaft=['staff','spear'].includes(kind)?23:['dagger','focus','shield'].includes(kind)?7:16;
+    pixel(-3,-2,shaft,4,dark);pixel(-2,-1,shaft-2,2,wood);
+    if(['sword','dagger','spear'].includes(kind)){const len=kind==='dagger'?9:kind==='spear'?22:16;pixel(3,-2,len,4,dark);pixel(4,-1,len-1,2,metal);pixel(5,-1,len-2,1,edge);pixel(2,-4,2,8,gold)}
+    else if(kind==='axe'){pixel(10,-7,6,13,dark);pixel(11,-6,5,11,metal);pixel(15,-5,1,9,edge)}
+    else if(kind==='mace'){pixel(10,-5,8,10,dark);pixel(11,-4,6,8,metal);pixel(12,-4,2,7,edge)}
+    else if(kind==='ranged'){pixel(5,-9,3,18,dark);pixel(6,-8,1,16,wood);pixel(3,-8,1,16,metal);pixel(-4,-1,19,2,metal);if(pose.phase!=='reload')pixel(9,-1,8,1,edge)}
+    else if(kind==='shield'){pixel(1,-8,12,16,dark);pixel(2,-7,10,13,gold);pixel(3,-6,8,11,wood);pixel(6,-2,3,4,metal)}
+    else if(kind==='hook'){pixel(13,-4,2,8,metal);pixel(9,3,5,2,edge)}
+    else if(kind==='whip'||kind==='censer'){for(let i=5;i<20;i++)pixel(i,Math.round(Math.sin(i*.5+now/150)*2),1,2,metal);if(kind==='censer'){pixel(18,-3,5,6,gold);pixel(19,-2,3,3,'#e5bf64')}}
+    else{pixel(13,-4,6,8,dark);pixel(14,-3,4,6,base==='fetish'?'#b9a890':'#59b9cf');pixel(15,-3,2,2,edge)}
+    // Fingers cover the grip. A second hand supports long weapons and the crossbow.
+    pixel(-2,-2,4,4,'#c08c60');if(['spear','staff','ranged','axe','mace'].includes(kind))pixel(4,-2,3,3,'#c08c60');
+  };
   if(typeof module==='object'&&module.exports)module.exports=api;
   root.SaltmarrowArt=api;
   if(typeof document==='undefined')return;
@@ -77,6 +132,31 @@
     const col=reduced?0:attacking?3:moving?1+(Math.floor(now/130)%2):0;
     if(key==='riptide'&&heroFrames.length){const row=Math.abs(e.fy||0)>Math.abs(e.fx||0)?(e.fy<0?0:2):(e.fx<0?3:1);return heroFrames[row*4+col]}
     return monsterFrames[key]?.[col]||null;
+  };
+  const bareFrames=new WeakMap();
+  api.heroBody=(key,e,now,reduced)=>{
+    const original=api.frameAsset(key,e,now,reduced)||api.actor(key);if(!original)return null;if(key==='riptide'&&!heroFrames.length)return original;
+    // Use resting/walking bodies: the atlas attack column contains a fixed hammer.
+    const row=Math.abs(e.fy||0)>Math.abs(e.fx||0)?(e.fy<0?0:2):(e.fx<0?3:1);
+    const moving=Math.abs((e.rx??e.x)-e.x)+Math.abs((e.ry??e.y)-e.y)>.04;
+    const source=key==='riptide'&&heroFrames.length?heroFrames[row*4+(moving&&!reduced?1+Math.floor(now/130)%2:0)]:original;
+    if(bareFrames.has(source))return bareFrames.get(source);
+    const raw=key==='riptide'?source.source:source.image,c=canvas(raw.width,raw.height),g=c.getContext('2d');g.drawImage(raw,0,0);
+    const w=c.width,h=c.height;
+    if(key==='riptide'){
+      const left=row===3;g.save();if(left){g.translate(w,0);g.scale(-1,1)}
+      const top=row===0?.65:row===2?.67:.65,shaft=row===0?.72:row===2?.71:.63;
+      g.clearRect(w*.58,0,w*.42,h*.14);g.clearRect(w*top,h*.14,w*(1-top),h*.28);
+      g.clearRect(w*shaft,h*.42,w*(.84-shaft),h*.38);g.clearRect(w*(shaft+.04),h*.8,w*.08,h*.09);
+      g.clearRect(w*.84,h*.42,w*.16,h*.46);g.restore();
+    }else{
+      // Each class has a right-hand prop in the source atlas. Retain its hand.
+      const cut={shadow:.65,storm:.72,flag:.70,occult:.73}[key]??.8;
+      g.clearRect(w*cut,key==='shadow'?h*.3:0,w*(1-cut),h);
+    }
+    const im=canvas(source.image.width,source.image.height),ig=im.getContext('2d');ig.imageSmoothingEnabled=false;
+    if(key==='riptide'){const factor=48/Math.max(...heroFrames.map(f=>f.source.height));const ww=Math.round(w*factor),hh=Math.round(h*factor);ig.drawImage(c,Math.round((im.width-ww)/2),im.height-hh,ww,hh)}else ig.drawImage(c,0,0,im.width,im.height);
+    const result={...source,image:im,white:null};bareFrames.set(source,result);return result;
   };
   api.animationCounts=()=>({hero:heroFrames.length,monsters:Object.values(monsterFrames).reduce((n,a)=>n+a.length,0)});
   api.get=(group,key)=>api.atlases[group]?.[key]||null;
