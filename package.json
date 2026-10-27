@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "test": "node --test tests/*.test.cjs",
+    "test:tactics": "node tests/tactics-browser.cjs",
     "test:browser": "node tests/gameplay.cjs",
     "test:drowned": "node tests/drowned-browser.cjs",
     "test:art": "node tests/art-browser.cjs",
