@@ -1,3 +1,5 @@
+> Superseded iteration: these prompts and v2 asset paths are historical. The active kit uses [the wholly new cohesive generation](cohesive-generation-prompts.md). No v2 atlas is shipped.
+
 # Reference-led atlas generation prompts
 
 Method: built-in ImageGen. The user's Rotwater sheet was supplied as the reference for the sewer atlas. The combined Blooming Deep / Forgotten Catacombs / Salt Pits sheet was supplied as the reference for each of those three atlases. The images are style references, not edit targets or source sheets to paste into gameplay. One subsequent edit corrected the catacomb alpha channel.

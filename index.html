@@ -7147,6 +7147,7 @@ function isoWall(TS,x,y,wf){
 }
 function isoFloorArt(img,t,x,y){return img}
 function isoBridgeEdge(x,y){
+  if(window.SaltmarrowBiomes?.eligible(S.L))return;
   const poly=(points,col)=>{ctx.fillStyle=col;ctx.beginPath();points.forEach((p,k)=>k?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fill()};
   const a=ISO.project((x+1)*T,(y+1)*T),b=ISO.project(x*T,(y+1)*T),c=ISO.project((x+1)*T,y*T),down=p=>({x:p.x,y:p.y+7});
   if(inb(x,y+1)&&S.L.map[I(x,y+1)]===PIT)poly([b,a,down(a),down(b)],'#26373c');
@@ -7167,13 +7168,13 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
       // Exposed walkway edges give bridges and chasms visible thickness.
       if(OPENT(L.map[i])){ctx.fillStyle='#8d8064';ctx.globalAlpha*=.55;if(inb(x,y+1)&&L.map[I(x,y+1)]===PIT)ctx.fillRect(x*T,y*T+T-2,T,2);if(inb(x+1,y)&&L.map[I(x+1,y)]===PIT)ctx.fillRect(x*T+T-2,y*T,2,T)}
     }ctx.globalAlpha=1;
-    if(TS.face&&!L.town)drawDressing(L,TS,0,W-1,0,H-1);
+    if(!window.SaltmarrowBiomes?.dressing(ctx,L,tiles,{w:W,visible:vis})&&TS.face&&!L.town)drawDressing(L,TS,0,W-1,0,H-1);
     window.SaltmarrowRooms?.ground(ctx,L,tiles,{w:W,h:H,actors:[P,...L.mons],visible:vis});
-    window.SaltmarrowLighting?.detail(ctx,L,tiles,{w:W,types:{floor:FLOOR,wall:WALL,water:WATER},visible:vis,actors:[P,...L.mons]});
+    if(!window.SaltmarrowBiomes?.eligible(L))window.SaltmarrowLighting?.detail(ctx,L,tiles,{w:W,types:{floor:FLOOR,wall:WALL,water:WATER},visible:vis,actors:[P,...L.mons]});
     window.SaltmarrowEnvironment?.draw(ctx,L,tiles,{w:W,h:H,types:{floor:FLOOR,wall:WALL},now:NOW,reduced:REDUCE,visible:vis,buildings:BUILDINGS,actors:[P,...L.mons,...(L.npcs||[])]});
     DEATHS.sync(L);DEATHS.draw(ctx,deathProject,deathVisible,'floor');
     for(const s of FX.stains)if(inb(s.x,s.y)&&L.seen[I(s.x,s.y)]){ctx.globalAlpha=.65*Math.max(0,1-(NOW-s.t0)/s.life);ctx.fillStyle=s.c;ctx.fillRect((s.x+.25)*T,(s.y+.45)*T,T*.5,T*.22)}ctx.globalAlpha=1;
-    for(const it of L.items)if(L.seen[I(it.x,it.y)]){ctx.globalAlpha=vis[I(it.x,it.y)]?1:.4;ctx.drawImage(SPR[it.kind==='gear'?gearSpr(it.item):it.kind],it.x*T,it.y*T,T,T)}ctx.globalAlpha=1;
+    for(const it of L.items)if(L.seen[I(it.x,it.y)]){ctx.globalAlpha=vis[I(it.x,it.y)]?1:.4;if(!window.SaltmarrowBiomes?.loot(ctx,L,it))ctx.drawImage(SPR[it.kind==='gear'?gearSpr(it.item):it.kind],it.x*T,it.y*T,T,T)}ctx.globalAlpha=1;
     drawOverlays(0,W-1,0,H-1);
   });
   for(const{x,y,i}of tiles)if(OPENT(L.map[i])){ctx.save();ctx.globalAlpha=window.SaltmarrowLighting?1:vis[i]?1:.45;isoBridgeEdge(x,y);ctx.restore()}
@@ -7293,6 +7294,7 @@ function calmTownTile(v,surface='stone'){
 const artTileBase=tileImg;
 tileImg=function(TS,t,x,y,wf){
   const L=S.L,plan=townArtPlan(L),v=h4(x,y);
+  const cohesive=window.SaltmarrowBiomes?.tile(L,t,x,y,wf,{w:W});if(cohesive)return cohesive;
   if(L.town&&!L.interior&&L.bart?.[I(x,y)]&&!plan)return artTileBase(TS,t,x,y,wf);
   if(plan?.covered.has(I(x,y)))return calmTownTile(v);
   if(L.town&&!L.interior&&t===FLOOR){const surface=window.SaltmarrowSurfaces?.get(L,t,x,y,{w:W,types:{floor:FLOOR,wall:WALL},buildings:BUILDINGS});if(surface)return surface;}
@@ -7501,7 +7503,10 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)clearHeldWa
 
 const artObjBase=drawObj;
 drawObj=function(o){
+  if(window.SaltmarrowBiomes?.object(ctx,S.L,o))return;
+  if(window.SaltmarrowBiomes?.eligible(S.L)&&['merchant','captive','rival'].includes(o.type))return artObjBase(o);
   if(o.type==='corpse'){if(DYING.some(d=>d.level===S.L&&d.e.x===o.x&&d.e.y===o.y))return;const a=ART?.corpseAsset?.(o.mt);if(a){const p=wpos(o),scale=MON[o.mt]?.boss?1.5:1,w=Math.round(a.image.width*scale),h=Math.round(a.image.height*scale);ctx.save();if(o.visualKind==='fire')ctx.filter='brightness(.45)';ctx.drawImage(a.image,Math.round(p.x-w/2),Math.round(p.y+T/2-h),w,h);ctx.restore();return}}
+  if(window.SaltmarrowBiomes?.eligible(S.L)&&o.type==='corpse')return artObjBase(o);
   const plan=townArtPlan(S.L);if(plan&&['door','house'].includes(o.type)&&plan.covered.has(I(o.x,o.y)))return;
   let key=o.type;if(key==='chest'||key==='coffin')key+=o.open?'Open':'';if(key==='brazier'&&!o.lit)key='brazierCold';if(key==='lever'&&o.on)key='leverOn';
   const a=ART?.get('props',key);if(!a)return artObjBase(o);
