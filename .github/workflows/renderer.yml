@@ -35,6 +35,9 @@ jobs:
       - run: npm run test:tactics
         env:
           SCREENSHOT_DIR: test-results
+      - run: npm run test:weapons
+        env:
+          SCREENSHOT_DIR: test-results
       - run: npm run test:browser
         env:
           SCREENSHOT_DIR: test-results
