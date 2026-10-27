@@ -7156,6 +7156,7 @@ function isoPixelLight(x,y,r,col,alpha){const p=ISO.project(x,y);ctx.save();ctx.
   for(let yy=-r;yy<=r;yy+=4)for(let xx=-r;xx<=r;xx+=4){const d=Math.hypot(xx,yy*1.35)/r;if(d>=1)continue;ctx.globalAlpha=alpha*Math.floor((1-d)*5)/5;ctx.fillStyle=col;ctx.fillRect(Math.round((p.x+xx)/4)*4,Math.round((p.y+yy)/4)*4,4,4)}ctx.restore()}
 function drawUnifiedTown(){
  const L=S.L,P=S.P,c=ISO.camera;
+ for(let i=DYING.length-1;i>=0;i--)if(DYING[i].level!==L||NOW-DYING[i].t0>=DYING[i].duration)DYING.splice(i,1);
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.imageSmoothingEnabled=false;ctx.globalAlpha=1;ctx.fillStyle='#10252f';ctx.fillRect(0,0,VW,VH);
  ctx.save();ctx.translate(-c.x,-c.y);SaltmarrowCoast.draw(ctx,L);
  if(!SaltmarrowCoast.loaded){ctx.fillStyle='#c8b68c';ctx.font='16px Georgia';ctx.fillText('Loading Saltmarrow…',c.x+24,c.y+40);ctx.restore();return}
