@@ -1,9 +1,10 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
-const art=require('../isometric-art.js');
+const art=require('../flat-art.js');
 test('every runtime atlas is shipped and precached for offline play',()=>{
   const sw=fs.readFileSync('sw.js','utf8');
   for(const spec of Object.values(art.specs)){assert.ok(fs.statSync(spec.url).size>1024,spec.url);assert.ok(sw.includes("'"+spec.url+"'"),spec.url)}
-  assert.ok(sw.includes("'isometric-art.js'"));
+  assert.ok(sw.includes("'flat-art.js'"));
+  for(const name of ['hero','monsters','reference']){const url='assets/flat/'+name+'.webp';assert.ok(fs.statSync(url).size>1024);assert.ok(sw.includes("'"+url+"'"))}
 });
 test('atlas cells cover each declared sprite without leaving the sheet',()=>{
   for(const spec of Object.values(art.specs)){
@@ -18,8 +19,8 @@ test('native actor scale distinguishes low creatures and bosses from people',()=
 });
 test('native app offline bundles include runtime scripts and the art folder',()=>{
   for(const file of ['.github/workflows/apk.yml','.github/workflows/mac.yml']){
-    const src=fs.readFileSync(file,'utf8');for(const name of ['../death-effects.js','../isometric-art.js','cp -R ../assets www/assets'])assert.ok(src.includes(name),`${file}: ${name}`);
+    const src=fs.readFileSync(file,'utf8');for(const name of ['../death-effects.js','../flat-art.js','cp -R ../assets www/assets'])assert.ok(src.includes(name),`${file}: ${name}`);
   }
 });
 
-test('home artwork is included in the offline cache',()=>{assert.ok(fs.statSync('assets/art/home.webp').size>1024);assert.ok(fs.readFileSync('sw.js','utf8').includes("'assets/art/home.webp'"))});
+test('home artwork is included in the offline cache',()=>{assert.ok(fs.statSync('assets/flat/home.webp').size>1024);assert.ok(fs.readFileSync('sw.js','utf8').includes("'assets/flat/home.webp'"))});

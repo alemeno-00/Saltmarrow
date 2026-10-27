@@ -527,7 +527,7 @@ body.mob .mhead{display:none}
 
 <script src="death-effects.js"></script>
 <script src="drowned-sprites.js"></script>
-<script src="isometric-art.js"></script>
+<script src="flat-art.js"></script>
 <script src="hollow-faith.js"></script>
 <script src="hollow-sprites.js"></script>
 <script>
@@ -631,7 +631,7 @@ const ITEM_NAMES={draught:'healing draught',charge:'blasting charge',ink:'smoke 
        ghoul (charges the weak, eats corpses) · support (heals, hexes, hangs back) · spider (webs, lurks)
        brute (straight at you) · skirmish (hit and fly off) · lurker (only from water) · caster (blinks away) */
 const MON={
-  rat:{name:'tunnel rat',ai:'swarm',coward:true,stam:5,speed:6,bonus:1,free:1,xp:2,pts:2,ab:[{name:'Bite',kind:'melee',range:1,t:[{d:2},{d:3},{d:4}]}],mal:{cost:2,name:'Frenzy',type:'extra'},
+  rat:{name:'Deep Crawler',ai:'swarm',coward:true,stam:5,speed:6,bonus:1,free:1,xp:2,pts:2,ab:[{name:'Bite',kind:'melee',range:1,t:[{d:2},{d:3},{d:4}]}],mal:{cost:2,name:'Frenzy',type:'extra'},
     desc:'Mangy and bold in numbers. Rats mob whoever is closest and scatter when hurt.'},
   wolf:{name:'cave wolf',ai:'pack',stam:8,speed:7,bonus:2,free:2,xp:4,pts:3,ab:[{name:'Bite',kind:'melee',range:1,t:[{d:2},{d:3},{d:5,cond:'slowed'}]}],mal:{cost:3,name:'Howl',type:'howl'},
     desc:'Hunts in packs. Wolves circle to surround you, and each packmate beside you adds to every bite. A wolf left alone and hurt will run.'},
@@ -639,13 +639,13 @@ const MON={
     desc:'Keeps its distance and lobs bombs. It will happily blow up a powder keg next to you, and runs when cornered.'},
   skeleton:{name:'skeleton archer',ai:'kite',stam:10,speed:5,bonus:2,free:2,xp:5,pts:4,ab:[{name:'Bone Bow',kind:'ranged',range:8,t:[{d:3},{d:5},{d:7}]},{name:'Bony Fist',kind:'melee',range:1,t:[{d:1},{d:2},{d:3}]}],mal:{cost:3,name:'Volley',type:'extra'},
     desc:'Backs away to shoot from range and looks for a clear line. Weak up close. Never tires and never flees.'},
-  ghoul:{name:'crypt ghoul',ai:'ghoul',stam:16,speed:6,bonus:2,free:2,xp:7,pts:5,ab:[{name:'Rending Claw',kind:'melee',range:1,t:[{d:3},{d:5},{d:6,cond:'dazed'}]}],mal:{cost:3,name:'Ravenous',type:'extra'},
+  ghoul:{name:'Rotfiend',ai:'ghoul',stam:16,speed:6,bonus:2,free:2,xp:7,pts:5,ab:[{name:'Rending Claw',kind:'melee',range:1,t:[{d:3},{d:5},{d:6,cond:'dazed'}]}],mal:{cost:3,name:'Ravenous',type:'extra'},
     desc:'Goes for the weakest prey. A hurt ghoul will stop to gorge on a nearby corpse and heal. Its claws can leave you dazed.'},
-  cultist:{name:'bone cultist',ai:'support',coward:true,stam:10,speed:5,bonus:2,free:1,xp:6,pts:4,ab:[{name:'Hex',kind:'ranged',range:6,t:[{d:2},{d:3,cond:'weakened'},{d:5,cond:'weakened'}]}],mal:{cost:3,name:'Dark Mending',type:'massheal'},
+  cultist:{name:'Bone Seer',ai:'support',coward:true,stam:10,speed:5,bonus:2,free:1,xp:6,pts:4,ab:[{name:'Hex',kind:'ranged',range:6,t:[{d:2},{d:3,cond:'weakened'},{d:5,cond:'weakened'}]}],mal:{cost:3,name:'Dark Mending',type:'massheal'},
     desc:'Hangs back behind its allies, knitting their wounds and hexing you. Kill it first, or its friends keep getting up.'},
   spider:{name:'cave spider',ai:'spider',webwalk:true,stam:14,speed:6,bonus:3,free:2,xp:8,pts:6,ab:[{name:'Venom Bite',kind:'melee',range:1,t:[{d:3},{d:5,cond:'bleeding'},{d:7,cond:'bleeding'}]},{name:'Spit Web',kind:'ranged',range:5,web:true,t:[{d:0,cond:'slowed'},{d:0,cond:'grabbed'},{d:2,cond:'grabbed'}]}],mal:{cost:3,name:'Web Burst',type:'webs'},
     desc:'Lurks on its webs and moves on them freely. Spits webbing to pin prey, then bites. Fire clears webs.'},
-  shambler:{name:'spore shambler',ai:'brute',sporeproof:true,burst:true,stam:26,speed:3,stab:2,bonus:3,free:3,xp:9,pts:6,ab:[{name:'Fungal Slam',kind:'melee',range:1,t:[{d:4,push:1},{d:6,push:2},{d:8,push:2}]}],mal:{cost:3,name:'Spore Cloud',type:'spores'},
+  shambler:{name:'Spore Walker',ai:'brute',sporeproof:true,burst:true,stam:26,speed:3,stab:2,bonus:3,free:3,xp:9,pts:6,ab:[{name:'Fungal Slam',kind:'melee',range:1,t:[{d:4,push:1},{d:6,push:2},{d:8,push:2}]}],mal:{cost:3,name:'Spore Cloud',type:'spores'},
     desc:'Slow, heavy and stuffed with spores. It bursts in a cloud when it dies, so do not be standing next to it.'},
   bat:{name:'bat swarm',ai:'skirmish',fly:true,stam:8,speed:8,bonus:2,free:1,xp:4,pts:3,ab:[{name:'Bites',kind:'melee',range:1,t:[{d:2},{d:3},{d:4,cond:'bleeding'}]}],mal:{cost:2,name:'Screech',type:'daze'},
     desc:'Darts in, bites and flutters away before you can answer. Flies over pits and water.'},
@@ -657,7 +657,7 @@ const MON={
     desc:'Spears you from range and reels you in toward its friends.'},
   knight:{name:'drowned knight',ai:'brute',noSwim:true,stab:2,stam:24,speed:4,bonus:3,free:3,xp:10,pts:7,ab:[{name:'Crushing Gauntlet',kind:'melee',range:1,t:[{d:4,push:1},{d:6,push:1},{d:9,push:2}]}],mal:{cost:3,name:'Barnacle Wall',type:'temp',amt:8},
     desc:'Heavy and hard to move, but it sinks in deep water. Shove it in.'},
-  wraith:{name:'lantern wraith',ai:'caster',fly:true,light:4,stam:15,speed:6,bonus:3,free:3,xp:10,pts:7,ab:[{name:'Drowning Glare',kind:'ranged',range:6,t:[{d:3},{d:5,cond:'weakened'},{d:7,cond:'weakened'}]}],mal:{cost:3,name:'Lantern Flare',type:'flare'},
+  wraith:{name:'Brine Hag',ai:'caster',fly:true,light:4,stam:15,speed:6,bonus:3,free:3,xp:10,pts:7,ab:[{name:'Drowning Glare',kind:'ranged',range:6,t:[{d:3},{d:5,cond:'weakened'},{d:7,cond:'weakened'}]}],mal:{cost:3,name:'Lantern Flare',type:'flare'},
     desc:'Its lantern lights you up and ruins your hiding place. It blinks away when you close in.'},
   horror:{name:'hagfish horror',ai:'brute',swim:true,stam:30,speed:5,bonus:3,free:4,xp:16,pts:10,ab:[{name:'Gnash',kind:'melee',range:1,t:[{d:5},{d:7,cond:'grabbed'},{d:10,cond:'grabbed'}]}],mal:{cost:4,name:'Engulf',type:'engulf'},
     desc:'Grabs and does not let go. Break free fast.'},
@@ -6946,9 +6946,9 @@ const FLOATERS=new Set(['wraith','bat','choir','harp']);
 const DEATHK={skeleton:'crumble',gaunt:'crumble',knight:'topple',wraith:'fade',choir:'fade',saint:'spore',shambler:'spore',host:'spore',deepone:'sink',eel:'sink',horror:'sink',harp:'sink',sailor:'sink',bat:'drop',rat:'drop',spider:'curl',abbot:'sink'};
 const DYING=[];
 {const k0=killMon;killMon=function(m,how,src){if(m.dead)return;const p=m.rx!=null?{x:m.rx*T+T/2,y:m.ry*T+T/2}:{x:m.x*T+T/2,y:m.y*T+T/2};const r=k0(m,how,src);
-  try{if(!REDUCE&&SPR[m.type]){const M=MT(m);DYING.push({img:DROWNED_ART.frame(m,NOW,REDUCE)||SPR[m.type],x:p.x,y:p.y,k:({ice:'crumble',occult:'fade',slash:'sever',piercing:'sever',fire:'burn',water:'sink',spores:'spore',lightning:'shock'})[m.lastHit&&m.lastHit.kind]||DEATHK[m.type]||'topple',t0:NOW,sz:DROWNED_TYPES.has(m.type)?(m.type==='admiral'?72:48):M.boss?T*1.5:T,dir:src&&src.x!=null&&src.x>m.x?-1:1,seed:Math.random()*6});if(DYING.length>24)DYING.splice(0,DYING.length-24)}}catch(e){}return r}}
+  try{if(!REDUCE&&SPR[m.type]){const M=MT(m);DYING.push({img:ART?.frameAsset?.(m.type,m,NOW,REDUCE)?.image||SPR[m.type],x:p.x,y:p.y,k:({ice:'crumble',occult:'fade',slash:'sever',piercing:'sever',fire:'burn',water:'sink',spores:'spore',lightning:'shock'})[m.lastHit&&m.lastHit.kind]||DEATHK[m.type]||'topple',t0:NOW,sz:DROWNED_TYPES.has(m.type)?(m.type==='admiral'?72:48):M.boss?T*1.5:T,dir:src&&src.x!=null&&src.x>m.x?-1:1,seed:Math.random()*6});if(DYING.length>24)DYING.splice(0,DYING.length-24)}}catch(e){}return r}}
 {const a0=drawAnims;drawAnims=function(){a0();if(!DYING.length)return;try{for(let i=DYING.length-1;i>=0;i--){const d=DYING[i],dur=d.k==='fade'?900:d.k==='crumble'?700:620,t=(NOW-d.t0)/dur;if(t>1){DYING.splice(i,1);continue}if(t<0)continue;
-  const sz=d.sz;let x=d.x,y=d.y;ctx.save();if(typeof ISO!=='undefined'){ctx.transform(.5,-.5,1/(2*ISO.rise),1/(2*ISO.rise),0,0);const p=ISO.project(x,y);x=p.x;y=p.y-T/2}ctx.globalCompositeOperation='source-over';
+  const sz=d.sz;let x=d.x,y=d.y;ctx.save();if(typeof ISO!=='undefined'){const p=ISO.project(x,y);x=p.x;y=p.y-T/2}ctx.globalCompositeOperation='source-over';
   switch(d.k){
     case'burn':{ctx.globalAlpha=1-t;ctx.filter='brightness('+Math.max(.08,1-t*2)+')';ctx.translate(x,y+sz*.3);ctx.scale(1-t*.35,1-t*.75);ctx.drawImage(d.img,-sz/2,-sz*.8,sz,sz);break}
     case'shock':{ctx.globalAlpha=1-t;ctx.filter='brightness('+(.3+Math.max(0,1-t*5)*1.7)+')';ctx.translate(x,y);ctx.rotate(d.dir*Math.min(1,t*2)*1.3);ctx.drawImage(d.img,-sz/2,-sz/2,sz,sz);break}
@@ -7041,12 +7041,12 @@ function buildTutorial(){const L=S.L,P=S.P,N=W*H;
   for(const k in TUT.rooms){if(META.tips['tut_'+k])continue;if(inRect(P.x,P.y,TUT.rooms[k])){META.tips['tut_'+k]=1;if(k==='E')META.tips.tut_done=1;saveMeta();UI.tip(TUT.say[k]);log(TUT.say[k],'gold');break}}}catch(e){}}}
 setTimeout(()=>{try{if(window.__dbg)Object.assign(window.__dbg,{buildTutorial:()=>buildTutorial()})}catch(e){}},480);
 
-/* ---------- semi-isometric presentation (simulation remains in grid coordinates) ---------- */
+/* ---------- reference camera: axis-aligned, slightly overhead, upright sprites ---------- */
 const ISO={
-  rise:.65,
-  project(x,y){return{x:x-y,y:(x+y)*ISO.rise}},
-  unproject(x,y){const row=y/(2*ISO.rise);return{x:row+x/2,y:row-x/2}},
-  depth(e){return(e.rx??e.x)+(e.ry??e.y)},
+  rise:1,
+  project(x,y){return{x,y}},
+  unproject(x,y){return{x,y}},
+  depth(e){return(e.ry??e.y)},
   camera:{x:0,y:0,ready:false},
   screen(x,y){const p=this.project(x,y);return{x:p.x-this.camera.x,y:p.y-this.camera.y}},
   pick(x,y){const p=this.unproject(x+this.camera.x,y+this.camera.y);return{x:Math.floor(p.x/T),y:Math.floor(p.y/T)}}
@@ -7061,32 +7061,19 @@ const isoAnimate=animate;animate=function(dt){if(ISO.level!==S.L){ISO.level=S.L;
   c.x=Math.round(c.x);c.y=Math.round(c.y)};
 tileFromEvent=function(ev){const r=cv.getBoundingClientRect();return ISO.pick((ev.clientX-r.left)*VW/r.width,(ev.clientY-r.top)*VH/r.height)};
 UI.inspectAt=(x,y)=>{const r=cv.getBoundingClientRect(),p=ISO.screen((x+.5)*T,(y+.5)*T);openInspect(x,y,r.left+p.x*r.width/VW,r.top+p.y*r.height/VH)};
-function isoGround(fn){ctx.save();ctx.transform(1,ISO.rise,-1,ISO.rise,0,0);fn();ctx.restore()}
+function isoGround(fn){ctx.save();fn();ctx.restore()}
 function isoUpright(e,fn){const p=wpos(e),q=ISO.project(p.x,p.y);ctx.save();ctx.translate(Math.round(q.x-p.x),Math.round(q.y-p.y-T/2));fn();ctx.restore()}
-function isoWall(TS,x,y,wf){const i=I(x,y),h=T*(S.L.town ? .85 : 1.1),im=tileImg(TS,S.L.map[i],x,y,wf);
-  // Two textured vertical faces and a diamond cap, all using the same tile art.
-  const a=ISO.project(x*T,y*T),b=ISO.project((x+1)*T,y*T),c=ISO.project(x*T,(y+1)*T);
-  ctx.save();ctx.transform(1,ISO.rise,0,1,c.x,c.y-h);ctx.drawImage(im,0,0,T,h);ctx.fillStyle='rgba(2,8,12,.24)';ctx.fillRect(0,0,T,h);ctx.restore();
-  ctx.save();ctx.transform(-1,ISO.rise,0,1,b.x,b.y-h);ctx.drawImage(im,0,0,T,h);ctx.fillStyle='rgba(2,8,12,.48)';ctx.fillRect(0,0,T,h);ctx.restore();
-  ctx.save();ctx.translate(0,-h);isoGround(()=>ctx.drawImage(ART?.tile('masonry',h4(x,y))||(TS.top?TS.top[h4(x,y)]:im),x*T,y*T,T,T));ctx.restore();
-  ctx.strokeStyle='#60716c';ctx.globalAlpha*=.35;ctx.beginPath();ctx.moveTo(b.x,b.y-h);ctx.lineTo(a.x,a.y-h);ctx.lineTo(c.x,c.y-h);ctx.stroke();
+function isoWall(TS,x,y,wf){
+  const im=tileImg(TS,S.L.map[I(x,y)],x,y,wf),px=x*T,base=(y+1)*T;
+  // Rear masonry rises above the floor; foreground walls cut low for visibility.
+  const front=inb(x,y-1)&&OPENT(S.L.map[I(x,y-1)]),h=front?12:T*1.65;
+  ctx.drawImage(im,px,base-h,T,h);
+  ctx.fillStyle='rgba(1,5,8,.28)';ctx.fillRect(px,base-h,T,h);
+  ctx.fillStyle='#30383b';ctx.fillRect(px,base-h-6,T,6);
+  ctx.fillStyle='#53534a';ctx.fillRect(px+1,base-h-6,T-2,1);
+  ctx.fillStyle='#11191e';ctx.fillRect(px,base-3,T,3);
 }
-const ISO_ART=new WeakMap();
-function isoFloorArt(img,t,x,y){
-  if(S.L.town&&!S.L.interior)return img;
-  // Cache four native-pixel variants; no per-frame texture allocation.
-  if(![FLOOR,RUBBLE,GRASS,WATER].includes(t))return img;
-  let variants=ISO_ART.get(img);if(!variants){variants=[];ISO_ART.set(img,variants)}
-  const v=h4(x,y);if(variants[v])return variants[v];
-  const c=document.createElement('canvas');c.width=c.height=T;const g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(img,0,0,T,T);
-  const R=srand(71+v*1337+t*19);
-  for(let k=0;k<22;k++){const px=2+(R()*28|0),py=2+(R()*28|0);g.fillStyle=k%3===0?'rgba(128,170,169,.16)':'rgba(3,12,16,.22)';g.fillRect(px,py,k%4===0?3:1,1)}
-  if(t===FLOOR||t===RUBBLE){
-    for(let row=0;row<2;row++)for(let col=0;col<2;col++){const px=col*16,py=row*16;g.fillStyle='rgba(4,12,15,.32)';g.fillRect(px,py,16,1);g.fillRect(px,py,1,16);g.fillStyle='rgba(130,151,141,.18)';g.fillRect(px+2,py+2,12,1);g.fillRect(px+2,py+3,1,10)}
-    if(v===1){g.fillStyle='rgba(53,100,111,.23)';g.fillRect(6,21,12,2);g.fillRect(9,23,14,2);g.fillStyle='rgba(141,194,194,.28)';g.fillRect(10,21,5,1)}
-  }
-  return variants[v]=c;
-}
+function isoFloorArt(img,t,x,y){return img}
 function isoBridgeEdge(x,y){
   const poly=(points,col)=>{ctx.fillStyle=col;ctx.beginPath();points.forEach((p,k)=>k?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fill()};
   const a=ISO.project((x+1)*T,(y+1)*T),b=ISO.project(x*T,(y+1)*T),c=ISO.project((x+1)*T,y*T),down=p=>({x:p.x,y:p.y+7});
@@ -7102,7 +7089,7 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
   ctx.save();ctx.translate(-c.x+shakeX,-c.y+shakeY);
   const tiles=[],standing=[],townPlan=townArtPlan(L);
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=I(x,y);if(!L.seen[i])continue;const q=ISO.project((x+.5)*T,(y+.5)*T);if(q.x<c.x-T*3||q.x>c.x+VW+T*3||q.y<c.y-T*3||q.y>c.y+VH+T*3)continue;tiles.push({x,y,i});
-    if((L.map[i]===WALL||L.map[i]===CRACK)&&!townPlan?.covered.has(i))standing.push({x,y,depth:x+y+1,wall:true})}
+    if((L.map[i]===WALL||L.map[i]===CRACK)&&!townPlan?.covered.has(i))standing.push({x,y,depth:y+1,wall:true})}
   isoGround(()=>{for(const{x,y,i}of tiles){ctx.globalAlpha=vis[i]?1:.45;ctx.drawImage(isoFloorArt(tileImg(TS,L.map[i],x,y,wf),L.map[i],x,y),x*T,y*T,T,T);
       // Exposed walkway edges give bridges and chasms visible thickness.
       if(OPENT(L.map[i])){ctx.fillStyle='#8d8064';ctx.globalAlpha*=.55;if(inb(x,y+1)&&L.map[I(x,y+1)]===PIT)ctx.fillRect(x*T,y*T+T-2,T,2);if(inb(x+1,y)&&L.map[I(x+1,y)]===PIT)ctx.fillRect(x*T+T-2,y*T,2,T)}
@@ -7117,12 +7104,12 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
   for(const o of L.objs)if(L.seen[I(o.x,o.y)]&&(o.type!=='charge'||vis[I(o.x,o.y)]))standing.push({e:o,depth:ISO.depth(o)+1,object:true});
   for(const m of L.mons)if(monVisible(m))standing.push({e:m,depth:ISO.depth(m)+1});
   for(const n of L.npcs||[])if(L.seen[I(n.x,n.y)])standing.push({e:n,depth:ISO.depth(n)+1,npc:true});
-  if(townPlan)for(const b of townPlan.entries)standing.push({building:b,depth:b.x+b.y+(b.w+b.h)*.6});
+  if(townPlan)for(const b of townPlan.entries)standing.push({building:b,depth:b.y+b.h});
   standing.push({e:P,depth:ISO.depth(P)+1,hero:true});
   standing.sort((a,b)=>a.depth-b.depth||(a.wall?-1:1)-(b.wall?-1:1));
   for(const entry of standing){ctx.save();if(entry.building){drawArtBuilding(entry.building)}else if(entry.wall){ctx.globalAlpha=vis[I(entry.x,entry.y)]?1:.45;
       // Cut away nearby foreground masonry so the hero and target remain readable.
-      if(entry.depth>P.x+P.y&&Math.abs(entry.x-P.x)<=2&&Math.abs(entry.y-P.y)<=2)ctx.globalAlpha*=.3;
+      if(entry.depth>P.y+1&&Math.abs(entry.x-P.x)<=2&&Math.abs(entry.y-P.y)<=2)ctx.globalAlpha*=.3;
       isoWall(TS,entry.x,entry.y,wf);
     }else{const e=entry.e;ctx.globalAlpha=vis[I(e.x,e.y)]||entry.hero?1:.45;isoUpright(e,()=>{
       if(entry.object)drawObj(e);else if(entry.hero)drawSprite(SPR[S.cls],SPRW[S.cls],e,T,P.hidden?.5:S.over&&!S.won?.35:1);
@@ -7143,7 +7130,7 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
   // Ambient darkness and local warm/cool illumination use projected positions.
   ctx.fillStyle=L.town?'rgba(2,8,14,.12)':'rgba(2,8,14,.24)';ctx.fillRect(c.x,c.y,VW,VH);
   if(P.lantern)isoPixelLight((P.rx+.5)*T,(P.ry+.5)*T,T*3,'#e3a548',.12);
-  for(const o of L.objs){if(!vis[I(o.x,o.y)])continue;const warm=['lamp','forge','hearth','altar','desk','chandelier'].includes(o.type)||(o.type==='brazier'&&o.lit)||(o.type==='shrine'&&!o.used);const cool=['crystal','shroom'].includes(o.type);if(warm||cool)isoPixelLight((o.x+.5)*T,(o.y+.5)*T,T*2.5,cool?'#63bfc7':'#efaa51',.16)}
+  for(const o of L.objs){if(!vis[I(o.x,o.y)])continue;const warm=['lamp','forge','hearth','altar','desk','chandelier'].includes(o.type)||(o.type==='brazier'&&o.lit)||(o.type==='shrine'&&!o.used);const cool=['crystal','shroom'].includes(o.type);if(warm||cool)isoPixelLight((o.x+.5)*T,(o.y+.5)*T,T*2.5,cool?'#63bfc7':'#efaa51',.30)}
   for(const l of FX.lights)isoPixelLight(l.x,l.y,l.r,l.c,.22*Math.max(0,1-(NOW-l.t0)/l.dur));
   for(const f of FX.floats){const t=(NOW-f.t0)/1000;if(t<0)continue;const p=ISO.project(f.x,f.y);ctx.globalAlpha=Math.max(0,1-t);ctx.textAlign='center';ctx.font=`700 ${f.huge?24:f.big?17:11}px monospace`;ctx.fillStyle='#04090e';ctx.fillText(f.text,p.x+1,p.y-(REDUCE?0:t*26)+1);ctx.fillStyle=f.c;ctx.fillText(f.text,p.x,p.y-(REDUCE?0:t*26))}ctx.globalAlpha=1;ctx.textAlign='start';
   if(L.town&&!L.interior)for(const b of BUILDINGS){const p=ISO.project((b.dx+.5)*T,(b.dy+1)*T);tag(ctx,p.x,p.y+12,b.name,'#e3c890')}
@@ -7184,10 +7171,8 @@ function townArtPlan(L){
   const plan={entries,covered};TOWN_ART.set(L,plan);return plan;
 }
 function artBuildingPlacement(b){
-  const center=ISO.project((b.x+b.w/2)*T,(b.y+b.h/2)*T);
-  const width=Math.round((b.w+b.h)*T*(b.key==='lift'?.65:.88)),asset=ART.get(b.key==='lift'?'structures':'buildings',b.key);
-  const height=asset?Math.round(width*asset.image.height/asset.image.width*(b.key==='lift'?.84:.78)):width;
-  return {x:Math.round(center.x-width/2),y:Math.round(center.y+(b.key==='lift'?T:(b.w+b.h)*T*ISO.rise*.44)-height),w:width,h:height};
+  const asset=ART.get(b.key==='lift'?'structures':'buildings',b.key),width=Math.round(b.w*T),height=asset?Math.round(width*asset.image.height/asset.image.width):width;
+  return{x:Math.round(b.x*T),y:Math.round((b.y+b.h)*T-height),w:width,h:height};
 }
 function drawArtBuilding(b){
   const a=ART.get(b.key==='lift'?'structures':'buildings',b.key);if(!a){if(b.key==='lift')drawArtLift(b);return}
@@ -7233,8 +7218,7 @@ tileImg=function(TS,t,x,y,wf){
 };
 const artSpriteBase=drawSprite;
 drawSprite=function(img,imgW,e,size,alpha,flipOk){
-  if(DROWNED_TYPES.has(e.type))return artSpriteBase(img,imgW,e,size,alpha,flipOk);
-  const key=e===S.P?S.cls:e.key||e.type,asset=ART?.actor(key);
+  const key=e===S.P?S.cls:e.key||e.type,asset=ART?.frameAsset?.(key,e,NOW,REDUCE)||ART?.actor(key);
   if(!asset)return artSpriteBase(img,imgW,e,size,alpha,flipOk);
   const p=wpos(e),scale=(size||T)/T,im=asset.image,h=Math.round(im.height*scale),w=Math.round(im.width*scale);
   let ox=0,oy=0,hop=0;
@@ -7249,7 +7233,7 @@ drawSprite=function(img,imgW,e,size,alpha,flipOk){
   ctx.fillStyle='rgba(0,5,9,.48)';ctx.fillRect(footX-Math.round(w*.3),footY-2,Math.round(w*.6),3);
   ctx.translate(footX,footY+bob-hop);const motion=bodyMotion(e);if(motion){ctx.rotate(motion.tilt);ctx.scale(motion.sx,motion.sy)}
   if(e.squash&&!REDUCE){const t=(NOW-e.squash.t0)/e.squash.dur;if(t>=0&&t<1){const k=Math.sin(t*Math.PI)*.18;ctx.scale(1+k,1-k)}else if(t>=1)e.squash=null}
-  ctx.scale(flipOk!==false&&e.fx<0?-1:1,1);ctx.drawImage(im,-Math.round(w/2),-h,w,h);
+  ctx.scale(!asset.directional&&flipOk!==false&&e.fx<0?-1:1,1);ctx.drawImage(im,-Math.round(w/2),-h,w,h);
   if(e.flashT&&NOW-e.flashT<140){ctx.globalAlpha*=.7;ctx.drawImage(ART.white(asset),-Math.round(w/2),-h,w,h)}ctx.restore();
 };
 const artObjBase=drawObj;
@@ -7268,7 +7252,7 @@ makeHero=function(key,o){if(o?.kit||o?.marks?.length)return artHeroBase(key,o);c
 const artPortraitBase=drawPortrait;
 drawPortrait=function(g,state,now){const a=ART?.portrait(S.cls);if(!a)return artPortraitBase(g,state,now);g.clearRect(0,0,48,48);g.imageSmoothingEnabled=false;g.drawImage(a,0,0);if(state==='hurt'||S.P.stam<S.P.max*.3){g.fillStyle='rgba(105,22,25,.16)';g.fillRect(0,0,48,48)}};
 ART?.ready.then(()=>{
-  for(const key of Object.keys(MON)){if(DROWNED_TYPES.has(key))continue;const im=ART.square(key);if(im){SPR[key]=im;SPRW[key]=white(im);delete MICON[key]}}
+  for(const key of Object.keys(MON)){const im=ART.square(key);if(im){SPR[key]=im;SPRW[key]=white(im);delete MICON[key]}}
   for(const key of Object.keys(HERO_LOOK)){const im=ART.square(key);if(im){SPR[key]=im;SPRW[key]=white(im);ICON[key]=im.toDataURL()}}
   HERO_CACHE.clear();if(S&&S.L)UI.render();
 });
@@ -7280,17 +7264,17 @@ tileFromEvent=function(ev){
   const plan=townArtPlan(S.L),candidates=[];
   for(const e of [...S.L.mons,...(S.L.npcs||[])]){
     if(e!==S.P&&(e.type?!monVisible(e):!S.L.seen[I(e.x,e.y)]))continue;
-    const frame=DROWNED_TYPES.has(e.type)?DROWNED_ART.frame(e,NOW,REDUCE):null;
-    let a=ART?.actor(e.key||e.type);if(frame){if(!ART_FACTION_MASKS.has(frame))ART_FACTION_MASKS.set(frame,{image:frame});a=ART_FACTION_MASKS.get(frame)}if(!a||!ART)continue;
+    const frame=null;
+    let a=ART?.frameAsset?.(e.key||e.type,e,NOW,REDUCE)||ART?.actor(e.key||e.type);if(frame){if(!ART_FACTION_MASKS.has(frame))ART_FACTION_MASKS.set(frame,{image:frame});a=ART_FACTION_MASKS.get(frame)}if(!a||!ART)continue;
     const p=wpos(e),q=ISO.project(p.x,p.y),scale=e.type&&MT(e).boss?1.5:e.mut==='hulking'?1.2:1;
     const w=frame?(e.type==='admiral'?72:48):Math.round(a.image.width*scale),h=frame?w:Math.round(a.image.height*scale);
-    let u=(mx-(q.x-w/2))/w*a.image.width,v=(my-(q.y-h))/h*a.image.height;if(!frame&&e.fx<0)u=a.image.width-1-u;
+    let u=(mx-(q.x-w/2))/w*a.image.width,v=(my-(q.y-h))/h*a.image.height;if(!frame&&!a.directional&&e.fx<0)u=a.image.width-1-u;
     if(ART.hit(a,u,v))candidates.push({depth:ISO.depth(e)+1,x:e.x,y:e.y});
   }
   if(plan&&!SEL.id)for(const b of plan.entries){
     const a=ART.get(b.key==='lift'?'structures':'buildings',b.key);if(!a)continue;const p=artBuildingPlacement(b),hero=ISO.project((S.P.rx+.5)*T,(S.P.ry+.5)*T);
     if(S.P.y<b.y+b.h&&S.P.x<b.x+b.w&&hero.x>p.x-12&&hero.x<p.x+p.w+12&&hero.y>p.y&&hero.y<p.y+p.h-12)continue;
-    if(ART.hit(a,(mx-p.x)/p.w*a.image.width,(my-p.y)/p.h*a.image.height))candidates.push({depth:b.x+b.y+(b.w+b.h)*.6,x:b.entryX,y:b.entryY});
+    if(ART.hit(a,(mx-p.x)/p.w*a.image.width,(my-p.y)/p.h*a.image.height))candidates.push({depth:b.y+b.h,x:b.entryX,y:b.entryY});
   }
   candidates.sort((a,b)=>b.depth-a.depth);return candidates[0]?{x:candidates[0].x,y:candidates[0].y}:artPickBase(ev);
 };
@@ -7300,21 +7284,21 @@ window.__art={ready:ART?.ready,plan:()=>townArtPlan(S.L),placement:artBuildingPl
 /* Home screen: one clear wordmark and a pixel-art scene, scoped away from dialogs. */
 {const st=document.createElement('style');st.textContent=`
 #overlay.ttov:not([hidden]):has(>.ttl){
-  background-image:linear-gradient(90deg,rgba(3,9,13,.30),rgba(3,9,13,.04) 72%),url('assets/art/home.webp')!important;
+  background-image:linear-gradient(90deg,rgba(3,9,13,.30),rgba(3,9,13,.04) 72%),url('assets/flat/home.webp')!important;
   background-color:#061016!important;background-position:center!important;background-size:cover!important;background-repeat:no-repeat!important;
   image-rendering:pixelated;justify-content:flex-start;align-items:center;isolation:isolate;
 }
-#boot[data-s="2"],#boot[data-s="2o"]{background:linear-gradient(90deg,rgba(3,9,13,.65),rgba(3,9,13,.3)),url('assets/art/home.webp') center/cover no-repeat!important;image-rendering:pixelated}
+#boot[data-s="2"],#boot[data-s="2o"]{background:linear-gradient(90deg,rgba(3,9,13,.65),rgba(3,9,13,.3)),url('assets/flat/home.webp') center/cover no-repeat!important;image-rendering:pixelated}
 #overlay.ttov:has(>.ttl)::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:-1;background:linear-gradient(0deg,rgba(2,7,10,.75),transparent 28%)}
 #overlay.ttov:has(>.ttl)>.ttl{width:min(430px,90vw);margin:0 0 0 clamp(28px,6vw,110px);padding:30px 16px;gap:28px;position:relative;z-index:1;image-rendering:auto}
-.ttl .tt1,#boot .b2 .tt1{font-size:clamp(44px,6vw,82px);line-height:1.04;letter-spacing:.025em;color:#e2e5d9;text-shadow:0 2px 0 #19272a,0 4px 12px #03090d}
+.ttl .tt1,#boot .b2 .tt1{font-family:Georgia,serif;text-transform:uppercase;font-weight:400;font-size:clamp(38px,4.2vw,64px);line-height:1.04;letter-spacing:.025em;color:#e2e5d9;text-shadow:0 2px 0 #19272a,0 4px 12px #03090d}
 .ttl .tt2,#boot .b2 .tt2{margin:10px 0 0;font-family:var(--display);font-size:clamp(19px,2.1vw,26px);line-height:1.2;letter-spacing:.48em;padding-left:.48em;color:#b9c8c4;background:none;filter:none;-webkit-text-fill-color:currentColor;text-shadow:0 2px 0 #071117}
 .ttl .ttorn{margin-top:13px;color:#9b8f6d}.ttl .ttorn i{width:68px}
 .ttl .ttsub{max-width:28ch;margin:16px auto 0;font-size:16px;line-height:1.5;color:#aebfbd;text-wrap:balance}
 .ttl .gml{max-width:290px;gap:5px}.ttl .gmb{min-height:44px;padding:8px 12px;font-size:24px;text-shadow:0 2px 8px #02080b}
 .ttl .gmb small{color:#a9b9b5}.ttl .ttfoot{color:#879b98}.ttl .gmmsg:empty{display:none}
 @media(max-width:700px){
-  #overlay.ttov:not([hidden]):has(>.ttl){background-image:linear-gradient(0deg,rgba(3,9,13,.98) 0%,rgba(3,9,13,.87) 46%,rgba(3,9,13,.15) 100%),url('assets/art/home.webp')!important;background-position:68% center!important;justify-content:center;align-items:flex-end}
+  #overlay.ttov:not([hidden]):has(>.ttl){background-image:linear-gradient(0deg,rgba(3,9,13,.98) 0%,rgba(3,9,13,.87) 46%,rgba(3,9,13,.15) 100%),url('assets/flat/home.webp')!important;background-position:68% center!important;justify-content:center;align-items:flex-end}
   #overlay.ttov:has(>.ttl)>.ttl{margin:0 auto;padding:26px 14px max(24px,env(safe-area-inset-bottom));width:min(390px,94vw);gap:18px}
   .ttl .tt1{font-size:clamp(38px,11.8vw,56px)}.ttl .tt2{font-size:19px;margin-top:7px}.ttl .ttsub{font-size:14px;margin-top:12px}.ttl .gml{gap:2px}.ttl .gmb{font-size:22px;min-height:44px}
 }
@@ -7357,8 +7341,39 @@ if(HFA){
   }ctx.restore();
  };
  const kill0=killMon;killMon=function(m,...args){const fresh=!m.dead&&HFA.ids.includes(m.type);const r=kill0(m,...args);if(fresh){for(let i=DYING.length-1;i>=0;i--)if(DYING[i].img===SPR[m.type])DYING.splice(i,1);HFDYING.push({m:{...m,hollowDeathAt:NOW},level:S.L,t0:NOW});if(HFDYING.length>20)HFDYING.shift()}return r};
- const anim0=drawAnims;drawAnims=function(){anim0();for(let i=HFDYING.length-1;i>=0;i--){const d=HFDYING[i];if(d.level!==S.L||NOW-d.t0>800){HFDYING.splice(i,1);continue}if(!vis[I(d.m.x,d.m.y)])continue;ctx.save();ctx.transform(.5,-.5,1/(2*ISO.rise),1/(2*ISO.rise),0,0);isoUpright(d.m,()=>drawSprite(null,null,d.m));ctx.restore()}};
+ const anim0=drawAnims;drawAnims=function(){anim0();for(let i=HFDYING.length-1;i>=0;i--){const d=HFDYING[i];if(d.level!==S.L||NOW-d.t0>800){HFDYING.splice(i,1);continue}if(!vis[I(d.m.x,d.m.y)])continue;ctx.save();isoUpright(d.m,()=>drawSprite(null,null,d.m));ctx.restore()}};
 }
+
+// Restore explicit health numbers alongside the reference portrait.
+{const r0=renderHero;renderHero=function(){r0();if(!S?.P)return;const P=S.P,b=$('heroBox'),d=document.createElement('div');d.className='reference-health';
+  d.innerHTML=`<div>Stamina <b>${Math.max(0,P.stam)} / ${P.max}</b></div><div class="bar2"><i style="width:${Math.max(0,Math.min(100,P.stam/P.max*100))}%;background:#a6372e"></i></div><div>Dread ${P.dread||0} / 10</div>`;b.querySelector('.who')?.after(d)}}
+{const r0=renderGear;renderGear=function(){r0();if(S?.mode!=='combat')return;
+  const enemies=S.L.mons.filter(m=>!m.dead&&m.stam>0&&monVisible(m));
+  const m=enemies.find(m=>SEL.hover&&m.x===SEL.hover.x&&m.y===SEL.hover.y)||enemies.sort((a,b)=>Math.hypot(a.x-S.P.x,a.y-S.P.y)-Math.hypot(b.x-S.P.x,b.y-S.P.y))[0];if(!m)return;
+  const el=$('gearBox'),a=ART?.frameAsset?.(m.type,m,NOW,true)||ART?.actor(m.type)||(HFA?.ids.includes(m.type)?{image:HFA.frame(m,NOW,true)}:null);
+  el.innerHTML=`<p class="label"><span>${esc(MT(m).name)}</span><button class="btn" id="targetPack">Pack</button></p><div class="target-detail">${a?'<img alt="">':''}<div><div class="bar2"><i style="width:${Math.max(0,Math.min(100,m.stam/m.max*100))}%;background:#a6372e"></i></div><p>Stamina ${Math.max(0,m.stam)} / ${m.max}</p><small>${esc((m.conds||[]).map(c=>c.id).join(' · ')||AI_TXT[MT(m).ai]||'Hostile')}</small></div></div>`;
+  if(a)el.querySelector('img').src=a.image.toDataURL();el.querySelector('#targetPack').onclick=UI.gear;
+}}
+
+/* Compact reference HUD: hero, log, portrait, equipment; all actions stay available. */
+{const st=document.createElement('style');st.textContent=`
+body.full.bot .game,body.tzon.full.bot .game{grid-template-columns:minmax(210px,.9fr) minmax(240px,1.35fr) 96px minmax(210px,.85fr);grid-template-rows:minmax(0,1fr) 112px 72px!important}
+body.full.bot #heroBox{grid-column:1;grid-row:2/4;border:1px solid #766144;background:#091116;position:relative}
+.reference-health{font-size:11px}.reference-health b{float:right}.reference-health .bar2{height:5px;margin:2px 0}.target-detail{display:flex;align-items:center;gap:10px}.target-detail img{width:64px;height:64px;object-fit:contain;image-rendering:pixelated}.target-detail>div{flex:1}.target-detail p{font-size:11px;margin:5px 0}.target-detail small{font-size:10px}
+body.full.bot .reference-health{position:absolute;right:10px;top:8px;width:105px}body.full.bot #heroBox .who{padding-right:112px;min-height:54px}
+body.full.bot #heroBox .chars{display:flex}body.full.bot #heroBox>.who{max-width:none}
+body.full.bot #logBox{display:block;grid-column:2;grid-row:2;border:1px solid #766144;background:#080f14}
+body.full.bot #portBox{grid-column:3;grid-row:2;padding:6px;border:1px solid #766144;background:#091116;gap:3px}
+body.full.bot #portBox canvas.portrait{width:72px;height:72px;image-rendering:pixelated}
+body.full.bot #portBox .pf{padding:1px;border-radius:0;background:#7e6846;box-shadow:none}
+body.full.bot #portBox .pw{font-size:10px;gap:4px}
+body.full.bot #gearBox{grid-column:4;grid-row:2;display:block;border:1px solid #766144;background:#091116}
+body.full.bot #satBox{display:none}
+body.full.bot .bar{grid-column:2/5;grid-row:3;display:flex;flex-direction:row;align-items:center;gap:8px;border:1px solid #766144;background:#080f14;overflow:auto}
+body.full.bot .bar .slots{flex-wrap:nowrap}.full.bot .bar-top{max-width:200px;flex-shrink:0}
+body.full.bot .log p{font-size:11px;line-height:1.3}.full.bot .who h2{color:#d4b879}
+@media(max-width:1100px){body.full.bot .game,body.tzon.full.bot .game{grid-template-columns:210px minmax(200px,1fr) 90px 190px}}
+`;document.head.appendChild(st)}
 
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
