@@ -1,0 +1,72 @@
+{
+  "baseline": false,
+  "midstep": {
+    "x": 16,
+    "y": 15,
+    "rx": 15.600761856902702,
+    "ry": 15,
+    "busy": true,
+    "pose": "walk",
+    "now": 2031.7,
+    "mode": "explore"
+  },
+  "arrival": {
+    "x": 16,
+    "y": 15,
+    "rx": 16,
+    "ry": 15,
+    "busy": false,
+    "pose": "idle",
+    "now": 2482.8,
+    "mode": "explore"
+  },
+  "contact": {
+    "x": 15,
+    "y": 15,
+    "rx": 15,
+    "ry": 15,
+    "round": 1,
+    "busy": true,
+    "hp": 91,
+    "hit": 3032.8,
+    "impact": 3032.8,
+    "end": 3527.8,
+    "pose": "recover",
+    "now": 3066.1,
+    "mode": "combat"
+  },
+  "reaction": {
+    "x": 15,
+    "y": 15,
+    "rx": 15,
+    "ry": 15,
+    "round": 1,
+    "busy": true,
+    "hp": 91,
+    "hit": 3032.8,
+    "impact": 3032.8,
+    "end": 3527.8,
+    "pose": "recover",
+    "now": 3166.2,
+    "mode": "combat",
+    "done": false
+  },
+  "attackMs": 997.1000000238419,
+  "finished": {
+    "x": 15,
+    "y": 15,
+    "rx": 15,
+    "ry": 15,
+    "round": 1,
+    "busy": false,
+    "hp": 91,
+    "hit": 3032.8,
+    "impact": 3032.8,
+    "end": 3527.8,
+    "pose": "idle",
+    "now": 3549.5,
+    "mode": "combat"
+  },
+  "fast": 405.89999997615814,
+  "instant": 134.19999998807907
+}

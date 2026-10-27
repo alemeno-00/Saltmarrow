@@ -1,0 +1,43 @@
+name: Movement and combat feel
+on:
+  pull_request:
+    paths: ['index.html', 'flat-art.js', 'animation-art.js', 'miner-body.js', 'assets/flat/miner-body*', 'assets/flat/miner-maul*', 'tests/**', 'package*.json', '.github/workflows/combat-feel.yml']
+  push:
+    branches: [main]
+    paths: ['index.html', 'flat-art.js', 'animation-art.js', 'miner-body.js', 'assets/flat/miner-body*', 'assets/flat/miner-maul*', 'tests/**', 'package*.json', '.github/workflows/combat-feel.yml']
+jobs:
+  feel:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - browser: chromium
+            os: ubuntu-latest
+          - browser: webkit
+            os: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: npm test
+      - run: npm run test:feel
+        env:
+          BROWSER: ${{ matrix.browser }}
+          SCREENSHOT_DIR: test-results/feel
+      - run: node tests/miner-body-browser.cjs
+        env:
+          BROWSER: ${{ matrix.browser }}
+          SCREENSHOT_DIR: test-results/feel
+      - run: node tests/ui-browser.cjs
+        env:
+          BROWSER: ${{ matrix.browser }}
+          SCREENSHOT_DIR: test-results/feel/ui
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: combat-feel-playtest-${{ matrix.browser }}
+          path: test-results/feel

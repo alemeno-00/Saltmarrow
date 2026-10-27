@@ -496,7 +496,7 @@ body.mob .mhead{display:none}
   <div class="game">
     <div class="left">
       <div class="stage" id="stage">
-        <canvas id="cv" aria-label="Dungeon map. Left-click to move or attack, right-click to inspect."></canvas>
+        <canvas id="cv" tabindex="0" aria-label="Dungeon map. Left-click to move or attack, right-click to inspect."></canvas>
         <div class="hud-tl" id="hudTl"></div>
         <div class="tracker" id="tracker" hidden></div>
         <div id="toastHost"></div>
@@ -528,7 +528,13 @@ body.mob .mhead{display:none}
 <script src="death-effects.js"></script>
 <script src="drowned-sprites.js"></script>
 <script src="flat-art.js"></script>
+<script src="environment-art.js"></script>
+<script src="environment-surfaces.js"></script>
+<script src="environment-scenes.js"></script>
+<script src="environment-lighting.js"></script>
+<script src="weapon-art.js"></script>
 <script src="animation-art.js"></script>
+<script src="miner-body.js"></script>
 <script src="hollow-faith.js"></script>
 <script src="hollow-sprites.js"></script>
 <script>
@@ -1417,35 +1423,39 @@ function dressLevel(L,rooms,inRoom){const DC=L.decal,map=L.map,bio=L.bio,seed=rn
   for(const o of L.objs)if(o.type==='corpse')for(const[dx,dy]of DIR8){const j=I(o.x+dx,o.y+dy);if(map[j]===FLOOR&&!DC[j]&&Math.random()<0.35)DC[j]=D.blood}}
 /* ================= the town of Saltmarrow ================= */
 const BUILDINGS=[
-  {key:'smith',name:'The Smithy',npc:'tobias',x:10,y:9,w:7,h:5,door:'s'},
-  {key:'chapel',name:'Chapel of Saint Hollis',npc:'agathe',x:21,y:7,w:9,h:7,door:'s'},
-  {key:'hall',name:'Town Hall',npc:'hale',x:38,y:8,w:8,h:6,door:'s'},
-  {key:'tavern',name:'The Drowned Lamb',npc:'bram',x:11,y:20,w:8,h:5,door:'s'},
-  {key:'archive',name:'The Old Archive',npc:null,x:23,y:20,w:6,h:5,door:'s'},
-  {key:'cottage',name:'Your Cottage',npc:null,x:32,y:20,w:5,h:4,door:'s'},
-  {key:'apoth',name:'Thorn Apothecary',npc:'nell',x:40,y:20,w:6,h:4,door:'s'},
+  {key:'smith',name:'The Smithy',npc:'tobias',x:10,y:10,w:7,h:5,door:'s'},
+  {key:'chapel',name:'Chapel of Saint Hollis',npc:'agathe',x:19,y:8,w:9,h:7,door:'s'},
+  {key:'hall',name:'Town Hall',npc:'hale',x:36,y:9,w:8,h:6,door:'s'},
+  {key:'tavern',name:'The Drowned Lamb',npc:'bram',x:10,y:19,w:8,h:5,door:'s'},
+  {key:'archive',name:'The Old Archive',npc:null,x:20,y:19,w:6,h:5,door:'s'},
+  {key:'cottage',name:'Your Cottage',npc:null,x:28,y:19,w:5,h:4,door:'s'},
+  {key:'apoth',name:'Thorn Apothecary',npc:'nell',x:35,y:19,w:6,h:4,door:'s'},
 ];
+const TOWN_LAYOUT={version:2,left:8,right:55,top:8,bottom:25,streetTop:16,streetBottom:17,northVerge:15,southVerge:18,backLane:24};
 function genTown(){const map=new Array(W*H).fill(WALL);
   const L=S.L={map,bio:'town',town:true,seen:new Array(W*H).fill(0),smoke:new Array(W*H).fill(0),spore:new Array(W*H).fill(0),fire:new Array(W*H).fill(0),light:new Uint8Array(W*H),opq:new Uint8Array(W*H),items:[],mons:[],objs:[],npcs:[],deco:new Uint8Array(W*H)};
-  for(let y=6;y<=27;y++)for(let x=7;x<=55;x++){const edge=y===6||y===27||x===7||x===55;map[I(x,y)]=edge?(Math.random()<0.5?RUBBLE:GRASS):FLOOR}
-  for(let y=15;y<=18;y++)for(let x=7;x<=58;x++)map[I(x,y)]=FLOOR;
-  for(let x=8;x<=54;x++)if(Math.random()<0.25)map[I(x,Math.random()<0.5?6:27)]=WALL;
+  L.townLayout={...TOWN_LAYOUT};L.townLanes=new Uint8Array(W*H);
+  const path=(x,y,w,h,kind=2)=>{for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++){map[I(xx,yy)]=FLOOR;L.townLanes[I(xx,yy)]=kind}};
+  for(let y=TOWN_LAYOUT.top;y<=TOWN_LAYOUT.bottom;y++)for(let x=TOWN_LAYOUT.left;x<=TOWN_LAYOUT.right;x++)map[I(x,y)]=FLOOR;
+  path(8,16,49,2,1); // two-tile carriageway; row 16 remains clear all the way to the lift
+  path(9,15,47,1);path(9,18,44,1);path(9,24,45,2);
+  for(const x of[8,17,26,33,42,53])path(x,9,2,17);
   const obj=(type,x,y,ex)=>{const o=Object.assign({type,x,y,id:S.nextId++},ex||{});L.objs.push(o);return o};
   L.bld=new Uint8Array(W*H);
-  for(const b of BUILDINGS){for(let y=b.y;y<b.y+b.h;y++)for(let x=b.x;x<b.x+b.w;x++){map[I(x,y)]=WALL;L.bld[I(x,y)]=1}
+  for(const b of BUILDINGS){for(let y=b.y;y<b.y+b.h;y++)for(let x=b.x;x<b.x+b.w;x++){map[I(x,y)]=WALL;L.bld[I(x,y)]=1;L.townLanes[I(x,y)]=0}
     const dx=b.x+(b.w>>1),dy=b.door==='s'?b.y+b.h-1:b.y;map[I(dx,dy)]=FLOOR;const open=b.key!=='apoth'||flag('nellFreed');
-    obj('door',dx,dy,{key:b.key,bname:b.name,closed:!open,desc:open?`${b.name}. Walk in to enter.`:`${b.name}. Boarded up since the herbalist went below.`});b.dx=dx;b.dy=dy+(b.door==='s'?1:-1)}
+    obj('door',dx,dy,{key:b.key,bname:b.name,closed:!open,desc:open?`${b.name}. Walk in to enter.`:`${b.name}. Boarded up since the herbalist went below.`});b.dx=dx;b.dy=dy+(b.door==='s'?1:-1);path(dx,b.dy,1,b.dy>=23?25-b.dy:1,3)}
   // graveyard behind the chapel, the lift head at the east end of the street
-  for(let k=0;k<9;k++)obj('grave',31+(k%3)*2,8+Math.floor(k/3)*2);
+  for(let k=0;k<9;k++)obj('grave',29+(k%3)*2,9+Math.floor(k/3)*2);
   for(let y=13;y<=20;y++)for(let x=56;x<=60;x++){map[I(x,y)]=WALL;L.bld[I(x,y)]=1}map[I(56,16)]=FLOOR;obj('liftgate',56,16);
   for(let y=13;y<=20;y++)map[I(55,y)]=FLOOR;
-  for(const[x,y]of[[9,15],[19,18],[29,15],[36,18],[47,15],[53,18],[24,14],[14,19]])obj('lamp',x,y);
-  obj('gibbet',31,17);
-  for(let k=0;k<14;k++){const x=rr(8,54),y=pick([14,19,26,7]);if(map[I(x,y)]===FLOOR&&!L.objs.some(o=>o.x===x&&o.y===y))map[I(x,y)]=Math.random()<0.5?GRASS:RUBBLE}
+  for(const[x,y]of[[9,15],[18,18],[28,15],[34,18],[44,15],[53,18],[24,15],[18,24]])obj('lamp',x,y);
+  obj('gibbet',31,18);
+  for(let k=0;k<14;k++){const x=rr(9,54),y=pick([9,14,23,25]);if(!L.townLanes[I(x,y)]&&map[I(x,y)]===FLOOR&&!L.objs.some(o=>o.x===x&&o.y===y))map[I(x,y)]=Math.random()<0.5?GRASS:RUBBLE}
   const npc=(key,x,y,r)=>L.npcs.push({key,x,y,rx:x,ry:y,home:{x,y},r:r||2,fx:Math.random()<0.5?1:-1,fy:0,id:S.nextId++});
   for(const b of BUILDINGS)if(b.npc&&(b.npc!=='nell'||flag('nellFreed')))npc(b.npc,b.dx,b.dy,1);
   npc('mara',54,17,1);if(flag('pipFreed'))npc('pip',15,15,0);
-  for(let k=0;k<4;k++)npc('folk',rr(12,50),rr(15,18),5);
+  for(let k=0;k<4;k++){let x,y;do{x=rr(12,50);y=rr(16,17)}while(L.objs.some(o=>o.x===x&&o.y===y)||L.npcs.some(n=>n.x===x&&n.y===y));npc('folk',x,y,5)}
   for(let i=0;i<W*H;i++){L.seen[i]=map[i]!==WALL||DIR8.some(([dx,dy])=>{const x=i%W+dx,y=((i/W)|0)+dy;return inb(x,y)&&map[I(x,y)]!==WALL})?1:0;L.deco[i]=rnd(256)}
   rebuildOpq();computeLight()}
 const npcAt=(x,y)=>S.L.npcs&&S.L.npcs.find(n=>n.x===x&&n.y===y);
@@ -1507,13 +1517,24 @@ function exitInterior(){const key=S.L.interior;genTown();const b=BUILDINGS.find(
 FEAT.liftgate.desc=()=>['The winch house over the shaft. Every delve begins here.','The winch house. The cables are wet higher up than they used to be.','The winch house. Black water stands in the bottom of the shaft now, and it is rising.','The winch house. Seawater laps at the lowest rungs of the ladder. The village has a season, perhaps less.'][act()-1];
 const _genTown=genTown;
 genTown=function(){_genTown();const L=S.L,a=act();const o=(type,x,y,ex)=>L.objs.push(Object.assign({type,x,y,id:S.nextId++},ex||{}));
-  let boarded=(a-1)+(flag('bribed')?1:0);const houses=[[48,9,'s'],[51,9,'s'],[48,21,'s'],[51,21,'s']];
-  for(const[hx,hy,dr]of houses){for(let y=hy;y<hy+3;y++)for(let x=hx;x<hx+3;x++){L.map[I(x,y)]=WALL;L.bld[I(x,y)]=1}const dx=hx+1,dy=dr==='s'?hy+2:hy;L.map[I(dx,dy)]=FLOOR;L.bld[I(dx,dy)]=0;o('house',dx,dy,{boarded:boarded-->0})}
-  o('lotbox',33,17);
+  let boarded=(a-1)+(flag('bribed')?1:0);const houses=[[45,11,'s'],[49,11,'s'],[44,20,'s'],[48,20,'s']];
+  for(const[hx,hy,dr]of houses){for(let y=hy;y<hy+3;y++)for(let x=hx;x<hx+3;x++){L.map[I(x,y)]=WALL;L.bld[I(x,y)]=1;L.townLanes[I(x,y)]=0}const dx=hx+1,dy=dr==='s'?hy+2:hy;L.map[I(dx,dy)]=FLOOR;L.bld[I(dx,dy)]=0;o('house',dx,dy,{boarded:boarded-->0});for(let y=dy+1;y<=(hy<16?15:24);y++){L.map[I(dx,y)]=FLOOR;L.townLanes[I(dx,y)]=3}}
+  o('lotbox',33,18);
   let cut=(a-1)+(flag('bribed')?1:0);L.npcs=L.npcs.filter(n=>n.key!=='folk'||cut--<=0||L.npcs.filter(m=>m.key==='folk').length<=1);
-  if(a>=3)for(let k=0;k<8;k++){const x=rr(8,54),y=pick([7,14,19,26]);if(L.map[I(x,y)]===FLOOR&&!L.objs.some(q=>q.x===x&&q.y===y))o('shroom',x,y)}
-  if(a>=4)for(let k=0;k<14;k++){const x=rr(9,54),y=rr(15,18);if(L.map[I(x,y)]===FLOOR&&!L.objs.some(q=>q.x===x&&q.y===y)&&!L.npcs.some(n=>n.x===x&&n.y===y))L.map[I(x,y)]=WATER}
+  if(a>=3)for(let k=0;k<8;k++){const x=rr(9,54),y=pick([9,14,23,25]);if(!L.townLanes[I(x,y)]&&L.map[I(x,y)]===FLOOR&&!L.objs.some(q=>q.x===x&&q.y===y))o('shroom',x,y)}
+  if(a>=4)for(let k=0;k<14;k++){const x=rr(9,54),y=pick([15,18]);if(L.townLanes[I(x,y)]!==3&&L.map[I(x,y)]===FLOOR&&!L.objs.some(q=>q.x===x&&q.y===y)&&!L.npcs.some(n=>n.x===x&&n.y===y))L.map[I(x,y)]=WATER}
   for(let i=0;i<W*H;i++)if(L.map[i]!==WALL)L.seen[i]=1;rebuildOpq();computeLight()};
+function migrateTownLayout(){
+  const old=S.L;if(!old.town||old.interior||old.townLayout?.version===TOWN_LAYOUT.version)return false;
+  const px=S.P.x,py=S.P.y,near=old.objs.filter(o=>o.type==='door'&&cheb(px,py,o.x,o.y)<=2).sort((a,b)=>cheb(px,py,a.x,a.y)-cheb(px,py,b.x,b.y))[0];
+  genTown();const L=S.L,reach=bfsDist(53,16,false);
+  const free=(x,y)=>inb(x,y)&&L.map[I(x,y)]===FLOOR&&!blockObjAt(x,y)&&!L.npcs.some(n=>n.x===x&&n.y===y)&&reach[I(x,y)]>=0;
+  const nearest=(x,y)=>{let best={x:53,y:16},dist=Infinity;for(let yy=8;yy<=25;yy++)for(let xx=8;xx<=55;xx++)if(free(xx,yy)){const d=Math.abs(xx-x)+Math.abs(yy-y);if(d<dist){best={x:xx,y:yy};dist=d}}return best};
+  const b=near&&BUILDINGS.find(b=>b.key===near.key),at=b?free(b.dx,b.dy)?{x:b.dx,y:b.dy}:nearest(b.dx,b.dy):free(px,py)?{x:px,y:py}:nearest(px,py);
+  Object.assign(S.P,{x:at.x,y:at.y,rx:at.x,ry:at.y});
+  for(const item of old.items||[]){const at=free(item.x,item.y)?item:nearest(item.x,item.y);L.items.push({...item,x:at.x,y:at.y})}
+  return true;
+}
 /* ================= things placed after a level is generated ================= */
 const _genLevel=genLevel;
 genLevel=function(){_genLevel();const L=S.L,P=S.P;
@@ -1680,7 +1701,7 @@ async function rollCart(o,dx,dy){const L=S.L;if(!dx&&!dy)return;log('The cart ru
     o.x=nx;o.y=ny;await UI.sleep(45)}}
 
 /* ================= exploration ================= */
-function moveEnt(e,x,y){if(x!==e.x||y!==e.y){e.fx=Math.sign(x-e.x);e.fy=Math.sign(y-e.y)}const t=tileAt(x,y);if(t===DOOR){S.L.map[I(x,y)]=OPEN;computeFov()}e.x=x;e.y=y}
+function moveEnt(e,x,y){const from={x:e.x,y:e.y};if(x!==e.x||y!==e.y){e.fx=Math.sign(x-e.x);e.fy=Math.sign(y-e.y)}const t=tileAt(x,y);if(t===DOOR){S.L.map[I(x,y)]=OPEN;computeFov()}e.x=x;e.y=y;if(from.x!==x||from.y!==y)UI.fx('step',{e,from})}
 function calm(m){m.state='idle';m.sus=0;m.inv=null;m.look=0;m.route=null}
 function turnRandom(m){const d=pick(DIR8);m.fx=d[0];m.fy=d[1]}
 function stepToward(m,tx,ty){if(m.x===tx&&m.y===ty)return false;const g=I(tx,ty);const pr=paths(m,m.x,m.y,40,{ignoreMons:true,goal:g});const p=pathTo(pr,g);if(!p||!p.length)return false;const n=p[0],x=n%W,y=(n/W)|0;if(occupied(x,y,m))return false;moveEnt(m,x,y);return true}
@@ -1740,7 +1761,7 @@ async function exploreStep(dx,dy){
   if(t===WEB){P.webbed=2;log('You blunder into a web and stick fast!','bad')}
   if(t===BONES&&!S.seenBones){S.seenBones=1;log('Bones crunch loudly underfoot.','old')}
   noise(P.x,P.y,stepNoise(),true);
-  await exploreTick();UI.render();return true}
+  S.busy=true;try{await UI.sleep(145);await exploreTick()}finally{S.busy=false}UI.render();return true}
 function smashWall(x,y){S.L.map[I(x,y)]=RUBBLE;S.L.seen[I(x,y)]=1;UI.fx('debris',{x,y});UI.fx('shake',{m:4});log('You smash through the cracked wall.','gold');noise(x,y,10);computeFov()}
 async function fallDown(){const P=S.P;if(S.depth>=MAXD){log('The shaft is choked with rubble a few feet down. There is nowhere deeper to fall.','old');UI.render();return}log('You drop into the shaft…','bad');S.C=null;S.mode='explore';const d=rr(2,5);await descend(true);damage(P,d,null);if(!S.over)log(`You land hard. ${d} damage.`,'bad');UI.render()}
 async function descend(fell){if(S.mode==='combat'&&!fell){log('You can\'t take the stairs with enemies on you.','bad');return}
@@ -1834,7 +1855,7 @@ async function startCombat(cause,m){
   S.C={round:0,malice:0,kills:0,heroFirst:true,act:{move:true,man:true,main:true},moveLeft:0,phase:'start',shanty:0,flags:{},usedAny:false};
   P.res=S.victories;P.hidden=false;P.defending=false;P.webbed=0;
   const wake=(o,surprise)=>{const ws=o.state==='sus';o.state='alert';if(surprise)o.surprised=!ws};
-  if(cause==='ambush'){wake(m,true);for(const o of S.L.mons){if(o===m||o.inCombat)continue;if(cheb(o.x,o.y,m.x,m.y)<=6&&sees(o.x,o.y,m.x,m.y))wake(o,true)}}
+  if(cause==='ambush'){wake(m,true);for(const o of S.L.mons){if(o===m||o.inCombat)continue;if(cheb(o.x,o.y,m.x,m.y)<=6&&sees(o.x,o.y,m.x,m.y))wake(o,false)}}
   else spreadAlert(m,false);
   const packs=new Set(S.L.mons.filter(o=>o.state==='alert'&&o.pack).map(o=>o.pack));
   let howl=false;for(const o of S.L.mons)if(o.pack&&packs.has(o.pack)&&o.state!=='alert'){o.state='alert';howl=true}
@@ -2004,7 +2025,7 @@ async function walkHero(path,shift){const P=S.P;
     if(!shift){if(moveAvail()<cost)break;
       for(const m of S.L.mons.filter(m=>m.inCombat&&!m.surprised&&!hasC(m,'dazed')&&cheb(m.x,m.y,P.x,P.y)===1&&cheb(m.x,m.y,x,y)>1)){await freeStrike(m,P);if(S.over)return}
       consumeMove(cost)}
-    moveEnt(P,x,y);pickup();computeFov();await UI.sleep(85);revealCheck();
+    moveEnt(P,x,y);pickup();computeFov();await UI.sleep(145);revealCheck();
     if(S.L.fire[n]>0){damage(P,3,null);if(S.over)return;log('You run through the flames!','bad')}
     if(tileAt(x,y)===WEB){addC(P,'grabbed','web');log('You blunder into a web and stick fast!','bad');break}}
   if(tileAt(P.x,P.y)===STAIRS)log('The stairs are here, but you can\'t descend mid-fight.','old')}
@@ -2086,7 +2107,7 @@ function inReach(m,ab,x,y,cx,cy){const P=S.P;cx=cx==null?P.x:cx;cy=cy==null?P.y:
 async function walkMonster(m,path,freeSteps){const P=S.P;let k=0;
   for(const n of path){const x=n%W,y=(n/W)|0;if(occupied(x,y,m))break;
     if(k>=(freeSteps||0)&&!MT(m).fly&&cheb(m.x,m.y,P.x,P.y)===1&&cheb(x,y,P.x,P.y)>1&&P.stam>0&&!hasC(P,'dazed')&&!P.hidden){await freeStrike(P,m);if(m.dead||S.over)return}
-    moveEnt(m,x,y);k++;await UI.sleep(70);if(S.L.fire[n]>0&&!m.dead){damage(m,3,null);if(m.dead)return}}}
+    moveEnt(m,x,y);k++;await UI.sleep(145);if(S.L.fire[n]>0&&!m.dead){damage(m,3,null);if(m.dead)return}}}
 function bestTile(m,max,score){const pr=paths(m,m.x,m.y,max);let best=-1,bs=Infinity;
   for(let i=0;i<W*H;i++){if(pr.dist[i]===Infinity)continue;const s=score(i%W,(i/W)|0,pr.dist[i]);if(s<bs){bs=s;best=i}}
   return best<0?null:{i:best,path:pathTo(pr,best),score:bs}}
@@ -3247,8 +3268,46 @@ if(HF){
  };
 }
 
+/* ---------- deliberate heavy threats: committed aim, guard and recovery ---------- */
+const HEAVY_THREATS=new Set(['knight','shambler']);
+{const original=monsterAttack;monsterAttack=async function(m,ab,center){
+  if(!HEAVY_THREATS.has(m.type)||ab.kind!=='melee'||m.heavyResolving)return original(m,ab,center);
+  return prepareHeavy(m,ab);
+}}
+function prepareHeavy(m,ab){
+  if(m.heavyAim)return; // Extra attacks cannot bypass the warning turn.
+  m.heavyAim={x:S.P.x,y:S.P.y,fromX:m.x,fromY:m.y};faceTo(m,S.P.x,S.P.y);
+  log(`${The(m)} braces for ${ab.name}. Leave the marked tile, flank it, or daze it!`,'bad');
+  UI.fx('float',{e:m,text:'BRACED',color:'#ffc078'});
+}
+{const original=monsterTurn;monsterTurn=async function(m){
+  if(!m.heavyAim&&!m.heavyRecovery)return original(m);
+  if(m.surprised)return;
+  if(hasC(m,'bleeding')){damage(m,rr(2,4),null);if(m.dead){checkCombatEnd();return}}
+  if(m.heavyRecovery){m.heavyRecovery=false;log(`${The(m)} recovers. An opening!`,'old');endConds(m);return}
+  const aim=m.heavyAim;m.heavyAim=null;
+  if(hasC(m,'dazed')||m.x!==aim.fromX||m.y!==aim.fromY){log(`${The(m)} loses the prepared slam.`,'good');endConds(m);return}
+  m.heavyRecovery=true;
+  if(S.P.x===aim.x&&S.P.y===aim.y){
+    const ab=MT(m).ab.find(a=>a.kind==='melee');m.heavyResolving=true;
+    try{await monsterAttack(m,{...ab,t:ab.t.map(t=>({...t,d:t.d+3}))})}finally{m.heavyResolving=false}
+  }else{log(`${The(m)} slams the empty marked tile.`,'good');UI.fx('debris',aim);await UI.sleep(220)}
+  endConds(m);checkCombatEnd();
+}}
+{const original=damage;damage=function(e,amt,src,hit){
+  if(e.heavyAim&&src===S.P&&!hasC(e,'dazed')){
+    const aim=e.heavyAim,frontX=Math.sign(aim.x-e.x),frontY=Math.sign(aim.y-e.y);
+    if(Math.sign(src.x-e.x)===frontX&&Math.sign(src.y-e.y)===frontY){amt=Math.max(0,amt-3);UI.fx('float',{e,text:'BRACED −3',color:'#b8cbd2'})}
+  }
+  return original(e,amt,src,hit);
+}}
+{const original=addC;addC=function(e,id,src){const result=original(e,id,src);if(id==='dazed'&&e.heavyAim){e.heavyAim=null;e.heavyRecovery=true}return result}}
+{const original=intentOf;intentOf=function(m){if(m.heavyAim)return{kind:'slam',x:m.heavyAim.x,y:m.heavyAim.y};if(m.heavyRecovery)return{kind:'recover'};return original(m)}}
+{const original=intentText;intentText=function(m){if(m.heavyAim)return 'Braced −3 frontal damage. Slam: marked tile next enemy turn (+3 damage); move clear, flank or daze';if(m.heavyRecovery)return 'Recovering: cannot attack next turn; exploit the opening';return original(m)}}
+{const original=endCombat;endCombat=function(){for(const m of S.L.mons){m.heavyAim=null;m.heavyRecovery=false}return original()}}
+
 /* ================= export for tests ================= */
-if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,spawnMon:(...a)=>spawnMon(...a),startCombat:(...a)=>startCombat(...a),gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems,damage,killMon,heroAttack,HOLLOW,HF,heal:(...a)=>heal(...a),drownedTurn,drownedPhase,drownedFlood,drownedSummon,monsterTurn,endCombat,POOL,hasC,addC,intentOf,intentText,pickAb,heroEdges,stepCost};return}
+if(HEADLESS){globalThis.G={get S(){return S},set S(v){S=v},get META(){return META},set META(v){META=v},newGame,newRun,spawnMon:(...a)=>spawnMon(...a),startCombat:(...a)=>startCombat(...a),gainXp:(n)=>gainXp(n),takePerk:(k)=>takePerk(k),perkChoices:()=>perkChoices(),learnMove:(k)=>learnMove(k),enterTown,TOWN_LAYOUT,BUILDINGS,migrateTownLayout,ringBell,exploreStep,useAbility,endHeroTurn,combatStep,combatWalkTo,validTargets,abUsable,descend,toggleLantern,catchBreathExplore,AB,CLASSES,MON,FEAT,cls,moveAvail,paths,pathTo,I,W,H,vis,computeFov,tileAt,featActions,interact,blockObjAt,monAt,closeDoor,bfsDist,genWeapon,genTome,gearSum,itemLines,D,NPCS,freshMeta,refreshHero,registerTome,UI,enterInterior,exitInterior,genRelic,KITS,RELICS,OMENS,deathToTown,carriedItems,damage,killMon,heroAttack,HOLLOW,HF,heal:(...a)=>heal(...a),drownedTurn,drownedPhase,drownedFlood,drownedSummon,monsterTurn,endCombat,POOL,hasC,addC,intentOf,intentText,pickAb,heroEdges,stepCost};return}
 /* =====================================================================
    BROWSER: sprites, rendering, animation, UI
    ===================================================================== */
@@ -3513,7 +3572,9 @@ Object.assign(ICON_MASK,{
 });
 for(const k in SPR_DATA)if(!SPR[k]){SPR[k]=mk(SPR_DATA[k][0],SPR_DATA[k][1]);SPRW[k]=white(SPR[k])}
 for(const k of['flag','occult','page','quest','tea','tome','w_blunt','w_hook','w_blade','w_ranged','w_focus'])ICON[k]=SPR[k].toDataURL();
-const gearSpr=it=>it.kind==='tome'?'tome':it.kind==='relic'?'relic':it.kind==='armor'?'a_'+it.base:WBASE[it.base].spr;
+function installWeaponIcons(){for(const base of Object.keys(WBASE)){let c=SaltmarrowWeapons.inventory[base];if(!c){c=document.createElement('canvas');c.width=c.height=48;SaltmarrowWeapons.drawSprite(c.getContext('2d'),base,8,34,-.85)}SPR['weapon_'+base]=c;SPRW['weapon_'+base]=white(c);ICON['weapon_'+base]=c.toDataURL()}}
+installWeaponIcons();SaltmarrowWeapons.ready?.then(installWeaponIcons);
+const gearSpr=it=>it.kind==='weapon'?'weapon_'+it.base:it.kind==='tome'?'tome':it.kind==='relic'?'relic':it.kind==='armor'?'a_'+it.base:WBASE[it.base].spr;
 /* ---------- the town ---------- */
 BPAL.town={w:'#24242a',wl:'#34343c',wd:'#121216',acc:'#ffd890',acc2:'#6a5a4a',f:'#26282c',fa:'#2e3034',fl:'#17181b',fd:'#383a40',wa:['#0e1a22','#1e3040','#6a8aa0'],beam:'#3a2a1a',beamd:'#20160c'};
 function townTiles(T0){const B=BPAL.town;
@@ -4283,7 +4344,7 @@ drawSprite=function(img,imgW,e,size,alpha,flipOk){if(S&&e===S.P&&HERO_LOOK[S.cls
   ctx.fillStyle='rgba(0,0,0,.38)';ctx.beginPath();ctx.ellipse(p.x+ox,p.y+T/2-3,sz*0.32*(1-hop/40),4,0,0,Math.PI*2);ctx.fill();
   ctx.translate(x+sz/2,y+sz);ctx.scale(flipOk!==false&&e.fx<0?-1:1,br);ctx.translate(-sz/2,-sz);
   if(img.width===48){const k=sz/32;ctx.drawImage(img,-8*k,-12*k,48*k,48*k);if(imgW&&e.flashT&&NOW-e.flashT<140)ctx.drawImage(imgW,-8*k,-12*k,48*k,48*k)}else{ctx.drawImage(img,0,0,sz,sz);if(imgW&&e.flashT&&NOW-e.flashT<140)ctx.drawImage(imgW,0,0,sz,sz)}ctx.restore()};
-function drawAnims(){const A=FX.anims;for(let i=A.length-1;i>=0;i--){const a=A[i];const t=(NOW-a.t0)/a.dur;if(t>1){A.splice(i,1);continue}if(t<0)continue;
+function drawAnims(){const A=FX.anims;for(let i=A.length-1;i>=0;i--){const a=A[i];const t=a.awaitHit?Math.min((NOW-a.t0)/a.dur,a.imp-.001):(NOW-a.t0)/a.dur;if(t>1){A.splice(i,1);continue}if(t<0)continue;
     ctx.save();switch(a.k){
       case'slash':{const ang=Math.atan2(a.b.y-a.a.y,a.b.x-a.a.x);const cx=a.a.x+(a.b.x-a.a.x)*0.55,cy=a.a.y+(a.b.y-a.a.y)*0.55;const sw=Math.min(1,t*1.6);
         for(let k=0;k<5;k++){const tt=sw-k*0.08;if(tt<0)continue;ctx.strokeStyle=hexA(a.c,(1-t)*(0.9-k*0.16));ctx.lineWidth=4-k*0.6;ctx.beginPath();ctx.arc(cx,cy,T*0.55,ang-1.25+tt*2.5-0.5,ang-1.25+tt*2.5,false);ctx.stroke()}break}
@@ -4341,13 +4402,13 @@ function drawIntent(){const L=S.L,P=S.P;
     if(wind)await UI.sleep(wind)}catch(e){}
   return h0(id,tx,ty)}}
 const BITERS=new Set(['rat','wolf','direwolf','ghoul','eel','bat','gaunt','deepone','spider']);
-{const m0=monsterAttack;monsterAttack=async function(m,ab,center){try{let wind=0;if(ab.kind==='melee')wind=flashAttack(m,S.P,BITERS.has(m.type)?'bite':'claw','#e8503a');else if(ab.kind==='area'&&center){UI.fx('throw',{from:m,to:center,color:'#3a3a3a',big:true})}else{wind=flashAttack(m,S.P,'mcast',m.type==='cultist'||MT(m).ai==='caster'?'#b48ae8':'#c8d2d6');sfx('shoot')}if(wind)await UI.sleep(wind)}catch(e){}return m0(m,ab,center)}}
+{const m0=monsterAttack;monsterAttack=async function(m,ab,center){try{let wind=0;if(ab.kind==='melee')wind=flashAttack(m,S.P,BITERS.has(m.type)?'bite':'claw','#e8503a');else if(ab.kind==='area'&&center){UI.fx('throw',{from:m,to:center,color:'#3a3a3a',big:true})}else{wind=flashAttack(m,S.P,'mcast',m.type==='cultist'||MT(m).ai==='caster'?'#b48ae8':'#c8d2d6')}if(wind)await UI.sleep(wind)}catch(e){}return m0(m,ab,center)}}
 {const d0=doUtility;doUtility=async function(id,tx,ty){try{if(tx!=null&&['stone','oil','ink','charge'].includes(id)&&cheb(tx,ty,S.P.x,S.P.y)>1){UI.fx('throw',{from:S.P,to:{x:tx,y:ty},color:id==='oil'?'#ffb347':id==='ink'?'#5a5a7a':'#c8c0b0',big:id!=='stone'});await UI.sleep(260)}}catch(e){}return d0(id,tx,ty)}}
 {const h0=heal;heal=function(a){h0(a);try{UI.fx('healfx',{e:S.P})}catch(e){}}}
 /* ---------- drawn-out, flashy attacks: wind-up, glowing strike, impact ---------- */
 FX.x=[];FX.imp=[];
 const PF=()=>META.pace==='fast'?0.35:META.pace==='instant'?0.08:1;
-const ASTYLE={slash:[200,620,0.6],smash:[300,800,0.6],thrust:[150,540,0.6],spin:[200,640,0.58],whip:[220,640,0.61],hook:[180,620,0.565],cast:[340,820,0.62],throw:[140,560,0.55],claw:[180,560,0.62],bite:[180,560,0.62],mcast:[200,600,0.62]};
+const ASTYLE={slash:[300,900,0.6],smash:[440,1240,0.6],thrust:[220,760,0.6],spin:[300,960,0.58],whip:[280,800,0.61],hook:[240,780,0.565],cast:[440,1100,0.62],throw:[200,700,0.55],claw:[260,800,0.62],bite:[240,760,0.62],mcast:[300,900,0.62]};
 function flashAttack(att,tgt,style,col){const timing=ASTYLE[style]||ASTYLE.slash;att.pixelAction={t0:NOW,dur:Math.max(80,timing[1]*PF())};if(UI.quiet||REDUCE)return 0;const P=ASTYLE[style]||ASTYLE.slash,pf=PF();const a=wpos(att),b={x:tgt.x*T+T/2,y:tgt.y*T+T/2};
   const dx=Math.sign(tgt.x-att.x),dy=Math.sign(tgt.y-att.y);if(style!=='spin'&&style!=='cast'&&style!=='mcast')att.windup={t0:NOW,dur:P[0]*pf,dx,dy};if(style==='smash')att.hop={t0:NOW+P[0]*pf*0.2,dur:P[0]*pf*1.4,h:14};
   FX.x.push({k:style,a,b,att,c:col||'#f4ecd8',t0:NOW,dur:P[1]*pf,imp:P[2],hit:false,crit:false,seed:Math.random()*6});FX.lastSwing={x:att.x,y:att.y,t:NOW+P[0]*pf};
@@ -4363,7 +4424,7 @@ const glow=(c,a)=>hexA(c,Math.max(0,Math.min(1,a)));
 function arcTrail(cx,cy,r,a0,a1,c,w,alpha){const n=12;for(let k=0;k<n;k++){const q=k/n,aa=a0+(a1-a0)*q,ab=a0+(a1-a0)*(q+1/n);ctx.strokeStyle=glow(c,alpha*(0.15+0.85*q));ctx.lineWidth=w*(0.3+0.7*q);ctx.beginPath();ctx.arc(cx,cy,r,aa,ab);ctx.stroke()}
   ctx.strokeStyle=glow('#ffffff',alpha*0.9);ctx.lineWidth=Math.max(1,w*0.35);ctx.beginPath();ctx.arc(cx,cy,r,a0+(a1-a0)*0.7,a1);ctx.stroke()}
 function drawFlashy(){const A=FX.x;ctx.save();ctx.globalCompositeOperation='lighter';
-  for(let i=A.length-1;i>=0;i--){const a=A[i];const t=(NOW-a.t0)/a.dur;if(t>1.05){A.splice(i,1);continue}if(t<0)continue;const w=ASTYLE[a.k][0]/ASTYLE[a.k][1];const imp=a.imp;
+  for(let i=A.length-1;i>=0;i--){const a=A[i];const elapsed=(NOW-a.t0-Math.min(a.pause||0,Math.max(0,NOW-(a.pauseAt??NOW))))/a.dur,t=a.awaitHit?Math.min(elapsed,a.imp-.001):elapsed;if(t>1.05){A.splice(i,1);continue}if(t<0)continue;const w=a.windFraction??ASTYLE[a.k][0]/ASTYLE[a.k][1];const imp=a.imp;
     if(!a.hit&&!a.awaitHit&&t>=imp){a.hit=true;const tgt=a.k==='spin'?a.a:a.b;impactFX(tgt.x,tgt.y,a.c,a.big||a.k==='smash',a.crit)}
     const ang=Math.atan2(a.b.y-a.a.y,a.b.x-a.a.x)||0;const s=Math.max(0,Math.min(1,(t-w)/(imp-w)));const after=Math.max(0,(t-imp)/(1-imp));
     switch(a.k){
@@ -4825,7 +4886,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 function tierLine(ab,ch){if(!ab.t)return'';const bands=['≤11','12–16','17+'];
   return ab.t.map((t,i)=>{const parts=[];if(t.d>0)parts.push(`${t.d+ch} dmg`);if(t.push)parts.push(`push ${t.push}`);if(t.pull)parts.push(`pull ${t.pull}`);if(t.out)parts.push(`hurl ${t.out}`);if(t.cond)parts.push(t.cond);return`<span class="t">${bands[i]}</span> ${parts.join(', ')||'no damage'}`}).join('<br>')}
 function abTip(id){const ab=AB[id];const c=abCost(id);const what=ab.act==='main'?'Main action':ab.act==='maneuver'?'Maneuver':'Move';
-  const rng=ab.kind==='melee'?`melee ${ab.range}`:ab.kind==='ranged'?`ranged ${ab.range}`:ab.kind==='area'?`3×3 area within ${ab.range}`:ab.kind==='burst'?'all adjacent':ab.kind==='point'?`within ${ab.range}`:ab.kind==='step'?`up to ${ab.range} squares`:'';
+  const rng=ab.kind==='melee'?`melee ${ab.range}`:ab.kind==='ranged'?`ranged ${ab.range+gearSum('range')}`:ab.kind==='area'?`${2*(ab.radius||1)+1}×${2*(ab.radius||1)+1} area within ${ab.range}`:ab.kind==='burst'?'all adjacent':ab.kind==='point'?`within ${ab.range}`:ab.kind==='step'?`up to ${ab.range} squares`:'';
   const u=abUsable(id);const ch=ab.stat?S.P.chars[ab.stat]:0;
   return `<b>${ab.name}</b><br><span class="s">${what}${rng?' · '+rng:''}${c?` · ${c} ${cls().res}`:''}${ab.stat&&ab.t?` · 2d10 + ${{M:'Might',A:'Agility',R:'Reason'}[ab.stat]} (${ch>=0?'+':''}${ch})`:''}</span><br>${esc(ab.desc)}${ab.t?'<br>'+tierLine(ab,ch):''}${u.ok?'':`<br><span style="color:#e88a74">${esc(u.why)}</span>`}`}
 function forecast(id,x,y){const ab=AB[id];if(!ab.t)return'';const m=monAt(x,y);const{e,b}=heroEdges(ab,m);const ch=S.P.chars[ab.stat]||0;
@@ -4925,7 +4986,7 @@ function contextHint(){const P=S.P;const t=tileAt(P.x,P.y);if(t===STAIRS)return'
 function slot(id,key,opt){opt=opt||{};const ab=AB[id];const u=opt.ok!=null?{ok:opt.ok}:abUsable(id);const c=ab?abCost(id):0;const act=ab?ab.act:'man';
   const cl=act==='main'?'main':act==='maneuver'?'man':'move';const icon=opt.icon||(ab&&ab.item?ICON[ab.item]:iconURL(ab.icon,ACT_COLOR[act]||'#e2d9c6'));
   const q=opt.q!=null?`<span class="q n">${opt.q}</span>`:c?`<span class="q">${c}</span>`:'';
-  return`<button class="sl ${cl}${SEL.id===id?' sel':''}" data-ab="${id}" ${u.ok&&!S.busy?'':'disabled'} aria-label="${esc(opt.name||ab.name)}">${key!=null?`<span class="k">${key}</span>`:''}${q}<img src="${icon}" alt=""><span class="nm">${esc(opt.short||(opt.name||ab.name).split(' ').slice(-1)[0])}</span></button>`}
+  return`<button class="sl ${cl}${SEL.id===id?' sel':''}" data-ab="${id}" tabindex="0" aria-disabled="${!u.ok||S.busy}" aria-label="${esc((opt.name||ab.name)+(key!=null?' · shortcut '+key:'')+(!u.ok?' · '+u.why:''))}">${key!=null?`<span class="k">${key}</span>`:''}${q}<img src="${icon}" alt=""><span class="nm">${esc(opt.short||(opt.name||ab.name).split(' ').slice(-1)[0])}</span></button>`}
 const SHORT={shadowstep:'Shadow',camp:'Camp',autoexp:'Explore',clapper:'Clapper',scourge:'Scourge',smite:'Smite',penance:'Penance',litany:'Litany',martyr:'Martyr',mindspike:'Spike',gaze:'Gaze',veil:'Veil',unravel:'Unravel',rend:'Rend',tea:'Tea',undertow:'Maul',gaff:'Hook',breakwater:'Whirl',redtide:'Break',gutter:'Strike',fishhook:'Dart',knife:'Knife',inkcloud:'Smoke',eelstep:'Tumble',brinebolt:'Bolt',squall:'Squall',grasp:'Undertow',staticlash:'Lash',waterspout:'Geyser',breath:'Breathe',escape:'Break free',stone:'Stone',draught:'Draught',charge:'Charge',ink:'Smoke',oil:'Firepot'};
 function renderBar(){const c=cls(),P=S.P,top=$('barTop'),sl=$('slots');if(S.over){top.innerHTML='';sl.innerHTML='';return}
   if(S.L.town){top.innerHTML=`<div class="prompt"><b>Saltmarrow.</b> <span class="s">Walk into a door or a person to go in or talk. The lift head is at the east end of the street.</span></div>`;sl.innerHTML='';return}
@@ -4938,15 +4999,15 @@ function renderBar(){const c=cls(),P=S.P,top=$('barTop'),sl=$('slots');if(S.over
   const g2=(S.mode==='explore'?slot('autoexp','O',{short:'Explore'})+slot('camp','K',{short:'Camp'}):'')+(S.mode==='combat'&&!early?[['shift',6],['shove',7],['hide',8],['defend',9],['dash',0]].map(([id,k])=>slot(id,k)).join(''):'')+slot('breath','B',{short:'Breathe',q:P.recov})+slot('stone','T',{short:'Stone'})+(hasC(P,'grabbed')?slot('escape',null,{short:'Break free'}):'');
   const g3=[['draught','R'],['charge','X'],['ink','V'],['oil','F']].map(([id,k])=>slot(id,k,{short:SHORT[id],q:S.inv[id]||0})).join('');
   sl.innerHTML=`<div class="grp">${g1}</div><div class="grp">${g2}</div><div class="grp">${g3}</div>`;
-  sl.querySelectorAll('[data-ab]').forEach(b=>{b.onclick=()=>selectAb(b.dataset.ab);
-    b.onmouseenter=()=>{const r=b.getBoundingClientRect();showTip(abTip(b.dataset.ab),r.left+r.width/2,$('stage').getBoundingClientRect().bottom+4,true)};b.onmouseleave=hideTip});
+  sl.querySelectorAll('[data-ab]').forEach(b=>{b.onclick=()=>{if(b.getAttribute('aria-disabled')!=='true'){selectAb(b.dataset.ab);if(SEL.id)cv.focus({preventScroll:true})}};
+    b.onmouseenter=()=>{const r=b.getBoundingClientRect();showTip(abTip(b.dataset.ab),r.left+r.width/2,$('stage').getBoundingClientRect().bottom+4,true)};b.onmouseleave=hideTip;b.onfocus=b.onmouseenter;b.onblur=hideTip;b.setAttribute('aria-describedby','tip')});
   const et=$('endTurn');if(et)et.onclick=()=>endHeroTurn();const lb=$('lanternBtn');if(lb)lb.onclick=toggleLantern;const db=$('descBtn');if(db)db.onclick=()=>descend(false);const cs=$('cancelSel');if(cs)cs.onclick=cancelSel}
 function renderHud(){const L=S.L;$('hudTl').innerHTML=L.town?`<span class="chip"><b>Saltmarrow</b> · act ${act()} of 4</span>`:`<span class="chip"><b>${S.depth===MAXD?'The Chapel':'Depth '+S.depth}</b> · ${BIOMES[L.bio].name}</span>${(S.L.turns||0)>300&&!S.L.stalker?'<span class="chip bad">Something is coming</span>':''}`;
   const tr=$('tracker');if(S.mode!=='combat'||!S.C){tr.hidden=true;return}tr.hidden=false;const C=S.C,P=S.P;
-  const foes=S.L.mons.filter(m=>m.inCombat).sort((a,b)=>cheb(a.x,a.y,P.x,P.y)-cheb(b.x,b.y,P.x,P.y));
-  const heroTok=`<div class="tok hero${C.phase==='hero'?' now':''}" title="You"><img src="${ICON[S.cls]}" alt=""><i><b style="width:${Math.max(0,P.stam)/P.max*100}%"></b></i></div>`;
-  const foeToks=foes.slice(0,12).map(m=>`<div class="tok${C.phase==='enemy'?' now':''}${monVisible(m)?'':' dim'}" title="${esc(MT(m).name)}"><img src="${monIcon(m.type)}" alt=""><i><b style="width:${Math.max(0,m.stam)/m.max*100}%"></b></i></div>`).join('');
-  tr.innerHTML=`<span class="chip rnd">Round <b>${C.round}</b> · ${C.phase==='hero'?'<b>Your turn</b>':'<span class="foe">Enemy turn</span>'} · Malice <span class="foe">${C.malice}</span></span><div class="order">${C.heroFirst?heroTok+foeToks:foeToks+heroTok}</div>`}
+  const foes=S.L.mons.filter(m=>m.inCombat&&!m.dead).sort((a,b)=>cheb(a.x,a.y,P.x,P.y)-cheb(b.x,b.y,P.x,P.y));
+  const heroTok=`<div class="tok hero${C.phase==='hero'?' now':''}" title="You · ${C.phase==='hero'?'acting now':'waiting'}"><img src="${ICON[S.cls]}" alt=""><i><b style="width:${Math.max(0,P.stam)/P.max*100}%"></b></i></div>`;
+  const foeToks=foes.slice(0,12).map(m=>`<div class="tok${C.phase==='enemy'?' now':''}${monVisible(m)?'':' dim'}" title="${esc(monVisible(m)?MT(m).name+' · '+intentText(m):'Unseen enemy')}"><img src="${monIcon(m.type)}" alt=""><i><b style="width:${Math.max(0,m.stam)/m.max*100}%"></b></i></div>`).join('');
+  tr.innerHTML=`<span class="chip rnd">Round <b>${C.round}</b> · ${C.phase==='hero'?'<b>Your turn</b>':'<span class="foe">Enemy turn</span>'} · Malice <span class="foe">${C.malice}</span></span><div class="order" aria-label="Phase order; enemies act nearest first, then may act again if their ability allows">${C.heroFirst?heroTok+foeToks:foeToks+heroTok}</div>`}
 UI.render=()=>{if(!S||!S.L)return;refreshOverlays();renderHero();renderGear();renderSatchel();renderBar();renderHud();UI.log();$('padMid').textContent=S.mode==='combat'?'end':'wait'};
 
 
@@ -5154,7 +5215,7 @@ const SAVE_KEY='saltmarrow-run-v5';
 let saveTimer=null;
 UI.save=(clear)=>{try{if(clear||S.over){localStorage.removeItem(SAVE_KEY);return}clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{const s=JSON.parse(JSON.stringify(S,(k,v)=>['rx','ry','lunge','flashT','route','bart'].includes(k)?undefined:v instanceof Uint8Array?Array.from(v):v));s.busy=false;localStorage.setItem(SAVE_KEY,JSON.stringify(s))}catch(e){}},200)}catch(e){}};
 function loadSave(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');return s&&s.v===5&&s.L&&!s.over?s:null}catch(e){return null}}
-function resume(s){S=s;S.busy=false;const L=S.L;L.light=new Uint8Array(L.light||W*H);L.opq=new Uint8Array(L.opq||W*H);L.deco=new Uint8Array(L.deco||W*H);L.decal=new Uint8Array(L.decal||W*H);if(L.bld)L.bld=new Uint8Array(L.bld);if(S.gear)for(const t of S.gear.tomes)registerTome(t);S.P.rx=S.P.x;S.P.ry=S.P.y;rebuildOpq();computeLight();computeFov();
+function resume(s){S=s;S.busy=false;migrateTownLayout();const L=S.L;L.light=new Uint8Array(L.light||W*H);L.opq=new Uint8Array(L.opq||W*H);L.deco=new Uint8Array(L.deco||W*H);L.decal=new Uint8Array(L.decal||W*H);if(L.bld)L.bld=new Uint8Array(L.bld);if(S.gear)for(const t of S.gear.tomes)registerTome(t);S.P.rx=S.P.x;S.P.ry=S.P.y;rebuildOpq();computeLight();computeFov();
   if(S.mode==='combat'&&S.C){S.C.phase='hero';beginHeroTurn()}$('overlay').hidden=true;camInit=false;UI.render();UI.toast(S.L.town?'Saltmarrow':S.depth===MAXD?'The Chapel':'Depth '+S.depth,S.L.town?'':BIOMES[S.L.bio].name)}
 
 /* ---------- overlays ---------- */
@@ -5191,7 +5252,7 @@ function startWalk(x,y){if(!S||S.busy||S.mode!=='explore')return;const P=S.P;con
 async function runWalk(){while(walkQ&&walkQ.length&&S.mode==='explore'&&!S.over){const n=walkQ.shift();const x=n%W,y=(n/W)|0;const P=S.P;const before=S.L.mons.filter(monVisible).length;const sus0=S.L.mons.filter(m=>m.state!=='idle').length;
     if(cheb(x,y,P.x,P.y)!==1){walkQ=null;break}const ok=await exploreStep(x-P.x,y-P.y);if(!ok){walkQ=null;break}
     const after=S.L.mons.filter(monVisible).length,sus1=S.L.mons.filter(m=>m.state!=='idle').length;if(after>before||sus1>sus0){walkQ=null;log('You stop. Something stirs.','old');UI.render();break}
-    if(window.RT_STOP){window.RT_STOP=false;walkQ=null;break}await new Promise(r=>setTimeout(r,window.RT&&RT.on?150:90))}walkQ=null;if(walkTalk){const k=walkTalk;walkTalk=null;const n=S.L.npcs&&S.L.npcs.find(n=>n.key===k&&cheb(n.x,n.y,S.P.x,S.P.y)<=1);if(n)UI.talk(k)}}
+    if(window.RT_STOP){window.RT_STOP=false;walkQ=null;break}await UI.sleep(0)}walkQ=null;if(walkTalk){const k=walkTalk;walkTalk=null;const n=S.L.npcs&&S.L.npcs.find(n=>n.key===k&&cheb(n.x,n.y,S.P.x,S.P.y)<=1);if(n)UI.talk(k)}}
 function tileFromEvent(ev){const r=cv.getBoundingClientRect();return{x:Math.floor(((ev.clientX-r.left)/ZOOM+camX)/T),y:Math.floor(((ev.clientY-r.top)/ZOOM+camY)/T)}}
 function clickTile(x,y){if(!S||S.over||!$('overlay').hidden||!inb(x,y))return;
   if(!insp.hidden){closeInspect();return}
@@ -5209,15 +5270,17 @@ cv.addEventListener('click',ev=>{const{x,y}=tileFromEvent(ev);clickTile(x,y)});
 cv.addEventListener('contextmenu',ev=>{ev.preventDefault();if(!S||!S.L||!$('overlay').hidden)return;if(SEL.id){cancelSel();return}const{x,y}=tileFromEvent(ev);openInspect(x,y,ev.clientX,ev.clientY)});
 let lastHover='';
 cv.addEventListener('mousemove',ev=>{if(!S||!S.L)return;const t=tileFromEvent(ev);
-  if(SEL.id){if(isValid(t.x,t.y)){SEL.cursor=t;const m=monAt(t.x,t.y);const f=m?forecast(SEL.id,t.x,t.y):'';if(f)showTip(f,ev.clientX,ev.clientY);else hideTip()}else hideTip();return}
-  SEL.hover=t;const key=t.x+','+t.y;if(key!==lastHover){lastHover=key;SEL.walk=null;
+  if(SEL.id){if(isValid(t.x,t.y)){const changed=!SEL.cursor||SEL.cursor.x!==t.x||SEL.cursor.y!==t.y;SEL.cursor=t;if(changed&&S.mode==='combat')renderGear();const m=monAt(t.x,t.y);const f=m?forecast(SEL.id,t.x,t.y):'';if(f)showTip(f,ev.clientX,ev.clientY);else hideTip()}else hideTip();return}
+  SEL.hover=t;const key=t.x+','+t.y;if(key!==lastHover){if(S.mode==='combat')renderGear();lastHover=key;SEL.walk=null;
     if(S.mode==='explore'&&inb(t.x,t.y)&&S.L.seen[I(t.x,t.y)]&&cheb(t.x,t.y,S.P.x,S.P.y)<=24&&!blockObjAt(t.x,t.y)){const pr=paths(S.P,S.P.x,S.P.y,40);SEL.walk=pathTo(pr,I(t.x,t.y))}}
   const s=insp.hidden?tileSummary(t.x,t.y):null;if(s)showTip(s,ev.clientX,ev.clientY);else hideTip()});
-cv.addEventListener('mouseleave',()=>{SEL.hover=null;SEL.walk=null;lastHover='';hideTip()});
+cv.addEventListener('mouseleave',()=>{SEL.hover=null;SEL.walk=null;lastHover='';if(S?.mode==='combat')renderGear();hideTip()});
 document.addEventListener('mousedown',ev=>{if(!insp.hidden&&!insp.contains(ev.target)&&ev.target!==cv)closeInspect()});
 const MOVE={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0],q:[-1,-1],e:[1,-1],z:[-1,1],c:[1,1],Home:[-1,-1],PageUp:[1,-1],End:[-1,1],PageDown:[1,1]};
 function doMove(dx,dy){closeInspect();if(S.mode==='combat')combatStep(dx,dy);else{walkQ=null;exploreStep(dx,dy)}}
 document.addEventListener('keydown',ev=>{if(AUTO.on&&ev.key!=='o'){AUTO.on=false}if(ev.metaKey||ev.ctrlKey||ev.altKey||!S||!S.L)return;
+  if(ev.target.closest?.('input,textarea,select,[contenteditable=true]'))return;
+  if(ev.target.closest?.('button,[role=button]')&&['Enter',' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(ev.key))return;
   const k=ev.key.length===1?ev.key.toLowerCase():ev.key;
   if(!$('overlay').hidden){if(k==='Escape'){if($('helpBack'))$('helpBack').click();else if(ov.querySelector('[data-close]'))closeModal()}return}
   if(menuOpen()){if(k==='Escape'||k==='m'){ev.preventDefault();toggleMenu(false)}return}
@@ -5227,7 +5290,7 @@ document.addEventListener('keydown',ev=>{if(AUTO.on&&ev.key!=='o'){AUTO.on=false
   if(k==='Escape'){if(!insp.hidden){closeInspect();return}if(SEL.id){cancelSel();return}toggleMenu(true);return}
   if(SEL.id){
     if(k==='Enter'||k===' '){ev.preventDefault();confirmSel();return}
-    if(k==='Tab'){ev.preventDefault();const v=SEL.valid.filter(t=>monAt(t.x,t.y)||blockObjAt(t.x,t.y));const list=v.length?v:SEL.valid;const i=list.findIndex(t=>t.x===SEL.cursor.x&&t.y===SEL.cursor.y);SEL.cursor=list[(i+1)%list.length];UI.render();return}
+    if(k==='Tab'&&ev.target===cv){ev.preventDefault();const v=SEL.valid.filter(t=>monAt(t.x,t.y)||blockObjAt(t.x,t.y));const list=v.length?v:SEL.valid;if(!list.length)return;const i=list.findIndex(t=>t.x===SEL.cursor.x&&t.y===SEL.cursor.y);SEL.cursor=list[(i+(ev.shiftKey?-1:1)+list.length)%list.length];UI.render();return}
     const d=MOVE[k];if(d){ev.preventDefault();const c=SEL.cursor||{x:S.P.x,y:S.P.y};SEL.cursor={x:c.x+d[0],y:c.y+d[1]};UI.render();return}}
   if(S.busy||S.over)return;
   const d=MOVE[k];if(d){ev.preventDefault();doMove(d[0],d[1]);return}
@@ -5469,15 +5532,15 @@ function heroBark(anchor){if(!S||!S.P||!S.L)return;const lines=(BARKS_P[S.cls]||
   clearTimeout(PORT.bt);PORT.bt=setTimeout(()=>{b.hidden=true},4200);try{sfx('voice',{cls:S.cls})}catch(e){}log(`${cls().name}: “${line}”`,'whisper')}
 PORT.cv.addEventListener('click',ev=>{ev.stopPropagation();heroBark(PORT.cv)});PORT.cv.style.cursor='pointer';
 /* ---------- real-time exploration: the world moves on its own clock; combat stays turn-based ---------- */
-const RT={on:(()=>{try{return localStorage.getItem('saltmarrow-rt')!=='off'}catch(e){return true}})(),busy:false,inTicker:false,moved:false,last:0,period:300};
+const RT={on:(()=>{try{return localStorage.getItem('saltmarrow-rt')!=='off'}catch(e){return true}})(),busy:false,inTicker:false,moved:false,last:0,lastTick:0,period:300};
 window.RT=RT;
 {const t0=exploreTick;exploreTick=async function(){if(RT.on&&!RT.inTicker&&S&&S.mode==='explore'){computeFov();return}return t0()}}
 {const e0=exploreStep;exploreStep=async function(dx,dy){if(RT.on&&S&&S.mode==='explore'&&(dx||dy)){const now=performance.now();if(now-RT.last<120)return true;RT.last=now}
-  const P=S&&S.P,x0=P&&P.x,y0=P&&P.y;const r=await e0(dx,dy);if(P&&(P.x!==x0||P.y!==y0))RT.moved=true;return r}}
+  const P=S&&S.P,L0=S&&S.L,x0=P&&P.x,y0=P&&P.y;const r=await e0(dx,dy);if(P&&(P.x!==x0||P.y!==y0)){RT.moved=true;if(RT.on&&S.L===L0&&performance.now()-RT.lastTick>=RT.period)await rtTick()}return r}}
 async function rtTick(){if(!RT.on||RT.busy)return;if(!S||!S.L||S.over||S.mode!=='explore'||S.busy||!$('overlay').hidden||document.hidden)return;
-  RT.busy=true;RT.inTicker=true;const L=S.L,P=S.P;const moved=RT.moved;RT.moved=false;const t0=L.turns||0,dk=S.darkT||0,f0=P.fat||0;
+  RT.busy=true;RT.lastTick=performance.now();RT.inTicker=true;S.busy=true;const state=S,L=S.L,P=S.P;const moved=RT.moved;RT.moved=false;const t0=L.turns||0,dk=S.darkT||0,f0=P.fat||0;
   const vis0=L.mons.filter(m=>monVisible(m)).length,sus0=L.mons.filter(m=>m.state!=='idle').length;
-  try{await exploreTick()}catch(e){}finally{RT.inTicker=false;RT.busy=false}
+  try{await exploreTick()}catch(e){}finally{RT.inTicker=false;RT.busy=false;if(S===state)S.busy=false}
   if(S.L===L&&!moved){if((L.turns||0)>t0)L.turns-=0.75;if((S.darkT||0)>dk)S.darkT=Math.max(0,S.darkT-0.75);if((P.fat||0)>f0)P.fat=f0+(P.fat-f0)*0.25}
   if(S.L===L&&S.mode==='explore'){const vis1=L.mons.filter(m=>monVisible(m)).length,sus1=L.mons.filter(m=>m.state!=='idle').length;
     if((vis1>vis0||sus1>sus0)&&(walkQ||AUTO.on)){window.RT_STOP=true;UI.stopWalk();log('You stop. Something stirs.','gold')}}
@@ -6615,13 +6678,17 @@ function armSpec(){const out={};let any=false;for(const s of ASLOTS){const a=S&&
 let pkSel=null,pkDrag=null;
 function pkCW(){const m=isMob();return m?Math.max(26,Math.min(36,Math.floor((innerWidth-56)/BAG_W))):40}
 function itemImg(it,w,h,inSlotBox){const spr=gearSpr(it),src=ICON[spr]||'';let rot=it.kind==='weapon'?(W_ROT[spr]||0):0;
+  if(it.kind==='weapon'&&SaltmarrowWeapons.inventory[it.base]){const aspect=SaltmarrowWeapons.aspects[it.base],tall=h>w*1.4;
+    const size=tall?Math.min(h/.854*.9,w*aspect/.854*.9):Math.min(w,h)*.95;
+    return`<img src="${src}" alt="" draggable="false" style="width:${Math.round(size)}px;height:${Math.round(size)}px;image-rendering:pixelated;${tall?'transform:rotate(-90deg)':''}">`}
   const tall=h>w*1.4;let sz=Math.min(w,h)*0.86;if(rot&&tall)sz=h/1.42;else if(tall&&!rot)sz=Math.min(w*1.1,h*0.9);
   return`<img src="${src}" alt="" draggable="false" style="width:${sz|0}px;height:${sz|0}px;${rot?`transform:rotate(${rot}deg)`:''}">`}
-function pkInfo(it,where){if(!it)return'<div class="pk-hint">Hover or tap an item to see it. Drag it onto your delver to wear it, or right-click to equip.</div>';const R=RARITY[it.rar]||RARITY.fine;const lines=itemLines(it);
+function pkInfo(it,where){if(!it)return'<div class="pk-hint">Hover or focus an item to compare. Enter selects it; Tab reaches Equip or Take off. Gear cannot change during combat.</div>';const R=RARITY[it.rar]||RARITY.fine;const lines=itemLines(it);
   const k=eqKind(it),cur=where==='bag'&&k?(k==='tome'?null:inSlot(k)):null;
+  const comparison=cur&&it.ident!==false&&cur.ident!==false?uiCompare(it,cur):'';
   const ttl=it.kind==='armor'?`${R.name} ${ABASE[it.base].name} · ${ASLOT_N[it.slot]}`:`${R.name} ${kindName(it)}`;
   return`<div class="pk-it"><b style="color:${it.ident===false?'var(--bone)':R.col}">${esc(itemTitle(it))}</b><div class="pk-sub">${esc(ttl)} · depth ${it.d||1}</div><ul>${lines.map(l=>`<li${l.startsWith('Curse')?' class="cur"':''}>${esc(l)}</li>`).join('')}</ul></div>`+
-    (cur?`<div class="pk-it pk-cur"><div class="pk-sub">Wearing now</div><b style="color:${(RARITY[cur.rar]||R).col}">${esc(itemTitle(cur))}</b><ul>${itemLines(cur).map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`:'')}
+    comparison+(cur?`<div class="pk-it pk-cur"><div class="pk-sub">Wearing now</div><b style="color:${(RARITY[cur.rar]||R).col}">${esc(itemTitle(cur))}</b><ul>${itemLines(cur).map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`:'')}
 function noiseWord(){let r=1;try{r=stepNoise()}catch(e){}return r<=0?['Silent','good']:r===1?['Quiet','good']:r<=3?['Normal','']:['Loud','bad']}
 UI.gear=()=>{if(S.L&&S.L.town){UI.cottage();return}bagSettle();const inC=S.mode==='combat',CW=pkCW(),mob=isMob();
   const sel=pkSel&&(S.bag.includes(pkSel)||slotOfEquipped(pkSel))?pkSel:null;pkSel=sel;
@@ -6632,14 +6699,14 @@ UI.gear=()=>{if(S.L&&S.L.town){UI.cottage();return}bagSettle();const inC=S.mode=
   const items=S.bag.filter(it=>it.bx>=0).map(it=>{const[w,h]=itSize(it),R=RARITY[it.rar]||RARITY.fine;return`<div class="pk-item pk-bi${sel===it?' sel':''}${it.ident===false?' unid':''}" data-iid="${it.id}" data-from="bag" style="left:${it.bx*CW}px;top:${it.by*CW}px;width:${w*CW}px;height:${h*CW}px;--rc:${R.col}">${itemImg(it,w*CW,h*CW)}</div>`}).join('');
   const over=S.bag.filter(it=>it.bx<0);
   const belt=[['draught','Draught'],['charge','Charge'],['ink','Smoke'],['oil','Firepot'],['tea','Tea'],['ration','Ration']].filter(([k])=>k!=='tea'||S.inv.tea).map(([k,n])=>`<div class="pk-pouch" title="${esc((AB[k]&&AB[k].desc)||n)}"><img src="${ICON[k]||''}" alt=""><b>${S.inv[k]||0}</b><span>${n}</span></div>`).join('');
-  const el=modal(`<div class="pk"><button data-close hidden></button>
+  const el=modal(`<div class="pk"><button class="btn pk-close" data-close aria-label="Close pack">Close · Esc</button>
     <div class="pk-top"><div class="gmt">${esc(CLASSES[S.cls].name)}</div><div class="pk-note">${inC?'You cannot change gear mid-fight.':mob?'Tap to inspect · drag to move or wear':'Drag to move or wear · right-click to equip or take off'}</div></div>
     <div class="pk-main">
       <div class="pk-doll">
         ${slotHtml('weapon')}<div class="pk-hero"><img src="${heroURL}" alt="" draggable="false"></div>${slotHtml('relic')}${slotHtml('tome0')}${slotHtml('tome1')}
         <div class="pk-kit${S.kit?' has':''}" title="${esc(S.kit?KITS[S.kit].desc:'Buy kits from Tobias the smith, then pick one at the lift head.')}"><span>Kit</span><b>${S.kit?esc(KITS[S.kit].name):'None'}</b>${S.kit?`<i>${esc(KITS[S.kit].desc)}</i>`:'<i>Chosen at the lift head</i>'}</div>
         <div class="pk-stats"><div><span>Stamina</span><b>${P.stam}/${P.max}</b></div><div><span>Speed</span><b>${speedOf(P)}</b></div><div><span>Footsteps</span><b class="${nw[1]}">${nw[0]}</b></div></div>
-        <div class="pk-belt">${belt}</div>
+        <div class="pk-belt">${belt}</div>${!mob?`<div class="pk-armour">${ASLOTS.map(slotHtml).join('')}</div>`:''}
       </div>
       <div class="pk-bag"><div class="pk-flap"><div class="pk-buckle"></div></div>
         <div class="pk-body"><div class="pk-grid" style="width:${BAG_W*CW}px;height:${BAG_H*CW}px;--cw:${CW}px">${items}<div class="pk-shadow" hidden></div></div>
@@ -6654,7 +6721,7 @@ UI.gear=()=>{if(S.L&&S.L.town){UI.cottage();return}bagSettle();const inC=S.mode=
     acts.innerHTML=eq?`<button class="btn" data-a="un">Take off</button>`:`${eqKind(it)?`<button class="btn primary" data-a="eq">${it.kind==='armor'?'Wear':it.kind==='tome'?'Ready':'Equip'}</button>`:''}<button class="btn" data-a="drop">Drop</button>`;
     acts.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const a=b.dataset.a;if(a==='eq')equipItem(it);else if(a==='un')unequip(eq);else if(a==='drop'){dropItem(it);pkSel=null}UI.save();UI.render();UI.gear()})};
   showActs(sel);
-  el.querySelectorAll('.pk-item').forEach(n=>{const it=byId(n.dataset.iid);n.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&!pkDrag)info.innerHTML=pkInfo(it,n.dataset.from)});
+  el.querySelectorAll('.pk-item').forEach(n=>{const it=byId(n.dataset.iid);n.tabIndex=0;n.setAttribute('role','button');n.setAttribute('aria-label',itemTitle(it));n.addEventListener('focus',()=>{info.innerHTML=pkInfo(it,n.dataset.from)});n.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();pkSel=it;info.innerHTML=pkInfo(it,n.dataset.from);showActs(it);el.querySelectorAll('.sel').forEach(x=>x.classList.remove('sel'));n.classList.add('sel')}});n.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&!pkDrag)info.innerHTML=pkInfo(it,n.dataset.from)});
     n.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'&&!pkDrag)info.innerHTML=pkInfo(pkSel,pkSel&&S.bag.includes(pkSel)?'bag':'slot')});
     n.addEventListener('contextmenu',e=>{e.preventDefault();if(inC)return;if(n.dataset.from==='slot')unequip(n.dataset.slot);else if(eqKind(it))equipItem(it);UI.save();UI.render();UI.gear()});
     n.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();pkDrag={it,from:n.dataset.from,slot:n.dataset.slot,n,sx:e.clientX,sy:e.clientY,on:false,id:e.pointerId}})});
@@ -6794,7 +6861,7 @@ const SND_K={slam:'smash',cavein:'smash',judge:'smash',uppercut:'smash',heave:'t
 {const s0=sfx;sfx=function(t,d){if(t==='windup'&&d&&SND_K[d.style])return s0(t,Object.assign({},d,{style:SND_K[d.style]}));if(t==='windup'&&d&&CASTK.has(d.style))return s0(t,Object.assign({},d,{style:'cast'}));return s0(t,d)}}
 // abilities with no target still show something on the hero
 const AURA={penance:'#e0485a',bloodrage:'#e8503a',seafog:'#c8d8e0',offering:'#e0485a',veil:'#9a6ae0',martyr:'#fff2b0',inkcloud:'#6a6a80',eelstep:'#d8d0c0',shadowstep:'#4a4a6a',defend:'#c0c8cc',hide:'#4a4a6a',dash:'#d8d0c0'};
-{const u0=useAbility;useAbility=async function(id,tx,ty){const P=S&&S.P;const r=await u0(id,tx,ty);try{if(P&&AURA[id]&&!REDUCE)FX.x.push({k:'aura',a:wpos(P),b:wpos(P),att:P,c:AURA[id],t0:NOW,dur:760*PF(),imp:0.25,hit:true,seed:Math.random()*6,id})}catch(e){}return r}}
+// Utility choreography is emitted by the final doUtility wrapper at the actual action boundary.
 
 /* --- drawing the new effects --- */
 const cl01=v=>v<0?0:v>1?1:v;
@@ -6802,7 +6869,7 @@ function jag(x0,y0,x1,y1,n,amp,seed){const pts=[[x0,y0]];for(let i=1;i<n;i++){co
 function strokePts(pts,c,w){ctx.strokeStyle=c;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);for(const p of pts)ctx.lineTo(p[0],p[1]);ctx.stroke()}
 function drawFx2(){const A=FX.x;if(!A.length)return;ctx.save();
   for(const a of A){const k=a.k;if(!ASTYLE[k]||['slash','smash','thrust','spin','whip','hook','cast','throw','claw','bite','mcast'].includes(k))continue;
-    const t=(NOW-a.t0)/a.dur;if(t<0||t>1.05)continue;const w=ASTYLE[k][0]/ASTYLE[k][1],imp=a.imp,s=cl01((t-w)/Math.max(0.01,imp-w)),af=cl01((t-imp)/(1-imp));const A0=a.a,B=a.b,c=a.c,sd=a.seed;
+    const t=a.awaitHit?Math.min((NOW-a.t0)/a.dur,a.imp-.001):(NOW-a.t0)/a.dur;if(t<0||t>1.05)continue;const w=a.windFraction??ASTYLE[k][0]/ASTYLE[k][1],imp=a.imp,s=cl01((t-w)/Math.max(0.01,imp-w)),af=cl01((t-imp)/(1-imp));const A0=a.a,B=a.b,c=a.c,sd=a.seed;
     ctx.globalCompositeOperation='lighter';
     switch(k){
       case'slam':case'judge':case'cavein':{const pre=cl01(t/imp);
@@ -7064,6 +7131,7 @@ UI.inspectAt=(x,y)=>{const r=cv.getBoundingClientRect(),p=ISO.screen((x+.5)*T,(y
 function isoGround(fn){ctx.save();fn();ctx.restore()}
 function isoUpright(e,fn){const p=wpos(e),q=ISO.project(p.x,p.y);ctx.save();ctx.translate(Math.round(q.x-p.x),Math.round(q.y-p.y-T/2));fn();ctx.restore()}
 function isoWall(TS,x,y,wf){
+  if(window.SaltmarrowSurfaces?.wall(ctx,S.L,x,y,inb(x,y-1)&&OPENT(S.L.map[I(x,y-1)]),W))return;
   const im=tileImg(TS,S.L.map[I(x,y)],x,y,wf),px=x*T,base=(y+1)*T;
   // Rear masonry rises above the floor; foreground walls cut low for visibility.
   const front=inb(x,y-1)&&OPENT(S.L.map[I(x,y-1)]),h=front?12:T*1.65;
@@ -7091,28 +7159,32 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
   for(let i=DYING.length-1;i>=0;i--){const d=DYING[i];if(d.level!==L||NOW-d.t0>=d.duration)DYING.splice(i,1);else standing.push({death:d,depth:ISO.depth(d.e)+1})}
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=I(x,y);if(!L.seen[i])continue;const q=ISO.project((x+.5)*T,(y+.5)*T);if(q.x<c.x-T*3||q.x>c.x+VW+T*3||q.y<c.y-T*3||q.y>c.y+VH+T*3)continue;tiles.push({x,y,i});
     if((L.map[i]===WALL||L.map[i]===CRACK)&&!townPlan?.covered.has(i))standing.push({x,y,depth:y+1,wall:true})}
-  isoGround(()=>{for(const{x,y,i}of tiles){ctx.globalAlpha=vis[i]?1:.45;ctx.drawImage(isoFloorArt(tileImg(TS,L.map[i],x,y,wf),L.map[i],x,y),x*T,y*T,T,T);
+  isoGround(()=>{for(const{x,y,i}of tiles){ctx.globalAlpha=window.SaltmarrowLighting?1:vis[i]?1:.45;ctx.drawImage(isoFloorArt(tileImg(TS,L.map[i],x,y,wf),L.map[i],x,y),x*T,y*T,T,T);
       // Exposed walkway edges give bridges and chasms visible thickness.
       if(OPENT(L.map[i])){ctx.fillStyle='#8d8064';ctx.globalAlpha*=.55;if(inb(x,y+1)&&L.map[I(x,y+1)]===PIT)ctx.fillRect(x*T,y*T+T-2,T,2);if(inb(x+1,y)&&L.map[I(x+1,y)]===PIT)ctx.fillRect(x*T+T-2,y*T,2,T)}
     }ctx.globalAlpha=1;
     if(TS.face&&!L.town)drawDressing(L,TS,0,W-1,0,H-1);
+    window.SaltmarrowLighting?.detail(ctx,L,tiles,{w:W,types:{floor:FLOOR,wall:WALL,water:WATER},visible:vis,actors:[P,...L.mons]});
+    window.SaltmarrowEnvironment?.draw(ctx,L,tiles,{w:W,h:H,types:{floor:FLOOR,wall:WALL},now:NOW,reduced:REDUCE,visible:vis,buildings:BUILDINGS,actors:[P,...L.mons,...(L.npcs||[])]});
     DEATHS.sync(L);DEATHS.draw(ctx,deathProject,deathVisible,'floor');
     for(const s of FX.stains)if(inb(s.x,s.y)&&L.seen[I(s.x,s.y)]){ctx.globalAlpha=.65*Math.max(0,1-(NOW-s.t0)/s.life);ctx.fillStyle=s.c;ctx.fillRect((s.x+.25)*T,(s.y+.45)*T,T*.5,T*.22)}ctx.globalAlpha=1;
     for(const it of L.items)if(L.seen[I(it.x,it.y)]){ctx.globalAlpha=vis[I(it.x,it.y)]?1:.4;ctx.drawImage(SPR[it.kind==='gear'?gearSpr(it.item):it.kind],it.x*T,it.y*T,T,T)}ctx.globalAlpha=1;
     drawOverlays(0,W-1,0,H-1);
   });
-  for(const{x,y,i}of tiles)if(OPENT(L.map[i])){ctx.save();ctx.globalAlpha=vis[i]?1:.45;isoBridgeEdge(x,y);ctx.restore()}
+  for(const{x,y,i}of tiles)if(OPENT(L.map[i])){ctx.save();ctx.globalAlpha=window.SaltmarrowLighting?1:vis[i]?1:.45;isoBridgeEdge(x,y);ctx.restore()}
   for(const o of L.objs)if(L.seen[I(o.x,o.y)]&&(o.type!=='charge'||vis[I(o.x,o.y)]))standing.push({e:o,depth:ISO.depth(o)+1,object:true});
   for(const m of L.mons)if(monVisible(m))standing.push({e:m,depth:ISO.depth(m)+1});
   for(const n of L.npcs||[])if(L.seen[I(n.x,n.y)])standing.push({e:n,depth:ISO.depth(n)+1,npc:true});
   if(townPlan)for(const b of townPlan.entries)standing.push({building:b,depth:b.y+b.h});
+  for(const scene of window.SaltmarrowScenes?.entries(L,W,H,{wall:WALL,floor:FLOOR},BUILDINGS)||[])if(L.seen[I(scene.x,scene.y)])standing.push({scene,depth:scene.depth});
   standing.push({e:P,depth:ISO.depth(P)+1,hero:true});
   standing.sort((a,b)=>a.depth-b.depth||(a.wall?-1:1)-(b.wall?-1:1));
-  for(const entry of standing){ctx.save();if(entry.death){drawPixelDeath(entry.death)}else if(entry.building){drawArtBuilding(entry.building)}else if(entry.wall){ctx.globalAlpha=vis[I(entry.x,entry.y)]?1:.45;
+  for(const entry of standing){ctx.save();if(entry.scene){window.SaltmarrowScenes.draw(ctx,L,entry.scene,{w:W,types:{wall:WALL,floor:FLOOR},visible:vis,actors:[P,...L.mons]})}else if(entry.death){drawPixelDeath(entry.death)}else if(entry.building){drawArtBuilding(entry.building)}else if(entry.wall){ctx.globalAlpha=window.SaltmarrowLighting?1:vis[I(entry.x,entry.y)]?1:.45;
       // Cut away nearby foreground masonry so the hero and target remain readable.
       if(entry.depth>P.y+1&&Math.abs(entry.x-P.x)<=2&&Math.abs(entry.y-P.y)<=2)ctx.globalAlpha*=.3;
       isoWall(TS,entry.x,entry.y,wf);
-    }else{const e=entry.e;ctx.globalAlpha=vis[I(e.x,e.y)]||entry.hero?1:.45;isoUpright(e,()=>{
+      window.SaltmarrowEnvironment?.drawWall(ctx,L,entry.x,entry.y,{w:W,types:{floor:FLOOR,wall:WALL},front:inb(entry.x,entry.y-1)&&OPENT(L.map[I(entry.x,entry.y-1)]),now:NOW,reduced:REDUCE});
+    }else{const e=entry.e;ctx.globalAlpha=window.SaltmarrowLighting||vis[I(e.x,e.y)]||entry.hero?1:.45;isoUpright(e,()=>{
       if(entry.object)drawObj(e);else if(entry.hero)drawSprite(SPR[S.cls],SPRW[S.cls],e,T,P.hidden?.5:S.over&&!S.won?.35:1);
       else if(entry.npc)drawSprite(npcImg(e),null,e,T);
       else{const M=MT(e);drawSprite(SPR[e.type],SPRW[e.type],e,M.boss?T*1.5:e.mut==='hulking'?T*1.2:T);
@@ -7128,11 +7200,16 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
     drawAnims();
   });
   DEATHS.draw(ctx,(x,y,z)=>{const p=ISO.project(x*T,y*T);return{x:p.x,y:p.y-z*T}},deathVisible,'air');
+  // Soft light pools and wall shadows affect presentation only; simulation light/FOV stay intact.
+  if(window.SaltmarrowLighting)SaltmarrowLighting.draw(ctx,L,{w:W,h:H,camera:c,viewport:{w:VW,h:VH},hero:P,visible:vis,types:{wall:WALL,crack:CRACK,door:DOOR,gate:GATE,grass:GRASS},now:NOW,reduced:REDUCE,extra:window.SaltmarrowScenes?.lights(L,W,H,{wall:WALL,floor:FLOOR},BUILDINGS)||[],effects:FX.lights});
+  else{
   // Ambient darkness and local warm/cool illumination use projected positions.
   ctx.fillStyle=L.town?'rgba(2,8,14,.12)':'rgba(2,8,14,.24)';ctx.fillRect(c.x,c.y,VW,VH);
   if(P.lantern)isoPixelLight((P.rx+.5)*T,(P.ry+.5)*T,T*3,'#e3a548',.12);
   for(const o of L.objs){if(!vis[I(o.x,o.y)])continue;const warm=['lamp','forge','hearth','altar','desk','chandelier'].includes(o.type)||(o.type==='brazier'&&o.lit)||(o.type==='shrine'&&!o.used);const cool=['crystal','shroom'].includes(o.type);if(warm||cool)isoPixelLight((o.x+.5)*T,(o.y+.5)*T,T*2.5,cool?'#63bfc7':'#efaa51',.30)}
+  for(const lamp of window.SaltmarrowScenes?.lights(L,W,H,{wall:WALL,floor:FLOOR},BUILDINGS)||[])if(vis[lamp.i])isoPixelLight(lamp.x,lamp.y,T*2,'#dda25e',.12);
   for(const l of FX.lights)isoPixelLight(l.x,l.y,l.r,l.c,.22*Math.max(0,1-(NOW-l.t0)/l.dur));
+  }
   for(const f of FX.floats){const t=(NOW-f.t0)/1000;if(t<0)continue;const p=ISO.project(f.x,f.y);ctx.globalAlpha=Math.max(0,1-t);ctx.textAlign='center';ctx.font=`700 ${f.huge?24:f.big?17:11}px monospace`;ctx.fillStyle='#04090e';ctx.fillText(f.text,p.x+1,p.y-(REDUCE?0:t*26)+1);ctx.fillStyle=f.c;ctx.fillText(f.text,p.x,p.y-(REDUCE?0:t*26))}ctx.globalAlpha=1;ctx.textAlign='start';
   if(L.town&&!L.interior)for(const b of BUILDINGS){const p=ISO.project((b.dx+.5)*T,(b.dy+1)*T);tag(ctx,p.x,p.y+12,b.name,'#e3c890')}
   ctx.restore();ctx.setTransform(dpr,0,0,dpr,0,0);drawAtmos(0,0);
@@ -7212,7 +7289,9 @@ tileImg=function(TS,t,x,y,wf){
   const L=S.L,plan=townArtPlan(L),v=h4(x,y);
   if(L.town&&!L.interior&&L.bart?.[I(x,y)]&&!plan)return artTileBase(TS,t,x,y,wf);
   if(plan?.covered.has(I(x,y)))return calmTownTile(v);
+  if(L.town&&!L.interior&&t===FLOOR){const surface=window.SaltmarrowSurfaces?.get(L,t,x,y,{w:W,types:{floor:FLOOR,wall:WALL},buildings:BUILDINGS});if(surface)return surface;}
   if(L.town&&!L.interior&&[FLOOR,RUBBLE,GRASS].includes(t))return calmTownTile(v,t===GRASS?'grass':t===RUBBLE?'yard':'stone');
+  const surface=window.SaltmarrowSurfaces?.get(L,t,x,y,{w:W,types:{floor:FLOOR,wall:WALL},buildings:BUILDINGS});if(surface)return surface;
   if(t===FLOOR){const key=L.interior?'planks':L.town?'town':L.bio==='fungal'?'fungal':L.bio==='drowned'||L.bio==='abbey'?'drowned':L.bio==='crypt'?'crypt':'mine';return ART?.tile(key,v)||artTileBase(TS,t,x,y,wf)}
   if(t===WALL||t===CRACK)return ART?.tile('masonry',v)||artTileBase(TS,t,x,y,wf);
   return artTileBase(TS,t,x,y,wf);
@@ -7221,7 +7300,7 @@ const WEAPON_ACTIONS=new WeakMap();
 function weaponContact(source,target){
   const action=WEAPON_ACTIONS.get(source);if(!action||action.resolved!==false)return;
   const recovery=Math.max(1,action.end-action.impact);action.impact=NOW;action.end=NOW+recovery;action.resolved=true;
-  const effect=action.effect;if(effect){effect.awaitHit=false;effect.imp=(NOW-effect.t0)/effect.dur;
+  const effect=action.effect;if(effect){const windTime=effect.windFraction*effect.dur;effect.awaitHit=false;effect.dur=action.end-effect.t0;effect.windFraction=windTime/effect.dur;effect.imp=(NOW-effect.t0)/effect.dur;
     if(target&&!effect.hit){effect.hit=true;const p=wpos(target);impactFX(p.x,p.y,effect.c,effect.big||effect.k==='smash',effect.crit)}
   }
 }
@@ -7229,24 +7308,53 @@ function weaponContact(source,target){
 {const original=flashAttack;flashAttack=function(att,tgt,style,col){
   if(att!==S.P)return original(att,tgt,style,col);
   const weapon=wpn(),ab=WEAPON_ABILITY;
-  if(weapon&&ab)style=ART.weaponStyle(weapon.base,ab,style);
+  const profile=ab&&SaltmarrowWeapons.profile(ab);
+  if(profile)style=profile.style;else if(weapon&&ab)style=ART.weaponStyle(weapon.base,ab,style);
   const dx=Math.sign(tgt.x-att.x),dy=Math.sign(tgt.y-att.y);
   if(dx||dy){att.fx=dx;att.fy=dy}
-  const wind=original(att,tgt,style,col),effect=FX.x[FX.x.length-1];
+  // Pass per-ability timing through the existing effect constructor without changing global pacing.
+  const previous=ASTYLE[style];if(profile)ASTYLE[style]=[profile.wind,profile.wind+170+profile.recovery,.6];
+  let wind;try{wind=original(att,tgt,style,col)}finally{if(previous)ASTYLE[style]=previous}
+  const effect=FX.x[FX.x.length-1];
   if(effect&&effect.att===att&&!UI.quiet&&!REDUCE){
     // heroAttack resolves damage after wind-up plus its existing 170 ms roll pause.
-    effect.imp=Math.min(.9,(wind+170)*PF()/effect.dur);
-    if(weapon&&ab){effect.awaitHit=true;WEAPON_ACTIONS.set(att,{base:weapon.base,style,t0:NOW,impact:NOW+(wind+170)*PF(),end:NOW+effect.dur,dx,dy,resolved:false,effect})}
+    effect.imp=Math.min(.9,(wind+170)*PF()/effect.dur);effect.windFraction=wind*PF()/effect.dur;
+    if(ab){effect.awaitHit=true;WEAPON_ACTIONS.set(att,{base:weapon?.base||null,style,id:ab.id,profile,t0:NOW,impact:NOW+(wind+170)*PF(),end:NOW+effect.dur,dx,dy,resolved:false,effect})}
   }
   return wind;
 }}
 let WEAPON_ABILITY=null;
-{const original=heroAttack;heroAttack=async function(id,tx,ty){WEAPON_ABILITY={...AB[id],id};try{return await original(id,tx,ty)}finally{weaponContact(S.P,null);WEAPON_ABILITY=null}}}
+async function weaponRecovery(actor){
+  // The concurrent combat-feel clock owns the combined max deadline when present.
+  if(typeof FEEL!=='undefined'&&FEEL.actions?.get(actor))return;
+  const action=WEAPON_ACTIONS.get(actor);if(!action||UI.quiet||REDUCE)return;
+  // Wait for the painted recovery boundary, including slow desktop frames. A hidden
+  // tab may suspend painting, so wall time also provides a bounded completion path.
+  const deadline=performance.now()+Math.max(0,action.end-NOW)+100;
+  while(WEAPON_ACTIONS.get(actor)===action&&NOW<action.end&&performance.now()<deadline){
+    await UI.sleep(Math.max(16,Math.min(60,action.end-NOW))/PF());
+  }
+}
+{const original=heroAttack;heroAttack=async function(id,tx,ty){WEAPON_ABILITY={...AB[id],id};try{return await original(id,tx,ty)}finally{weaponContact(S.P,null);await weaponRecovery(S.P);WEAPON_ABILITY=null}}}
+// Utilities use the same contact clock as attacks, while their existing gameplay remains authoritative.
+{const original=doUtility;doUtility=async function(id,tx,ty){
+  const ab={...AB[id],id},profile=SaltmarrowWeapons.profile(ab),prior=WEAPON_ABILITY;
+  if(!profile||UI.quiet||REDUCE)return original(id,tx,ty);
+  WEAPON_ABILITY=ab;
+  try{
+    const col=ABCOL[id]||AURA[id]||(ab.el&&ELEM[ab.el]?.col)||'#c4d6ce';
+    const wind=flashAttack(S.P,{x:tx??S.P.x,y:ty??S.P.y},profile.style,col);
+    await UI.sleep(wind+170);
+    const result=await original(id,tx,ty);weaponContact(S.P,null);
+    await weaponRecovery(S.P);
+    return result;
+  }finally{weaponContact(S.P,null);WEAPON_ABILITY=prior}
+}}
 {const original=freeStrike;freeStrike=async function(att,tgt){
   if(att!==S.P||!wpn())return original(att,tgt);
   const prior=WEAPON_ABILITY;WEAPON_ABILITY={kind:'melee',id:'freeStrike'};
   const dx=Math.sign(tgt.x-att.x),dy=Math.sign(tgt.y-att.y);att.fx=dx;att.fy=dy;
-  if(!REDUCE&&!UI.quiet)WEAPON_ACTIONS.set(att,{base:wpn().base,t0:NOW,impact:NOW+110*PF(),end:NOW+300*PF(),dx,dy,resolved:false});
+  if(!REDUCE&&!UI.quiet)WEAPON_ACTIONS.set(att,{base:wpn().base,id:'freeStrike',style:'thrust',profile:SaltmarrowWeapons.profile(WEAPON_ABILITY),t0:NOW,impact:NOW+110*PF(),end:NOW+300*PF(),dx,dy,resolved:false});
   try{return await original(att,tgt)}finally{weaponContact(att,null);WEAPON_ABILITY=prior}
 }}
 {const original=damage;damage=function(e,amt,src,hit){
@@ -7257,30 +7365,128 @@ let WEAPON_ABILITY=null;
 }}
 const artSpriteBase=drawSprite;
 drawSprite=function(img,imgW,e,size,alpha,flipOk){
-  const key=e===S.P?S.cls:e.key||e.type,asset=e===S.P&&wpn()?ART?.heroBody(key,e,NOW,REDUCE):ART?.frameAsset?.(key,e,NOW,REDUCE)||ART?.actor(key);
+  const key=e===S.P?S.cls:e.key||e.type,body=e===S.P&&wpn()?ART?.fullBodyAsset?.(key,e,NOW,REDUCE,wpn().base,WEAPON_ACTIONS.get(e)):null,asset=body||(e===S.P&&wpn()?ART?.heroBody(key,e,NOW,REDUCE):ART?.frameAsset?.(key,e,NOW,REDUCE)||ART?.actor(key));
   if(!asset)return artSpriteBase(img,imgW,e,size,alpha,flipOk);
   const p=wpos(e),scale=(size||T)/T,im=asset.image,h=Math.round(im.height*scale),w=Math.round(im.width*scale);
-  let ox=0,oy=0,hop=0;
-  if(e.lunge){const t=(NOW-e.lunge.t0)/200;if(t<1){const k=Math.sin(t*Math.PI)*T*.3;ox+=e.lunge.dx*k;oy+=e.lunge.dy*k}else e.lunge=null}
+  let ox=0,oy=0,hop=0;const action=FEEL.actions.get(e),active=action&&NOW>=action.t0&&NOW<action.end;
+  if(e.lunge&&!active&&!asset.fullBody){const t=(NOW-e.lunge.t0)/200;if(t<1){const k=Math.sin(t*Math.PI)*T*.3;ox+=e.lunge.dx*k;oy+=e.lunge.dy*k}else e.lunge=null}
   if(e.kb){const t=(NOW-e.kb.t0)/240;if(t<1){const k=Math.sin(t*Math.PI)*T*.16;ox+=e.kb.dx*k;oy+=e.kb.dy*k}else e.kb=null}
-  if(e.windup){const t=(NOW-e.windup.t0)/e.windup.dur;if(t<1){const k=Math.sin(Math.min(1,t)*Math.PI/2)*T*.15;ox-=e.windup.dx*k;oy-=e.windup.dy*k}else e.windup=null}
-  if(e.hop){const t=(NOW-e.hop.t0)/e.hop.dur;if(t<1)hop=Math.sin(t*Math.PI)*e.hop.h;else e.hop=null}
+  if(e.windup&&!active&&!asset.fullBody){const t=(NOW-e.windup.t0)/e.windup.dur;if(t<1){const k=Math.sin(Math.min(1,t)*Math.PI/2)*T*.15;ox-=e.windup.dx*k;oy-=e.windup.dy*k}else e.windup=null}
+  if(e.hop&&!active&&!asset.fullBody){const t=(NOW-e.hop.t0)/e.hop.dur;if(t<1)hop=Math.sin(t*Math.PI)*e.hop.h;else e.hop=null}
+  if(active&&!REDUCE&&!asset.fullBody){
+    const dx=e.fx||0,dy=e.fy||0,wind=e.pixelAction?.windupEnd??action.impact;
+    const physical=!action.effect||!['cast','mcast'].includes(action.effect.k);
+    let reach=0;
+    if(NOW<wind)reach=-.20*Math.min(1,(NOW-action.t0)/Math.max(1,wind-action.t0));
+    else if(NOW<action.impact){const q=Math.min(1,(NOW-wind)/Math.max(1,action.impact-wind));reach=-.20+.46*q*q*q}
+    else{const hold=e.pixelAction?.hold||0,q=Math.max(0,Math.min(1,(NOW-action.impact-hold)/Math.max(1,action.end-action.impact-hold)));reach=.26*(1-q)*(1-q)}
+    if(physical){ox+=dx*T*reach;oy+=dy*T*reach}else oy-=Math.sin(Math.min(1,(NOW-action.t0)/Math.max(1,action.impact-action.t0))*Math.PI/2)*2;
+  }
   const moving=Math.abs((e.rx??e.x)-e.x)+Math.abs((e.ry??e.y)-e.y)>.04;
-  const bob=REDUCE?0:Math.round(Math.sin(NOW/(moving?100:540)+(Number(e.id)||0))*(moving?1.3:.65));
+  const stride=e.walkStart!=null?Math.max(0,Math.min(1,(NOW-e.walkStart)/Math.max(1,e.walkDuration))):null;
+  const bob=REDUCE||asset.fullBody?0:moving&&stride!=null?-Math.round(Math.sin(stride*Math.PI)*1.5):Math.round(Math.sin(NOW/(moving?100:540)+(Number(e.id)||0))*(moving?1.3:.65));
   const footX=Math.round(p.x+ox),footY=Math.round(p.y+T/2+oy);
   ctx.save();if(alpha!=null)ctx.globalAlpha*=alpha;
   ctx.fillStyle='rgba(0,5,9,.48)';ctx.fillRect(footX-Math.round(w*.3),footY-2,Math.round(w*.6),3);
-  ctx.translate(footX,footY+(asset.posed?0:bob)-hop);
+  ctx.translate(footX,footY+(asset.posed&&!moving?0:bob)-hop);
   if(e.squash&&!REDUCE&&!asset.posed){const t=(NOW-e.squash.t0)/e.squash.dur;if(t>=0&&t<1){const k=Math.sin(t*Math.PI)*.18;ctx.scale(1+k,1-k)}else if(t>=1)e.squash=null}
   const weapon=e===S.P?wpn():null;
-  const held=weapon?ART.weaponPose(weapon.base,e,NOW,WEAPON_ACTIONS.get(e),REDUCE):null;
+  const held=weapon&&!asset.integratedWeapon?ART.weaponPose(weapon.base,e,NOW,WEAPON_ACTIONS.get(e),REDUCE):null;
   // Feet, body and held equipment share one transform, including hit recoil.
   ctx.imageSmoothingEnabled=false;
   if(held?.back)ART.drawWeapon(ctx,held,weapon.base,NOW);
-  ctx.save();ctx.scale(!asset.directional&&flipOk!==false&&e.fx<0?-1:1,1);ctx.drawImage(im,-Math.round(w/2),-h,w,h);
-  if(e.flashT&&NOW-e.flashT<140){ctx.globalAlpha*=.7;ctx.drawImage(ART.white(asset),-Math.round(w/2),-h,w,h)}ctx.restore();
+  ctx.save();ctx.scale(!asset.directional&&flipOk!==false&&e.fx<0?-1:1,1);ctx.drawImage(im,-Math.round(w/2),-h+(asset.groundOffsetY||0)*scale,w,h);
+  if(e.flashT&&NOW-e.flashT<140){ctx.globalAlpha*=.7;ctx.drawImage(ART.white(asset),-Math.round(w/2),-h+(asset.groundOffsetY||0)*scale,w,h)}ctx.restore();
   if(held&&!held.back)ART.drawWeapon(ctx,held,weapon.base,NOW);ctx.restore();
 };
+/* ---------- presentation clock: bounded movement and complete action beats ---------- */
+const FEEL={motions:new WeakMap(),actions:new WeakMap(),active:0,current:null};
+{const original=impactFX;impactFX=function(...args){if(REDUCE)return;const start=FX.imp.length,lights=FX.lights.length;original(...args);for(const fx of FX.imp.slice(start))fx.dur*=PF();for(const fx of FX.lights.slice(lights))fx.dur*=PF();if(FX.flash)FX.flash.dur*=PF();FX.stop=NOW+Math.max(0,FX.stop-NOW)*PF()}}
+{const original=UI.fx;UI.fx=function(type,d){
+  if(type==='step'){
+    const e=d.e,fromX=e.rx??d.from.x,fromY=e.ry??d.from.y;
+    if(REDUCE||UI.quiet){e.rx=e.x;e.ry=e.y;FEEL.motions.delete(e);return}
+    const motion={x:fromX,y:fromY,tx:e.x,ty:e.y,t0:NOW,dur:145*PF(),level:S.L};
+    FEEL.motions.set(e,motion);e.walkCycle=(e.walkCycle||0)+1;e.walkStart=NOW;e.walkDuration=motion.dur;return;
+  }
+  const action=FEEL.current&&FEEL.actions.get(FEEL.current);
+  if(action&&!action.resolved&&['burstfx','fire','lightning','splash','voidfx','explosion'].includes(type)){(action.pending||=[]).push({type,d});return}
+  const rings=FX.rings.length,bolts=FX.bolts.length,lights=FX.lights.length;
+  const result=original(type,d);for(const list of [FX.rings.slice(rings),FX.bolts.slice(bolts),FX.lights.slice(lights)])for(const fx of list)fx.dur*=PF();
+  if(type==='hit')FX.stop=NOW+Math.max(0,FX.stop-NOW)*PF();return result;
+}}
+{const original=animate;animate=function(dt){original(dt);for(const e of [S.P,...S.L.mons]){
+  const m=FEEL.motions.get(e);if(!m)continue;
+  if(m.level!==S.L||m.tx!==e.x||m.ty!==e.y){FEEL.motions.delete(e);e.rx=e.x;e.ry=e.y;continue}
+  const t=Math.max(0,Math.min(1,(NOW-m.t0)/m.dur)),q=t;
+  e.rx=m.x+(m.tx-m.x)*q;e.ry=m.y+(m.ty-m.y)*q;
+  if(t===1){e.rx=e.x;e.ry=e.y;FEEL.motions.delete(e)}
+}}}
+{const original=flashAttack;flashAttack=function(att,tgt,style,col){
+  const wind=original(att,tgt,style,col);if(UI.quiet)return wind;
+  const effect=FX.x.filter(a=>a.att===att).at(-1),profile=ASTYLE[effect?.k||style]||ASTYLE.slash;
+  const action={t0:NOW,impact:NOW+(wind+170)*PF(),end:NOW+(REDUCE?170:profile[1])*PF(),effect,resolved:false};
+  FEEL.actions.set(att,action);
+  if(effect&&!REDUCE){effect.awaitHit=true;effect.imp=(action.impact-effect.t0)/effect.dur}
+  att.pixelAction={t0:NOW,dur:profile[1]*PF(),windupEnd:NOW+wind*PF(),impact:action.impact,end:action.end};
+  return wind;
+}}
+function feelContact(att,target){
+  const a=FEEL.actions.get(att);if(!a||a.resolved)return;
+  a.resolved=true;for(const fx of a.pending||[])UI.fx(fx.type,fx.d);a.pending=[];a.impact=NOW;const hold=REDUCE?0:90*PF();a.end=Math.max(a.end+hold,NOW+(REDUCE?100:285)*PF());
+  if(att.pixelAction){att.pixelAction.impact=NOW;att.pixelAction.hold=hold;att.pixelAction.end=a.end}
+  if(a.effect){const fx=a.effect;fx.awaitHit=false;fx.hit=true;fx.pauseAt=NOW;fx.pause=hold;fx.imp=(NOW-fx.t0)/fx.dur;
+    if(target&&!REDUCE)impactFX(wpos(target).x,wpos(target).y,fx.c,fx.big||fx.k==='smash',fx.crit)}
+  const held=WEAPON_ACTIONS.get(att);if(held){held.hold=hold;held.end=Math.max(held.end,a.end)}
+}
+{const original=damage;damage=function(e,amt,src,hit){if(amt>0)feelContact(src||FEEL.current,e);return original(e,amt,src,hit)}}
+async function feelFinish(att){
+  feelContact(att,null);const a=FEEL.actions.get(att);if(!a||UI.quiet)return;a.end=Math.max(a.end,WEAPON_ACTIONS.get(att)?.end||0);
+  // Rendering can lag the timer; wait for the painted recovery deadline with a
+  // bounded wall-clock fallback for hidden or throttled tabs.
+  const deadline=performance.now()+Math.max(0,a.end-NOW)+100;
+  while(NOW<a.end&&performance.now()<deadline){await UI.sleep(Math.max(16,Math.min(60,a.end-NOW))/PF())}
+  // A death sequence can outlast a light attack. Keep its collapse readable.
+  const deaths=DYING.filter(d=>d.level===S.L);const remaining=deaths.length?Math.max(...deaths.map(d=>780-(NOW-d.t0))):0;
+  if(!REDUCE&&META.pace==='normal'&&remaining>0)await UI.sleep(Math.min(remaining,320));
+  FEEL.actions.delete(att);
+}
+for(const key of ['hero','monster','free','utility']){
+  const original=key==='hero'?heroAttack:key==='monster'?monsterAttack:key==='utility'?doUtility:freeStrike;
+  const wrapped=async function(...args){const att=key==='hero'||key==='utility'?S.P:args[0],busy=S.busy;if(key==='monster'&&HEAVY_THREATS.has(att.type)&&args[1].kind==='melee'&&!att.heavyResolving)return prepareHeavy(att,args[1]);const previous=FEEL.current;FEEL.current=att;FEEL.active++;S.busy=true;
+    if(key==='free'&&!UI.quiet){const impact=NOW+110*PF(),end=NOW+(REDUCE?170:360)*PF();FEEL.actions.set(att,{t0:NOW,impact,end,resolved:false});att.pixelAction={t0:NOW,dur:end-NOW,windupEnd:NOW+70*PF(),impact,end}}
+    try{const result=await original(...args);await feelFinish(att);return result}
+    finally{FEEL.current=previous;FEEL.active--;S.busy=S.over?false:busy}
+  };
+  if(key==='hero')heroAttack=wrapped;else if(key==='monster')monsterAttack=wrapped;else if(key==='utility')doUtility=wrapped;else freeStrike=wrapped;
+}
+{const original=endCombat;endCombat=function(){const result=original();if(FEEL.active)S.busy=true;return result}}
+{const original=drawIntent;drawIntent=function(){original();for(const m of S.L.mons){if(!m.heavyAim||!monVisible(m))continue;const p=tc(m.heavyAim);ctx.save();ctx.fillStyle='rgba(230,125,65,.3)';ctx.fillRect(p.x-T/2,p.y-T/2,T,T);ctx.strokeStyle='#ffc078';ctx.lineWidth=2;ctx.strokeRect(p.x-T/2+2,p.y-T/2+2,T-4,T-4);ctx.fillStyle='#fff0c0';ctx.font='bold 17px monospace';ctx.textAlign='center';ctx.fillText('!',p.x,p.y+6);ctx.restore()}}}
+
+/* Held movement repeats player input through the existing tick or combat movement budget. */
+const HELD_WALK={keys:new Map(),pending:null,running:false};
+function clearHeldWalk(){HELD_WALK.keys.clear();HELD_WALK.pending=null}
+async function heldWalk(){
+  if(HELD_WALK.running)return;HELD_WALK.running=true;const mode=S?.mode;
+  try{while((HELD_WALK.keys.size||HELD_WALK.pending)&&S&&!S.over&&S.mode===mode&&(mode==='explore'||mode==='combat'&&S.C?.phase==='hero'&&moveAvail()>0)&&ov.hidden&&!menuOpen()&&!SEL.id){
+    if(S.busy){await new Promise(resolve=>setTimeout(resolve,10));continue}
+    const direction=HELD_WALK.pending||[...HELD_WALK.keys.values()].at(-1),before={x:S.P.x,y:S.P.y},level=S.L;
+    HELD_WALK.pending=null;if(mode==='combat'&&monAt(S.P.x+direction[0],S.P.y+direction[1]))break;const moved=mode==='explore'?await exploreStep(...direction):(await combatStep(...direction),true);
+    if(S.L!==level||!moved||(S.P.x===before.x&&S.P.y===before.y))break;
+  }}finally{HELD_WALK.running=false;if(S?.mode!==mode||mode==='combat')clearHeldWalk()}
+}
+document.addEventListener('keydown',ev=>{
+  if(ev.key==='Escape'){clearHeldWalk();return}
+  const key=ev.key.length===1?ev.key.toLowerCase():ev.key,direction=MOVE[key];
+  if(!direction||ev.ctrlKey||ev.metaKey||ev.altKey||!S||S.over||!['explore','combat'].includes(S.mode)||S.mode==='combat'&&(S.C?.phase!=='hero'||monAt(S.P.x+direction[0],S.P.y+direction[1]))||!ov.hidden||menuOpen()||SEL.id||/^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(ev.target?.tagName||''))return;
+  ev.preventDefault();ev.stopImmediatePropagation();walkQ=null;AUTO.on=false;closeInspect();
+  if(!HELD_WALK.keys.has(key)){if(HELD_WALK.running&&S.busy)HELD_WALK.pending=direction;HELD_WALK.keys.set(key,direction)}heldWalk();
+},true);
+document.addEventListener('keyup',ev=>{const key=ev.key.length===1?ev.key.toLowerCase():ev.key;HELD_WALK.keys.delete(key)},true);
+window.addEventListener('blur',clearHeldWalk);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clearHeldWalk()});
+{const original=UI.stopWalk;UI.stopWalk=function(){clearHeldWalk();return original()}}
+
 const artObjBase=drawObj;
 drawObj=function(o){
   if(o.type==='corpse'){if(DYING.some(d=>d.level===S.L&&d.e.x===o.x&&d.e.y===o.y))return;const a=ART?.corpseAsset?.(o.mt);if(a){const p=wpos(o),scale=MON[o.mt]?.boss?1.5:1,w=Math.round(a.image.width*scale),h=Math.round(a.image.height*scale);ctx.save();if(o.visualKind==='fire')ctx.filter='brightness(.45)';ctx.drawImage(a.image,Math.round(p.x-w/2),Math.round(p.y+T/2-h),w,h);ctx.restore();return}}
@@ -7288,7 +7494,8 @@ drawObj=function(o){
   let key=o.type;if(key==='chest'||key==='coffin')key+=o.open?'Open':'';if(key==='brazier'&&!o.lit)key='brazierCold';if(key==='lever'&&o.on)key='leverOn';
   const a=ART?.get('props',key);if(!a)return artObjBase(o);
   const p=wpos(o),h=key==='lamp'?T*2.1:['shrine','statue','shelf','bell','forge','altar'].includes(key)?T*1.45:T*.85,w=Math.round(h*a.image.width/a.image.height);
-  ctx.save();if(o.type==='shrine'&&o.used)ctx.filter='brightness(.5)';ctx.drawImage(a.image,Math.round(p.x-w/2),Math.round(p.y+T/2-h),w,Math.round(h));
+  ctx.save();if(o.type==='lamp'&&Math.abs((S.P.rx??S.P.x)-o.x)<.7&&(S.P.ry??S.P.y)<o.y&&o.y-(S.P.ry??S.P.y)<2.5)ctx.globalAlpha*=.28;
+  if(o.type==='shrine'&&o.used)ctx.filter='brightness(.5)';ctx.drawImage(a.image,Math.round(p.x-w/2),Math.round(p.y+T/2-h),w,Math.round(h));
   if((o.type==='brazier'&&o.lit)||o.type==='forge')flame(p.x,p.y+T*.15,.6,o.id);
   ctx.restore();
 };
@@ -7395,9 +7602,9 @@ if(HFA){
   d.innerHTML=`<div>Stamina <b>${Math.max(0,P.stam)} / ${P.max}</b></div><div class="bar2"><i style="width:${Math.max(0,Math.min(100,P.stam/P.max*100))}%;background:#a6372e"></i></div><div>Dread ${P.dread||0} / 10</div>`;b.querySelector('.who')?.after(d)}}
 {const r0=renderGear;renderGear=function(){r0();if(S?.mode!=='combat')return;
   const enemies=S.L.mons.filter(m=>!m.dead&&m.stam>0&&monVisible(m));
-  const m=enemies.find(m=>SEL.hover&&m.x===SEL.hover.x&&m.y===SEL.hover.y)||enemies.sort((a,b)=>Math.hypot(a.x-S.P.x,a.y-S.P.y)-Math.hypot(b.x-S.P.x,b.y-S.P.y))[0];if(!m)return;
+  const focus=SEL.id?SEL.cursor:SEL.hover;const m=enemies.find(m=>focus&&m.x===focus.x&&m.y===focus.y)||enemies.sort((a,b)=>Math.hypot(a.x-S.P.x,a.y-S.P.y)-Math.hypot(b.x-S.P.x,b.y-S.P.y))[0];if(!m)return;
   const el=$('gearBox'),a=ART?.frameAsset?.(m.type,m,NOW,true)||ART?.actor(m.type)||(HFA?.ids.includes(m.type)?{image:HFA.frame(m,NOW,true)}:null);
-  el.innerHTML=`<p class="label"><span>${esc(MT(m).name)}</span><button class="btn" id="targetPack">Pack</button></p><div class="target-detail">${a?'<img alt="">':''}<div><div class="bar2"><i style="width:${Math.max(0,Math.min(100,m.stam/m.max*100))}%;background:#a6372e"></i></div><p>Stamina ${Math.max(0,m.stam)} / ${m.max}</p><small>${esc((m.conds||[]).map(c=>c.id).join(' · ')||AI_TXT[MT(m).ai]||'Hostile')}</small></div></div>`;
+  el.innerHTML=`<p class="label"><span>${focus&&m.x===focus.x&&m.y===focus.y?'Target':'Nearest foe'} · ${esc(MT(m).name)}</span><button class="btn" id="targetPack">Pack</button></p><div class="target-detail">${a?'<img alt="">':''}<div><div class="bar2"><i style="width:${Math.max(0,Math.min(100,m.stam/m.max*100))}%;background:#a6372e"></i></div><p>Stamina ${Math.max(0,m.stam)} / ${m.max}</p><small>${esc((m.conds||[]).map(c=>c.id).join(' · ')||AI_TXT[MT(m).ai]||'Hostile')}</small><p class="enemy-intent"><b>Intent</b> · ${esc(intentText(m))}</p></div></div>`;
   if(a)el.querySelector('img').src=a.image.toDataURL();el.querySelector('#targetPack').onclick=UI.gear;
 }}
 
@@ -7420,6 +7627,59 @@ body.full.bot .bar .slots{flex-wrap:nowrap}.full.bot .bar-top{max-width:200px;fl
 body.full.bot .log p{font-size:11px;line-height:1.3}.full.bot .who h2{color:#d4b879}
 @media(max-width:1100px){body.full.bot .game,body.tzon.full.bot .game{grid-template-columns:210px minmax(200px,1fr) 90px 190px}}
 `;document.head.appendChild(st)}
+
+
+/* Desktop UI presentation: state adapters only; combat rules and art remain unchanged. */
+function uiCompare(item,current){
+  const stats=[['armor','Armour',1],['dmg','Damage bonus',1],['t3','Tier 3 damage bonus',2],['roll','Power roll bonus',1],['stam','Max stamina bonus',4],['speed','Speed bonus',1],['stab','Stability bonus',1],['light','Lantern radius bonus',1],['recov','Recoveries bonus',1]];
+  const values=it=>{const base=it.kind==='armor'?ABASE[it.base]?.base:it.kind==='weapon'?WBASE[it.base]?.base:null;return Object.fromEntries(stats.map(([k,,scale])=>[k,((base?.[k]||0)+(it.aff?.[k]||0))*scale]))};
+  const a=values(item),b=values(current),rows=stats.filter(([k])=>a[k]||b[k]);
+  return rows.length?`<table class="gear-compare"><caption>Item contributions · compared with equipped</caption><thead><tr><th>Stat</th><th>Equipped</th><th>Selected</th><th>Change</th></tr></thead><tbody>${rows.map(([k,label])=>{const d=a[k]-b[k];return`<tr><th>${label}</th><td>${b[k]}</td><td>${a[k]}</td><td class="${d>0?'good':d<0?'bad':''}">${d>0?'+':''}${d}</td></tr>`}).join('')}</tbody></table>`:'';
+}
+{const original=renderBar;renderBar=function(){original();if(!S?.L||S.L.town||S.over)return;
+  const top=$('barTop');if(S.C){const phase=document.createElement('div');phase.className='turn-state';phase.setAttribute('role','status');phase.textContent=`Round ${S.C.round} · ${S.C.phase==='hero'?(S.busy?'Resolving action':'Your turn'):'Enemy phase'} · ${S.C.heroFirst?'You act first':'Enemies act first'}`;top.prepend(phase)}
+  if(SEL.id){const legend=document.createElement('div');legend.className='preview-key';legend.textContent='Brass outline: valid target · filled tiles: affected area · red: invalid · Tab on map: cycle targets';top.append(legend)}
+  else if(S.C){const legend=document.createElement('div');legend.className='preview-key';legend.textContent='Green tiles: movement reach · dashed line: route · Enter / Space: end turn';top.append(legend)}
+  top.querySelectorAll('.pip').forEach(n=>{const used=n.classList.contains('used');n.setAttribute('aria-label',n.textContent+(used?' · spent':' · available'));if(!n.classList.contains('move'))n.append(document.createTextNode(used?' · spent':' · ready'))});
+}}
+{const original=selectAb;selectAb=function(...args){const result=original(...args);if(SEL.id&&!isMob())cv.focus({preventScroll:true});return result}}
+tipEl.setAttribute('role','tooltip');
+// Focus remains inside open dialogs; restoring it never triggers a game action.
+{let returnFocus=null;const observer=new MutationObserver(()=>{if(ov.hidden){if(returnFocus)(returnFocus.isConnected?returnFocus:cv).focus({preventScroll:true});returnFocus=null;return}const dialog=ov.firstElementChild;if(!dialog)return;
+  if(!dialog.hasAttribute('role')){returnFocus ||= document.activeElement===document.body||ov.contains(document.activeElement)?cv:document.activeElement;dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-label',dialog.querySelector('h2,.gmt,.tt1')?.textContent||'Saltmarrow menu');dialog.tabIndex=-1;if(!ov.contains(document.activeElement))(dialog.querySelector('button:not([hidden]):not(:disabled),input,textarea')||dialog).focus({preventScroll:true})}});
+ observer.observe(ov,{childList:true,attributes:true,attributeFilter:['hidden']});
+ document.addEventListener('keydown',e=>{if(ov.hidden||e.key!=='Tab')return;const all=[...ov.querySelectorAll('button:not(:disabled),a[href],input,textarea,select,[tabindex="0"]')].filter(n=>n.getClientRects().length&&!n.hidden);if(!all.length){e.preventDefault();ov.firstElementChild?.focus();return}const i=all.indexOf(document.activeElement);e.preventDefault();all[(i+(e.shiftKey?-1:1)+all.length)%all.length].focus({preventScroll:true})},true);
+}
+{const style=document.createElement('style');style.textContent=`
+@media(min-width:901px){
+body:not(.mob){--bone:#e9ddc2;--dim:#b7ad98;--line:#66563e;--lantern:#e3bd75}
+body:not(.mob) .box,body:not(.mob) .bar{border-radius:0!important;background:linear-gradient(180deg,#141a1d,#0b1115)!important;border-color:#776143!important;box-shadow:inset 0 0 0 2px #080c0e,inset 0 3px #a2854c22}
+body:not(.mob) .label{color:#d7b77d;letter-spacing:.08em;border-bottom:1px solid #66563e;padding-bottom:5px;margin-bottom:7px}
+body.full.bot .game,body.tzon.full.bot .game{grid-template-columns:minmax(240px,.9fr) minmax(220px,1.2fr) 86px minmax(290px,1fr);grid-template-rows:minmax(0,1fr) 154px 138px!important}
+body.full.bot .bar{align-items:stretch;flex-direction:column;gap:5px;padding:8px 10px;overflow:auto}
+body.full.bot .bar .bar-top{max-width:none;display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-shrink:0}
+body.full.bot .bar .slots{min-height:49px;overflow-x:auto;flex-shrink:0;gap:8px}
+body.full.bot .bar .sl{min-width:48px;width:48px;height:48px;border-radius:0;flex-shrink:0}
+body.full.bot .reference-health{position:static;width:auto;margin:6px 0;font-size:12px}
+body.full.bot #heroBox .who{padding-right:0;min-height:0}body.full.bot #heroBox .chars{margin:5px 0}
+body.full.bot #gearBox{overflow:auto}body.full.bot #gearBox .label{font-size:11px;letter-spacing:0}
+body.full.bot #logBox .log p{font-size:12px;line-height:1.4}
+body.full.bot .bar-top .prompt .s{display:inline}.turn-state{font:700 12px var(--mono);color:#efd5a2;flex:1 1 260px}
+.preview-key{font-size:11px;color:#c0b7a4;flex:1 0 100%}.econ{gap:6px}.pip.used{color:#aaa18e;text-decoration:line-through;opacity:.8}
+.enemy-intent{color:#f0ca8d;line-height:1.4;font-size:12px!important;margin:5px 0!important}.target-detail img{width:48px;height:48px}.target-detail{align-items:flex-start;gap:8px}
+#tracker{max-width:65%;gap:3px}#tracker .order{max-width:100%;overflow:hidden}#tracker .tok{border-radius:0}
+#tip{max-width:360px;font-size:13px;line-height:1.5;border:1px solid #b1945f;border-radius:0;background:#10161a;color:#e9ddc2;box-shadow:0 4px 12px #0009;z-index:20}
+#toastHost,.toast,.hud-tl,.tracker,.feed{pointer-events:none}
+#overlay .mdl.wide:has(.pk){width:1120px;max-width:calc(100vw - 40px);max-height:calc(100vh - 40px);overflow:auto;box-sizing:border-box}.pk-main{flex-wrap:nowrap}.pk-doll{flex:0 0 420px;box-sizing:border-box}.pk-bag{flex:0 0 auto}
+.pk-close{float:right;margin:0 0 8px 12px}.pk-armour{grid-column:1/-1;display:flex;gap:10px;justify-content:center}.pk-armour .pk-slot{width:56px!important;height:52px!important}.pk-armour img{max-width:48px;max-height:46px;object-fit:contain}.pk-armour .pk-slot>span{font-size:10px}
+.pk-body,.pk-doll,.pk-slot,.pk-item,.btn,.sl{border-radius:0!important}.pk-slot>span{color:#b7ad98}.pk-sub,.pk-note{color:#b7ad98}
+.gear-compare{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}.gear-compare caption{text-align:left;color:#d7b77d;padding:6px 0}.gear-compare th,.gear-compare td{padding:5px 8px;border-bottom:1px solid #4d4433;text-align:right}.gear-compare th:first-child{text-align:left}.gear-compare .good{color:#b2d8ad}.gear-compare .bad{color:#f4a38e}
+.sl[aria-disabled=true]{filter:grayscale(.75);opacity:.55;cursor:help}.sl[aria-disabled=true]:focus-visible{opacity:1}
+}
+:where(button,a,input,textarea,select,[tabindex]):focus-visible{outline:2px solid #f5d18a!important;outline-offset:3px;box-shadow:0 0 0 5px #10161a!important}
+#cv:focus-visible{outline-offset:-3px;box-shadow:none!important}
+@media(prefers-reduced-motion:reduce){.tok,.sl,.btn{animation:none!important;transition:none!important}}
+`;document.head.appendChild(style)}
 
 window.claude?.hot?.snapshot?.(()=>({S:S&&!S.preview?S:null}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});

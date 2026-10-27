@@ -6,8 +6,8 @@ function sample(e,now,reduced){
  if(reduced)return {state:'idle',column:0};
  const hit=now-(e.hitT??-Infinity);if(hit>=0&&hit<170)return {state:'hurt',column:5};
  const action=e.pixelAction||(e.cast?{t0:e.cast.t0,dur:e.cast.dur}:e.attackT!=null?{t0:e.attackT,dur:480}:e.lunge?{t0:e.lunge.t0,dur:480}:null);
- if(action){const t=(now-action.t0)/Math.max(1,action.dur);if(t>=0&&t<1)return {state:t<.28?'windup':t<.72?'strike':'recover',column:t<.28?2:t<.72?3:4}}
- if(Math.abs((e.rx??e.x)-e.x)+Math.abs((e.ry??e.y)-e.y)>.035)return {state:'walk',column:Math.floor((now+(Number(e.id)||0)*71)/115)%2};
+ if(action){const clock=now-Math.min(action.hold||0,Math.max(0,now-(action.impact??now)));const t=(clock-action.t0)/Math.max(1,action.dur);if(action.impact!=null&&now>=action.t0&&now<action.end)return {state:now<(action.windupEnd??action.impact)?'windup':now<action.impact+(action.hold||0)?'strike':'recover',column:now<(action.windupEnd??action.impact)?2:now<action.impact+(action.hold||0)?3:4};if(t>=0&&t<1)return {state:t<.28?'windup':t<.72?'strike':'recover',column:t<.28?2:t<.72?3:4}}
+ if(Math.abs((e.rx??e.x)-e.x)+Math.abs((e.ry??e.y)-e.y)>.035)return {state:'walk',column:e.walkCycle!=null?e.walkCycle%2:Math.floor((now+(Number(e.id)||0)*71)/115)%2};
  return {state:'idle',column:0};
 }
 function deathIndex(elapsed,reduced){return reduced?5:Math.max(0,Math.min(5,Math.floor(elapsed/130)))}
