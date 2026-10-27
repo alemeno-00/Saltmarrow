@@ -41,7 +41,7 @@ function collect(L,{w,h,hero,visible,now=0,reduced=false,extra=[],effects=[]}){
  return sources;
 }
 function polygon(g,points){g.beginPath();points.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.closePath();g.clip()}
-function seenClip(g,L,w){g.beginPath();for(let i=0;i<L.map.length;i++)if(L.seen[i])g.rect(i%w*32,Math.floor(i/w)*32,32,32);g.clip()}
+function seenClip(g,L,w){g.beginPath();if(L.townLand&&!L.interior&&L.seen.every(Boolean)){g.rect(0,0,w*32,Math.ceil(L.map.length/w)*32);g.clip();return}for(let i=0;i<L.map.length;i++)if(L.seen[i])g.rect(i%w*32,Math.floor(i/w)*32,32,32);g.clip()}
 function point(g,x,y,r,color,alpha){g.save();g.globalCompositeOperation='screen';g.globalAlpha*=alpha;const im=texture(r,color);g.drawImage(im,Math.round(x-im.width/2),Math.round(y-im.height/2));g.restore()}
 function memoryMask(L,w,h,visible){
  let revision=2166136261;for(let i=0;i<L.map.length;i++)revision=Math.imul(revision^(visible[i]?3:L.seen[i]?1:0),16777619);

@@ -11,7 +11,7 @@ const server=http.createServer((req,res)=>{const name=decodeURIComponent(req.url
    const page=await browser.newPage({viewport:{width:1440,height:1000},deviceScaleFactor:1,reducedMotion:'reduce'}),errors=[];
    page.on('pageerror',e=>errors.push(e.message));
    await page.goto(`http://127.0.0.1:${server.address().port}`);
-   await page.waitForFunction(()=>window.__environment);await page.evaluate(()=>Promise.all([window.__art.ready,SaltmarrowScenes.ready]));assert.deepEqual(await page.evaluate(()=>SaltmarrowScenes.errors),[]);const sizes=await page.evaluate(()=>['coal','quench','station','winch'].map(k=>{const im=SaltmarrowScenes.image(k);return{width:im?.width,height:im?.height}}));for(const size of sizes){assert.ok([64,96].includes(size.width));assert.ok(size.height>0&&size.height<=48,'landmark remains below the north actor foot line')}
+   await page.waitForFunction(()=>window.__environment);await page.evaluate(()=>Promise.all([window.__art.ready,SaltmarrowScenes.ready,SaltmarrowCoast.ready]));assert.deepEqual(await page.evaluate(()=>SaltmarrowScenes.errors),[]);const sizes=await page.evaluate(()=>['coal','quench','station','winch'].map(k=>{const im=SaltmarrowScenes.image(k);return{width:im?.width,height:im?.height}}));for(const size of sizes){assert.ok([64,96].includes(size.width));assert.ok(size.height>0&&size.height<=48,'landmark remains below the north actor foot line')}
    const initial=await page.evaluate(b=>window.__environment.prepare(b),bio),stats=await page.evaluate(()=>window.__environment.stats());
    assert.ok(stats.count>0,`${bio} has clusters`);assert.equal(stats.map,initial.map);
    const pixels=[];
@@ -33,7 +33,7 @@ const server=http.createServer((req,res)=>{const name=decodeURIComponent(req.url
      await page.waitForFunction(key=>window.__environment.interior()===key,key,{timeout:5000});
      const exit=await page.evaluate(()=>window.__environment.exit());assert.equal(exit.x,exit.expectedX);assert.equal(exit.y,exit.expectedY);
     }
-    const migration=await page.evaluate(()=>window.__environment.migration());assert.deepEqual(migration,{version:2,passable:true,gold:123});
+    const migration=await page.evaluate(()=>window.__environment.migration());assert.deepEqual(migration,{version:3,passable:true,gold:123});
    }
    assert.deepEqual(errors,[]);await page.close();
    console.log(`PASS desktop ${bio}: ${stats.count} clusters, ${stats.scenes} landmarks, ${result.surfaces} cached surfaces; ${result.ms.toFixed(2)} ms/full render; navigation unchanged`);
