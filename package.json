@@ -11,6 +11,7 @@
     "test:hollow": "node tests/hollow-browser.cjs",
     "test:weapons": "node tests/weapons-browser.cjs",
     "test:environment": "node tests/environment-browser.cjs",
+    "test:coast": "node tests/coast-browser.cjs",
     "test:lighting": "node tests/lighting-browser.cjs",
     "test:ui": "node tests/ui-browser.cjs"
   },
