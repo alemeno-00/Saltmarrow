@@ -3,12 +3,16 @@
   "private": true,
   "scripts": {
     "test": "node --test tests/*.test.cjs",
+    "test:feel": "node tests/feel-browser.cjs",
     "test:tactics": "node tests/tactics-browser.cjs",
     "test:browser": "node tests/gameplay.cjs",
     "test:drowned": "node tests/drowned-browser.cjs",
     "test:art": "node tests/art-browser.cjs",
     "test:hollow": "node tests/hollow-browser.cjs",
-    "test:weapons": "node tests/weapons-browser.cjs"
+    "test:weapons": "node tests/weapons-browser.cjs",
+    "test:environment": "node tests/environment-browser.cjs",
+    "test:lighting": "node tests/lighting-browser.cjs",
+    "test:ui": "node tests/ui-browser.cjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"

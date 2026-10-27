@@ -44,9 +44,9 @@
     const north=Math.abs(e.fy||0)>Math.abs(e.fx||0)&&e.fy<0,side=e.fx<0?-1:1;
     const moving=Math.abs((e.rx??e.x)-e.x)+Math.abs((e.ry??e.y)-e.y)>.04;
     let x=side*9,y=-21,angle=-1.15,phase='idle',off=0;
-    if(moving&&!reduced){y+=Math.floor(now/130)%2;angle+=Math.sin(now/130)*.08;phase='walk'}
+    if(moving&&!reduced){const stride=e.walkStart!=null?(now-e.walkStart)/Math.max(1,e.walkDuration):now/260;y-=Math.sin(Math.min(1,stride)*Math.PI)*1.5;angle+=Math.sin(stride*Math.PI)*.08*(((e.walkCycle||0)%2)?1:-1);phase='walk'}
     if(action&&action.base===base&&now>=action.t0&&(now<action.end||action.resolved===false)&&!reduced){
-      const clock=action.resolved===false?Math.min(now,action.impact-.01):now;
+      const clock=action.resolved===false?Math.min(now,action.impact-.01):now-Math.min(action.hold||0,Math.max(0,now-action.impact));
       const t=(clock-action.t0)/Math.max(.01,action.impact-action.t0),recover=Math.max(0,(clock-action.impact)/Math.max(.01,action.end-action.impact));
       const power=t<1?Math.max(0,(t-.65)/.35):1-recover;
       phase=t<.65?'windup':t<1?'strike':kind==='ranged'?'reload':'recover';
@@ -129,7 +129,7 @@
   api.frameAsset=(key,e,now,reduced)=>{
     const moving=Math.abs((e.rx??e.x)-e.x)+Math.abs((e.ry??e.y)-e.y)>.04;
     const attacking=!!e.lunge&&now-e.lunge.t0>=0&&now-e.lunge.t0<200;
-    const col=reduced?0:attacking?3:moving?1+(Math.floor(now/130)%2):0;
+    const col=reduced?0:attacking?3:moving?1+((e.walkCycle!=null?e.walkCycle%2:Math.floor(now/130)%2)):0;
     if(key==='riptide'&&heroFrames.length){const row=Math.abs(e.fy||0)>Math.abs(e.fx||0)?(e.fy<0?0:2):(e.fx<0?3:1);return heroFrames[row*4+col]}
     return monsterFrames[key]?.[col]||null;
   };
@@ -139,7 +139,7 @@
     // Use resting/walking bodies: the atlas attack column contains a fixed hammer.
     const row=Math.abs(e.fy||0)>Math.abs(e.fx||0)?(e.fy<0?0:2):(e.fx<0?3:1);
     const moving=Math.abs((e.rx??e.x)-e.x)+Math.abs((e.ry??e.y)-e.y)>.04;
-    const source=key==='riptide'&&heroFrames.length?heroFrames[row*4+(moving&&!reduced?1+Math.floor(now/130)%2:0)]:original;
+    const source=key==='riptide'&&heroFrames.length?heroFrames[row*4+(moving&&!reduced?1+(e.walkCycle!=null?e.walkCycle%2:Math.floor(now/130)%2):0)]:original;
     if(bareFrames.has(source))return bareFrames.get(source);
     const raw=key==='riptide'?source.source:source.image,c=canvas(raw.width,raw.height),g=c.getContext('2d');g.drawImage(raw,0,0);
     const w=c.width,h=c.height;

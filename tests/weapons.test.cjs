@@ -47,3 +47,9 @@ test('a delayed damage event holds the contact pose until resolution then begins
   assert.equal(A.weaponPose('knife',{fx:1},1250,action).phase,'recover');
   assert.equal(A.weaponPose('knife',{fx:1},1501,action).phase,'idle');
 });
+test('weapon contact pose holds through hit-stop and footsteps follow stride time',()=>{
+ const e={fx:1},action={base:'maul',t0:100,impact:500,end:1000,hold:65,resolved:true};
+ assert.deepEqual(A.weaponPose('maul',e,500,action),A.weaponPose('maul',e,560,action));
+ const walk={fx:1,x:2,y:2,rx:1.5,ry:2,walkStart:1000,walkDuration:145,walkCycle:1};
+ assert.notDeepEqual(A.weaponPose('maul',walk,1010,null),A.weaponPose('maul',walk,1070,null));
+});

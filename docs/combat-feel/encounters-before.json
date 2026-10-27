@@ -1,0 +1,242 @@
+[
+  {
+    "seed": 1,
+    "cls": "riptide",
+    "turns": 3,
+    "dodges": 1,
+    "attacks": 3,
+    "hpLost": 56,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 2,
+    "cls": "riptide",
+    "turns": 4,
+    "dodges": 2,
+    "attacks": 4,
+    "hpLost": 61,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 3,
+    "cls": "riptide",
+    "turns": 4,
+    "dodges": 2,
+    "attacks": 4,
+    "hpLost": 56,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 4,
+    "cls": "riptide",
+    "turns": 3,
+    "dodges": 1,
+    "attacks": 3,
+    "hpLost": 56,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 5,
+    "cls": "riptide",
+    "turns": 5,
+    "dodges": 2,
+    "attacks": 5,
+    "hpLost": 44,
+    "won": true,
+    "stalled": false
+  },
+  {
+    "seed": 6,
+    "cls": "riptide",
+    "turns": 3,
+    "dodges": 1,
+    "attacks": 3,
+    "hpLost": 56,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 7,
+    "cls": "riptide",
+    "turns": 4,
+    "dodges": 2,
+    "attacks": 4,
+    "hpLost": 62,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 8,
+    "cls": "riptide",
+    "turns": 3,
+    "dodges": 1,
+    "attacks": 3,
+    "hpLost": 57,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 9,
+    "cls": "riptide",
+    "turns": 5,
+    "dodges": 2,
+    "attacks": 5,
+    "hpLost": 62,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 10,
+    "cls": "riptide",
+    "turns": 4,
+    "dodges": 2,
+    "attacks": 4,
+    "hpLost": 60,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 11,
+    "cls": "riptide",
+    "turns": 4,
+    "dodges": 2,
+    "attacks": 4,
+    "hpLost": 60,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 12,
+    "cls": "riptide",
+    "turns": 5,
+    "dodges": 2,
+    "attacks": 5,
+    "hpLost": 35,
+    "won": true,
+    "stalled": false
+  },
+  {
+    "seed": 1,
+    "cls": "shadow",
+    "turns": 7,
+    "dodges": 3,
+    "attacks": 7,
+    "hpLost": 43,
+    "won": true,
+    "stalled": false
+  },
+  {
+    "seed": 2,
+    "cls": "shadow",
+    "turns": 7,
+    "dodges": 3,
+    "attacks": 7,
+    "hpLost": 28,
+    "won": true,
+    "stalled": false
+  },
+  {
+    "seed": 3,
+    "cls": "shadow",
+    "turns": 6,
+    "dodges": 3,
+    "attacks": 6,
+    "hpLost": 38,
+    "won": true,
+    "stalled": false
+  },
+  {
+    "seed": 4,
+    "cls": "shadow",
+    "turns": 3,
+    "dodges": 1,
+    "attacks": 3,
+    "hpLost": 46,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 5,
+    "cls": "shadow",
+    "turns": 6,
+    "dodges": 3,
+    "attacks": 6,
+    "hpLost": 49,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 6,
+    "cls": "shadow",
+    "turns": 3,
+    "dodges": 1,
+    "attacks": 3,
+    "hpLost": 43,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 7,
+    "cls": "shadow",
+    "turns": 4,
+    "dodges": 2,
+    "attacks": 4,
+    "hpLost": 45,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 8,
+    "cls": "shadow",
+    "turns": 4,
+    "dodges": 2,
+    "attacks": 4,
+    "hpLost": 47,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 9,
+    "cls": "shadow",
+    "turns": 6,
+    "dodges": 3,
+    "attacks": 6,
+    "hpLost": 48,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 10,
+    "cls": "shadow",
+    "turns": 6,
+    "dodges": 3,
+    "attacks": 6,
+    "hpLost": 51,
+    "won": false,
+    "stalled": false
+  },
+  {
+    "seed": 11,
+    "cls": "shadow",
+    "turns": 6,
+    "dodges": 3,
+    "attacks": 6,
+    "hpLost": 46,
+    "won": true,
+    "stalled": false
+  },
+  {
+    "seed": 12,
+    "cls": "shadow",
+    "turns": 5,
+    "dodges": 2,
+    "attacks": 5,
+    "hpLost": 20,
+    "won": true,
+    "stalled": false
+  }
+]

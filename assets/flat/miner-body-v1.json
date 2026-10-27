@@ -1,0 +1,389 @@
+{
+  "cell": [
+    112,
+    96
+  ],
+  "groundY": 88,
+  "rows": [
+    "walk-east",
+    "walk-west",
+    "attack-east",
+    "attack-west"
+  ],
+  "walkFrames": 8,
+  "attackFrames": 8,
+  "frames": [
+    {
+      "kind": "walk",
+      "frame": 0,
+      "sourceBox": [
+        26,
+        73,
+        258,
+        342
+      ],
+      "anchor": [
+        151.866,
+        340
+      ],
+      "scale": 0.17843866171003717,
+      "packedOrigin": [
+        34,
+        40
+      ],
+      "packedSize": [
+        41,
+        48
+      ]
+    },
+    {
+      "kind": "walk",
+      "frame": 1,
+      "sourceBox": [
+        325,
+        78,
+        531,
+        343
+      ],
+      "anchor": [
+        430.373,
+        339
+      ],
+      "scale": 0.17843866171003717,
+      "packedOrigin": [
+        37,
+        41
+      ],
+      "packedSize": [
+        37,
+        47
+      ]
+    },
+    {
+      "kind": "walk",
+      "frame": 2,
+      "sourceBox": [
+        599,
+        73,
+        796,
+        343
+      ],
+      "anchor": [
+        692.887,
+        340
+      ],
+      "scale": 0.17843866171003717,
+      "packedOrigin": [
+        39,
+        40
+      ],
+      "packedSize": [
+        35,
+        48
+      ]
+    },
+    {
+      "kind": "walk",
+      "frame": 3,
+      "sourceBox": [
+        836,
+        69,
+        1072,
+        343
+      ],
+      "anchor": [
+        964.584,
+        337
+      ],
+      "scale": 0.17843866171003717,
+      "packedOrigin": [
+        33,
+        40
+      ],
+      "packedSize": [
+        42,
+        49
+      ]
+    },
+    {
+      "kind": "walk",
+      "frame": 4,
+      "sourceBox": [
+        1120,
+        74,
+        1354,
+        343
+      ],
+      "anchor": [
+        1245.451,
+        341
+      ],
+      "scale": 0.17843866171003717,
+      "packedOrigin": [
+        34,
+        40
+      ],
+      "packedSize": [
+        42,
+        48
+      ]
+    },
+    {
+      "kind": "walk",
+      "frame": 5,
+      "sourceBox": [
+        1404,
+        84,
+        1619,
+        343
+      ],
+      "anchor": [
+        1517.869,
+        337
+      ],
+      "scale": 0.17843866171003717,
+      "packedOrigin": [
+        36,
+        43
+      ],
+      "packedSize": [
+        38,
+        46
+      ]
+    },
+    {
+      "kind": "walk",
+      "frame": 6,
+      "sourceBox": [
+        1685,
+        73,
+        1883,
+        343
+      ],
+      "anchor": [
+        1780.547,
+        341
+      ],
+      "scale": 0.17843866171003717,
+      "packedOrigin": [
+        39,
+        40
+      ],
+      "packedSize": [
+        35,
+        48
+      ]
+    },
+    {
+      "kind": "walk",
+      "frame": 7,
+      "sourceBox": [
+        1923,
+        70,
+        2162,
+        343
+      ],
+      "anchor": [
+        2054.849,
+        337
+      ],
+      "scale": 0.17843866171003717,
+      "packedOrigin": [
+        32,
+        40
+      ],
+      "packedSize": [
+        43,
+        49
+      ]
+    },
+    {
+      "kind": "attack",
+      "frame": 0,
+      "sourceBox": [
+        80,
+        120,
+        336,
+        410
+      ],
+      "anchor": [
+        186.5,
+        408
+      ],
+      "scale": 0.16551724137931034,
+      "packedOrigin": [
+        38,
+        40
+      ],
+      "packedSize": [
+        42,
+        48
+      ]
+    },
+    {
+      "kind": "attack",
+      "frame": 1,
+      "sourceBox": [
+        513,
+        142,
+        803,
+        410
+      ],
+      "anchor": [
+        672.0,
+        408
+      ],
+      "scale": 0.16551724137931034,
+      "packedOrigin": [
+        30,
+        44
+      ],
+      "packedSize": [
+        48,
+        44
+      ]
+    },
+    {
+      "kind": "attack",
+      "frame": 2,
+      "sourceBox": [
+        958,
+        103,
+        1226,
+        409
+      ],
+      "anchor": [
+        1112.0,
+        408
+      ],
+      "scale": 0.16551724137931034,
+      "packedOrigin": [
+        31,
+        38
+      ],
+      "packedSize": [
+        44,
+        51
+      ]
+    },
+    {
+      "kind": "attack",
+      "frame": 3,
+      "sourceBox": [
+        1421,
+        34,
+        1671,
+        410
+      ],
+      "anchor": [
+        1546.0,
+        408
+      ],
+      "scale": 0.16551724137931034,
+      "packedOrigin": [
+        35,
+        26
+      ],
+      "packedSize": [
+        41,
+        62
+      ]
+    },
+    {
+      "kind": "attack",
+      "frame": 4,
+      "sourceBox": [
+        79,
+        533,
+        408,
+        814
+      ],
+      "anchor": [
+        213.0,
+        808
+      ],
+      "scale": 0.16551724137931034,
+      "packedOrigin": [
+        34,
+        42
+      ],
+      "packedSize": [
+        54,
+        47
+      ]
+    },
+    {
+      "kind": "attack",
+      "frame": 5,
+      "sourceBox": [
+        502,
+        564,
+        878,
+        817
+      ],
+      "anchor": [
+        662.5,
+        809
+      ],
+      "scale": 0.16551724137931034,
+      "packedOrigin": [
+        29,
+        47
+      ],
+      "packedSize": [
+        62,
+        42
+      ]
+    },
+    {
+      "kind": "attack",
+      "frame": 6,
+      "sourceBox": [
+        954,
+        564,
+        1328,
+        813
+      ],
+      "anchor": [
+        1086.5,
+        811
+      ],
+      "scale": 0.16551724137931034,
+      "packedOrigin": [
+        34,
+        47
+      ],
+      "packedSize": [
+        62,
+        41
+      ]
+    },
+    {
+      "kind": "attack",
+      "frame": 7,
+      "sourceBox": [
+        1419,
+        533,
+        1694,
+        818
+      ],
+      "anchor": [
+        1532.0,
+        814
+      ],
+      "scale": 0.16551724137931034,
+      "packedOrigin": [
+        37,
+        41
+      ],
+      "packedSize": [
+        46,
+        47
+      ]
+    }
+  ],
+  "sources": {
+    "miner-body-side-v1.png": "95953b809e3fed0e8385c6a7ac3fcaf6884178889c4e880108e0587ef7526346",
+    "miner-maul-body-source-v1.png": "c1e36020f8381ed44741c52219ff6f26f10276e13bdeb8ed152f945eae068ab1"
+  }
+}
