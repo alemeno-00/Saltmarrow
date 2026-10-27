@@ -735,7 +735,7 @@ const FEAT={
   lamp:{name:'Gas lamp',block:true,desc:'A sputtering lamp. Fog crawls around its post.'},
   gibbet:{name:'Gibbet',block:true,desc:'An iron cage on a chain. The thing inside was a man who spoke against the lottery.'},
   grave:{name:'Grave',block:false,desc:'A miner\'s grave. Most of them are empty.'},
-  liftgate:{name:'The Lift Head',block:true,desc:'The winch house over the shaft. Every delve begins here.'},
+  liftgate:{name:'Wharf Lift',block:true,desc:'The winch house over the shaft. Every delve begins here.'},
   door:{name:'Door',block:true,desc:o=>o.desc||'A door.'},
 };
 const CAPTIVE_DESC=w=>w==='pip'?'A boy in a smith\'s apron, tied to a post with his own leather straps. His eyes are wrong.':w==='nell'?'A woman cocooned to the chest in pale fungus, still breathing, still smiling.':'A prisoner.';
@@ -1426,63 +1426,54 @@ function dressLevel(L,rooms,inRoom){const DC=L.decal,map=L.map,bio=L.bio,seed=rn
 /* ================= the town of Saltmarrow ================= */
 FEAT.townRelic={name:'Weathered landmark',block:false,desc:o=>o.name+'. '+o.desc};
 const BUILDINGS=[
-  {key:'smith',name:'The Smithy',npc:'tobias',x:10,y:10,w:7,h:5,door:'s'},
-  {key:'chapel',name:'Chapel of Saint Hollis',npc:'agathe',x:19,y:7,w:9,h:7,door:'s'},
-  {key:'hall',name:'Town Hall',npc:'hale',x:36,y:9,w:8,h:6,door:'s'},
-  {key:'tavern',name:'The Drowned Lamb',npc:'bram',x:10,y:22,w:8,h:5,door:'s'},
-  {key:'archive',name:'The Old Archive',npc:null,x:21,y:24,w:6,h:5,door:'s'},
-  {key:'cottage',name:'Your Cottage',npc:null,x:29,y:25,w:5,h:4,door:'s'},
-  {key:'apoth',name:'Thorn Apothecary',npc:'nell',x:39,y:22,w:6,h:5,door:'s'},
+ {key:'chapel',name:'Chapel of Saint Hollis',npc:'agathe',x:17,y:2,w:12,h:7,door:'s'},
+ {key:'hall',name:'Town Hall',npc:'hale',x:46,y:4,w:12,h:8,door:'s',entryX:51},
+ {key:'tavern',name:'The Drowned Lamb',npc:'bram',x:13,y:12,w:10,h:8,door:'s'},
+ {key:'smith',name:'The Smithy',npc:'tobias',x:26,y:15,w:8,h:5,door:'s'},
+ {key:'apoth',name:'Thorn Apothecary',npc:'nell',x:35,y:14,w:10,h:6,door:'s',entryX:42},
+ {key:'archive',name:'The Old Archive',npc:null,x:47,y:19,w:10,h:11,door:'s'},
+ {key:'cottage',name:'Your Cottage',npc:null,x:25,y:24,w:9,h:6,door:'s'}
 ];
-const TOWN_LAYOUT={version:3,left:8,right:60,top:5,bottom:31,streetTop:16,streetBottom:17,northVerge:15,southVerge:18,backLane:27};
-function genTown(){const map=new Array(W*H).fill(WALL);
-  const L=S.L={map,bio:'town',town:true,seen:new Array(W*H).fill(0),smoke:new Array(W*H).fill(0),spore:new Array(W*H).fill(0),fire:new Array(W*H).fill(0),light:new Uint8Array(W*H),opq:new Uint8Array(W*H),items:[],mons:[],objs:[],npcs:[],deco:new Uint8Array(W*H)};
-  L.townLayout={...TOWN_LAYOUT};L.townLanes=new Uint8Array(W*H);
-  const path=(x,y,w,h,kind=2)=>{for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++){map[I(xx,yy)]=FLOOR;L.townLanes[I(xx,yy)]=kind}};
-  // Terrace footprints are deliberately irregular. The uncarved cells are sea/cliff,
-  // solid in the simulation; elevation is visual and never changes square-grid picking.
-  L.townLand=new Uint8Array(W*H);L.townElevation=new Uint8Array(W*H);L.townAct=act();
-  const terrace=(x,y,w,h,z)=>{for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++){const i=I(xx,yy);map[i]=FLOOR;L.townLand[i]=1;L.townElevation[i]=z}};
-  terrace(18,7,15,9,3);terrace(36,8,18,8,3);terrace(9,10,9,6,2);
-  terrace(8,15,48,6,2);terrace(10,21,23,7,1);terrace(37,21,17,7,1);terrace(20,28,19,4,1);
-  // The tide cleft divides the settlement. Only the two authored bridges cross it.
-  for(let y=5;y<32;y++)for(let x=34;x<=35;x++){map[I(x,y)]=WALL;L.townLand[I(x,y)]=0;L.townElevation[I(x,y)]=0}
-  terrace(34,16,2,2,2);terrace(34,29,3,2,1);
-  path(8,16,49,2,1);path(9,15,25,1);path(36,15,20,1);path(9,18,25,1);path(36,18,18,1);
-  path(10,27,23,1);path(20,29,18,2);path(37,27,17,1);
-  for(const[x,y,h]of[[17,14,14],[28,13,18],[52,14,14],[37,17,14]])path(x,y,2,h);
-  // path() also authors land on narrow stair links.
-  for(let i=0;i<W*H;i++)if(map[i]===FLOOR){L.townLand[i]=1;if(!L.townElevation[i])L.townElevation[i]=i/W<15?3:i/W<22?2:1}
-  L.townStairs=[[17,14,2,2],[28,14,2,2],[52,14,2,2],[18,20,2,2],[28,21,2,3],[52,20,2,2],[37,27,2,2]];
-  L.townBridges=[[34,16,2,2],[34,29,3,2]];
-  const obj=(type,x,y,ex)=>{const o=Object.assign({type,x,y,id:S.nextId++},ex||{});L.objs.push(o);return o};
-  L.bld=new Uint8Array(W*H);
-  for(const b of BUILDINGS){for(let y=b.y;y<b.y+b.h;y++)for(let x=b.x;x<b.x+b.w;x++){map[I(x,y)]=WALL;L.bld[I(x,y)]=1;L.townLanes[I(x,y)]=0}
-    const dx=b.x+(b.w>>1),dy=b.door==='s'?b.y+b.h-1:b.y;map[I(dx,dy)]=FLOOR;const open=b.key!=='apoth'||flag('nellFreed');
-    obj('door',dx,dy,{key:b.key,bname:b.name,closed:!open,desc:open?`${b.name}. Walk in to enter.`:`${b.name}. Boarded up since the herbalist went below.`});b.dx=dx;b.dy=dy+(b.door==='s'?1:-1);path(dx,b.dy,1,b.dy>=27?31-b.dy:1,3)}
-  // Salt graves occupy the eastern lower terrace; the lift stands over the eastern sea wall.
-  for(let k=0;k<9;k++)obj('grave',46+(k%3)*2,21+Math.floor(k/3));
-  for(let y=13;y<=20;y++)for(let x=56;x<=60;x++){map[I(x,y)]=WALL;L.bld[I(x,y)]=1}map[I(56,16)]=FLOOR;obj('liftgate',56,16);
-  for(let y=13;y<=20;y++)map[I(55,y)]=FLOOR;
-  for(const[x,y]of[[9,15],[18,18],[28,15],[36,18],[44,15],[53,18],[24,15],[18,24]])obj('lamp',x,y);
-  obj('gibbet',31,18);
-  // The bell is an inspectable landmark; ringing dungeon bells keeps its existing rules.
-  for(let y=5;y<=13;y++)for(let x=29;x<=32;x++){map[I(x,y)]=WALL;L.bld[I(x,y)]=1;L.townLand[I(x,y)]=1}
-  obj('townRelic',31,14,{name:'Deep Bell Tower',desc:['The Deep Bell hangs above the tide cleft. Its bronze lip is polished by generations of warning ropes.','A second tide mark has been cut into the bell stair. Fresh rope replaces a cable eaten white by salt.','The bell sounds without a hand on its rope. Pale fungus threads the oldest mortar.','The bell tolls for the houses below. Refuge blankets and evacuation ropes wait beneath its arch.'][act()-1]});
-  for(let k=0;k<14;k++){const x=rr(9,54),y=pick([9,14,23,25]);if(!L.townLanes[I(x,y)]&&map[I(x,y)]===FLOOR&&!L.objs.some(o=>o.x===x&&o.y===y))map[I(x,y)]=Math.random()<0.5?GRASS:RUBBLE}
-  const npc=(key,x,y,r)=>L.npcs.push({key,x,y,rx:x,ry:y,home:{x,y},r:r||2,fx:Math.random()<0.5?1:-1,fy:0,id:S.nextId++});
-  for(const b of BUILDINGS)if(b.npc&&(b.npc!=='nell'||flag('nellFreed')))npc(b.npc,b.dx,b.dy,1);
-  npc('mara',54,17,1);if(flag('pipFreed'))npc('pip',15,15,0);
-  for(let k=0;k<4;k++){let x,y;do{x=rr(12,50);y=rr(16,17)}while(L.objs.some(o=>o.x===x&&o.y===y)||L.npcs.some(n=>n.x===x&&n.y===y));npc('folk',x,y,5)}
-  for(let i=0;i<W*H;i++){L.seen[i]=map[i]!==WALL||DIR8.some(([dx,dy])=>{const x=i%W+dx,y=((i/W)|0)+dy;return inb(x,y)&&map[I(x,y)]!==WALL})?1:0;L.deco[i]=rnd(256)}
-  rebuildOpq();computeLight()}
+const TOWN_LAYOUT={version:6,left:13,right:61,top:0,bottom:38,spawnX:22,spawnY:30};
+function genTown(){
+ const map=new Array(W*H).fill(WALL),N=W*H;
+ const L=S.L={map,bio:'town',town:true,townScene:6,townAct:act(),townLayout:{...TOWN_LAYOUT},seen:new Array(N).fill(1),smoke:new Array(N).fill(0),spore:new Array(N).fill(0),fire:new Array(N).fill(0),light:new Uint8Array(N),opq:new Uint8Array(N),items:[],mons:[],objs:[],npcs:[],deco:new Uint8Array(N),bld:new Uint8Array(N),townLand:new Uint8Array(N),townElevation:new Uint8Array(N),townLanes:new Uint8Array(N)};
+ const path=(x,y,w,h,z=2)=>{for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++){const i=I(xx,yy);map[i]=FLOOR;L.townLand[i]=1;L.townElevation[i]=z;L.townLanes[i]=1}};
+ for(const[x,y,w,h,z]of[[24,12,34,2,3],[23,9,2,12,2],[15,20,30,2,2],[34,21,2,10,1],[51,13,2,5,2],[44,17,14,2,2],[44,18,2,12,1],[22,30,36,2,1],[13,32,10,2,1],[20,29,3,5,1],[21,34,2,4,1],[19,36,4,2,1],[38,11,1,2,3]])path(x,y,w,h,z);
+ L.townStairs=[[23,9,2,11],[34,22,2,8],[51,13,2,4],[44,19,2,9],[21,31,2,7]];
+ L.townBridges=[[31,12,3,1],[38,30,4,1]];
+ const obj=(type,x,y,ex={})=>{const o={type,x,y,id:S.nextId++,...ex};L.objs.push(o);return o};
+ for(const b of BUILDINGS){
+  for(let y=b.y;y<b.y+b.h;y++)for(let x=b.x;x<b.x+b.w;x++){const i=I(x,y);map[i]=WALL;L.bld[i]=1;L.townLand[i]=1}
+  b.dx=b.entryX??b.x+(b.w>>1);b.dy=b.y+b.h;const open=b.key!=='apoth'||flag('nellFreed');path(b.dx,b.dy,1,1,b.dy<18?3:b.dy<27?2:1);map[I(b.dx,b.dy-1)]=FLOOR;
+  obj('door',b.dx,b.dy-1,{key:b.key,bname:b.name,closed:!open,desc:open?b.name+'. Walk in to enter.':b.name+'. Boarded since Nell disappeared below.'});
+ }
+ for(let y=0;y<11;y++)for(let x=35;x<42;x++){L.bld[I(x,y)]=1;L.townLand[I(x,y)]=1;map[I(x,y)]=WALL}
+ const bellTexts=['Rope-polished bronze hangs above the oldest stair. Every storm has its own warning rhythm.','A fresh tide notch has been cut into the bell stair. The old rope has been replaced.','The Deep Bell rings with no hand at its rope. Pale mycelium runs through the mortar.','Blankets and evacuation lines wait beneath the belfry. The bell now tolls for the lower homes.'];
+ obj('townRelic',38,11,{name:'Deep Bell Tower',desc:bellTexts[act()-1]});
+ obj('liftgate',14,31);map[I(14,31)]=FLOOR;L.townLand[I(14,31)]=1;
+ // Attached homes are inspectable entrances in the painted stonework, with clear frontages.
+ for(const[x,y,k]of[[36,18,0],[34,23,1],[61,11,2],[22,28,3]]){path(x,y+1,1,1);map[I(x,y)]=FLOOR;L.townLand[I(x,y)]=1;obj('house',x,y,{boarded:k<act()-1+(flag('bribed')?1:0)})}
+ // Residential niches join the painted side stairs rather than opening onto rock faces.
+ path(36,19,1,2,2);path(61,12,1,6,3);path(57,16,5,2,2);path(22,29,1,2,1);
+ const stories=[[21,30,'The Last Catch','Nets dry above a wreck whose name has been scraped away. The catch ledger ends with a drawing of a hand.'],[21,9,'Drowned Saint','Salt has grown over the saint’s face. Someone still replaces the candles.'],[54,31,'Unsent Letters','Rain swells bundles of letters addressed to ships that never returned.'],[30,30,'The Empty Chair','One cup, two hooks for coats, a mining helmet full of rain.'],[17,32,'Wharf Tide Gauge','The newest tide notch is above the winch keeper’s shoulder.']];
+ L.townFacades=BUILDINGS.map(b=>({...b,entryX:b.dx,entryY:b.dy-1}));L.townStories=stories;for(const[x,y,name,desc]of stories){path(x,y,1,1,y<18?3:y<27?2:1);obj('townRelic',x,y,{name,desc})}
+ path(21,9,3,1,3);
+ // Front parapets are not walkable pavement; register the inner road centres.
+ for(const[y,x0,x1]of[[13,25,50],[21,15,33],[21,36,43],[31,23,50],[31,55,57]])for(let x=x0;x<=x1;x++){const i=I(x,y);if(!L.bld[i]){map[i]=WALL;L.townLand[i]=0;L.townLanes[i]=0;L.townElevation[i]=0}}
+ const npc=(key,x,y,r=0)=>L.npcs.push({key,x,y,rx:x,ry:y,home:{x,y},r,fx:1,fy:0,id:S.nextId++});
+ for(const b of BUILDINGS)if(b.npc&&(b.npc!=='nell'||flag('nellFreed'))){const at=[[b.dx-1,b.dy],[b.dx+1,b.dy],[b.dx,b.dy+1]].find(([x,y])=>map[I(x,y)]===FLOOR&&!L.objs.some(o=>o.x===x&&o.y===y&&FEAT[o.type].block)&&!L.npcs.some(n=>n.x===x&&n.y===y))||[b.dx,b.dy];npc(b.npc,at[0],at[1],0)}
+ npc('mara',15,33,0);if(flag('pipFreed'))npc('pip',31,20,0);
+ for(const[x,y]of[[28,12],[32,20],[46,30],[24,30]].slice(0,5-act()))npc('folk',x,y,1);
+ rebuildOpq();computeLight();
+}
 const npcAt=(x,y)=>S.L.npcs&&S.L.npcs.find(n=>n.x===x&&n.y===y);
 function npcTick(){if(!S.L.npcs)return;for(const n of S.L.npcs){if(!n.r||Math.random()>0.3)continue;const d=pick(DIR8),x=n.x+d[0],y=n.y+d[1];
   if(cheb(x,y,n.home.x,n.home.y)>n.r||!inb(x,y)||S.L.map[I(x,y)]!==FLOOR||occupied(x,y,null)||npcAt(x,y)||(S.P.x===x&&S.P.y===y))continue;n.fx=Math.sign(d[0])||n.fx;n.x=x;n.y=y}}
 function townHero(){const k=S&&S.cls&&classOpen(S.cls)?S.cls:'riptide';const P=newHero(k);return P}
 function enterTown(why){const cls0=S&&S.cls?S.cls:'riptide';
   S={v:5,cls:cls0,depth:0,turn:0,mode:'explore',P:null,L:null,C:null,log:S&&S.log?S.log.slice(-30):[],victories:0,xp:0,gold:0,inv:{},trinkets:[],kills:0,nextId:1,over:false,won:false,pitWarn:-1,busy:false,gear:{weapon:null,tomes:[],arm:{}},bag:[],bless:null};
-  S.P=townHero();{const kk=(META.heroes||{})[cls0];if(kk&&S.P)S.P.lvl=kk.lvl}genTown();S.P.x=53;S.P.y=16;S.P.rx=53;S.P.ry=16;S.P.lantern=true;S.P.dread=0;computeFov();
+  S.P=townHero();{const kk=(META.heroes||{})[cls0];if(kk&&S.P)S.P.lvl=kk.lvl}genTown();S.P.x=TOWN_LAYOUT.spawnX;S.P.y=TOWN_LAYOUT.spawnY;S.P.rx=S.P.x;S.P.ry=S.P.y;S.P.lantern=true;S.P.dread=0;computeFov();
   if(why==='death'){log('You wake on the cold floor of the chapel. You do not remember the climb. Your pack is gone.','dread');UI.toast('Saltmarrow','You do not remember the climb')}
   else if(why==='bell'){log('The lift groans up out of the dark. Rain, gas lamps, and the smell of the sea.','gold');UI.toast('Saltmarrow','You made it back')}
   else{log('Saltmarrow smells of brine and coal smoke. Black cliffs rise above a violent sea. The Deep Bell watches over broken terraces; the Wharf Lift waits beyond the bridge.','gold');UI.toast('Saltmarrow','A settlement at the edge of the world')}
@@ -1530,33 +1521,15 @@ function genInterior(key){const[w,h]=ROOMS[key];const map=new Array(W*H).fill(WA
   for(let i=0;i<W*H;i++){const x=i%W,y=(i/W)|0;L.seen[i]=x>=x0-1&&x<=x0+w&&y>=y0-1&&y<=y0+h?1:0;L.deco[i]=rnd(256)}
   S.P.x=cx;S.P.y=by-1;S.P.rx=S.P.x;S.P.ry=S.P.y;rebuildOpq();computeLight();computeFov()}
 function enterInterior(key){S.townDoor=key;genInterior(key);const B=BUILDINGS.find(b=>b.key===key);log(`You step into ${B?B.name:'the building'}, out of the rain.`,'old');UI.save();UI.render()}
-function exitInterior(){const key=S.L.interior;genTown();const b=BUILDINGS.find(b=>b.key===key);if(b){S.P.x=b.dx;S.P.y=b.dy}else{S.P.x=53;S.P.y=16}S.P.rx=S.P.x;S.P.ry=S.P.y;computeFov();UI.save();UI.render()}
+function exitInterior(){const key=S.L.interior;genTown();const b=BUILDINGS.find(b=>b.key===key);if(b){S.P.x=b.dx;S.P.y=b.dy}else{S.P.x=TOWN_LAYOUT.spawnX;S.P.y=TOWN_LAYOUT.spawnY}S.P.rx=S.P.x;S.P.ry=S.P.y;computeFov();UI.save();UI.render()}
 /* ================= the town changes with the acts ================= */
 FEAT.liftgate.desc=()=>['The winch house over the shaft. Every delve begins here.','The winch house. The cables are wet higher up than they used to be.','The winch house. Black water stands in the bottom of the shaft now, and it is rising.','The winch house. Seawater laps at the lowest rungs of the ladder. The village has a season, perhaps less.'][act()-1];
-const _genTown=genTown;
-genTown=function(){_genTown();const L=S.L,a=act();const o=(type,x,y,ex)=>L.objs.push(Object.assign({type,x,y,id:S.nextId++},ex||{}));
-  let boarded=(a-1)+(flag('bribed')?1:0);const houses=[[45,10,'s'],[49,10,'s'],[45,24,'s'],[49,24,'s']];
-  for(const[hx,hy,dr]of houses){for(let y=hy;y<hy+3;y++)for(let x=hx;x<hx+3;x++){L.map[I(x,y)]=WALL;L.bld[I(x,y)]=1;L.townLanes[I(x,y)]=0}const dx=hx+1,dy=dr==='s'?hy+2:hy;L.map[I(dx,dy)]=FLOOR;L.bld[I(dx,dy)]=0;o('house',dx,dy,{boarded:boarded-->0});for(let y=dy+1;y<=(hy<16?15:27);y++){L.map[I(dx,y)]=FLOOR;L.townLanes[I(dx,y)]=3}}
-  o('lotbox',33,18);
-  let cut=(a-1)+(flag('bribed')?1:0);L.npcs=L.npcs.filter(n=>n.key!=='folk'||cut--<=0||L.npcs.filter(m=>m.key==='folk').length<=1);
-  if(a>=3)for(let k=0;k<8;k++){const x=rr(9,54),y=pick([9,14,23,25]);if(!L.townLanes[I(x,y)]&&L.map[I(x,y)]===FLOOR&&!L.objs.some(q=>q.x===x&&q.y===y))o('shroom',x,y)}
-  if(a>=4)for(let k=0;k<14;k++){const x=rr(9,54),y=pick([15,18]);if(L.townLanes[I(x,y)]!==3&&L.map[I(x,y)]===FLOOR&&!L.objs.some(q=>q.x===x&&q.y===y)&&!L.npcs.some(n=>n.x===x&&n.y===y))L.map[I(x,y)]=WATER}
-  L.townStories=[
-    [9,19,'The Last Catch','Fishing nets hang beside harpoons. The catch ledger ends with a drawing of a human hand.'],
-    [19,26,'The Drowned Saint','Whale ribs shelter a salt-encrusted saint. Candles are replaced each morning; the face is never cleaned.'],
-    [38,28,'The Unsent Letters','Boat planks shore up the archive balcony. Bundles of letters name ships that never returned.'],
-    [54,19,'Wharf Lift','Anchor chains and a rope winch hold the only road into the depths. Tide marks climb the shaft.'],
-    [28,30,'The Empty Chair','A cottage chair faces the sea. One cup, two hooks for coats, a mining helmet full of rain.']
-  ];
-  for(const[x,y,name,desc]of L.townStories)if(L.map[I(x,y)]===FLOOR&&!L.objs.some(o=>o.x===x&&o.y===y))o('townRelic',x,y,{name,desc});
-  for(let i=0;i<W*H;i++){L.seen[i]=1;if(L.map[i]!==WALL||L.bld[i]){L.townLand[i]=1;if(!L.townElevation[i])L.townElevation[i]=i/W<15?3:i/W<22?2:1}}
-  rebuildOpq();computeLight()};
 function migrateTownLayout(){
   const old=S.L;if(!old.town||old.interior||old.townLayout?.version===TOWN_LAYOUT.version)return false;
   const px=S.P.x,py=S.P.y,near=old.objs.filter(o=>o.type==='door'&&cheb(px,py,o.x,o.y)<=2).sort((a,b)=>cheb(px,py,a.x,a.y)-cheb(px,py,b.x,b.y))[0];
-  genTown();const L=S.L,reach=bfsDist(53,16,false);
+  genTown();const L=S.L,reach=bfsDist(TOWN_LAYOUT.spawnX,TOWN_LAYOUT.spawnY,false);
   const free=(x,y)=>inb(x,y)&&L.map[I(x,y)]===FLOOR&&!blockObjAt(x,y)&&!L.npcs.some(n=>n.x===x&&n.y===y)&&reach[I(x,y)]>=0;
-  const nearest=(x,y)=>{let best={x:53,y:16},dist=Infinity;for(let yy=TOWN_LAYOUT.top;yy<=TOWN_LAYOUT.bottom;yy++)for(let xx=TOWN_LAYOUT.left;xx<=TOWN_LAYOUT.right;xx++)if(free(xx,yy)){const d=Math.abs(xx-x)+Math.abs(yy-y);if(d<dist){best={x:xx,y:yy};dist=d}}return best};
+  const nearest=(x,y)=>{let best={x:TOWN_LAYOUT.spawnX,y:TOWN_LAYOUT.spawnY},dist=Infinity;for(let yy=TOWN_LAYOUT.top;yy<=TOWN_LAYOUT.bottom;yy++)for(let xx=TOWN_LAYOUT.left;xx<=TOWN_LAYOUT.right;xx++)if(free(xx,yy)){const d=Math.abs(xx-x)+Math.abs(yy-y);if(d<dist){best={x:xx,y:yy};dist=d}}return best};
   const b=near&&BUILDINGS.find(b=>b.key===near.key),at=b?free(b.dx,b.dy)?{x:b.dx,y:b.dy}:nearest(b.dx,b.dy):free(px,py)?{x:px,y:py}:nearest(px,py);
   Object.assign(S.P,{x:at.x,y:at.y,rx:at.x,ry:at.y});
   for(const item of old.items||[]){const at=free(item.x,item.y)?item:nearest(item.x,item.y);L.items.push({...item,x:at.x,y:at.y})}
@@ -2900,7 +2873,7 @@ async function lvTick(n){const L=S.L;if(!L||L.town)return;try{sitTick(n);if(S.ov
     const dir=Math.abs(fx-P.x)>Math.abs(fy-P.y)?(fx>P.x?'east':'west'):(fy>P.y?'south':'north');log(`Inside, a miner's scrawled note: "Hid the good stuff behind the wall, ${dir} of here. Took ${sr.thick} charges to close it up." The spot is marked on your map.`,'gold')}}return r}}
 {const k0=killMon;killMon=function(m,how,src){const L=S.L,key=m.key;k0(m,how,src);if(key&&S.L===L&&tileAt(m.x,m.y)!==PIT)L.items.push({kind:'vkey',x:m.x,y:m.y})}}
 ITEM_NAMES.vkey='vault key';
-{const e0=exploreStep;exploreStep=async function(dx,dy){const P=S.P;if(S.mode==='explore'&&!S.busy&&(dx||dy)){const x=P.x+dx,y=P.y+dy;if(inb(x,y)&&tileAt(x,y)===WALL&&wpn()&&wpn().base==='pick'&&x>0&&y>0&&x<W-1&&y<H-1){S.busy=true;try{await digWall(x,y)}finally{S.busy=false}await exploreTick();UI.render();return false}}return e0(dx,dy)}}
+{const e0=exploreStep;exploreStep=async function(dx,dy){const P=S.P;if(S.mode==='explore'&&!S.L.townScene&&!S.busy&&(dx||dy)){const x=P.x+dx,y=P.y+dy;if(inb(x,y)&&tileAt(x,y)===WALL&&wpn()&&wpn().base==='pick'&&x>0&&y>0&&x<W-1&&y<H-1){S.busy=true;try{await digWall(x,y)}finally{S.busy=false}await exploreTick();UI.render();return false}}return e0(dx,dy)}}
 {const d0=descend;descend=async function(f){S.inv.vkey=0;return d0(f)}}
 {const f0=fovR;fovR=function(){return f0()+(S.L&&S.L.glow?1:0)}}
 /* ---------- learning new moves: every class has a pool to draw from as it levels ---------- */
@@ -4014,8 +3987,8 @@ const lc=document.createElement('canvas'),lctx=lc.getContext('2d');
 function renderScale(){const d=window.devicePixelRatio||1;let g='auto';try{g=localStorage.getItem('saltmarrow-gfx')||'auto'}catch(e){}if(g==='sharp')return d;if(g==='fast')return 1;return Math.max(1,Math.min(d,window.__rsCap!=null?window.__rsCap:1.5))}
 let VW=0,VH=0,dpr=1,camX=0,camY=0,camInit=false;
 let ZOOM=1;const PAN={x:0,y:0,px:-1,py:-1};
-function resize(){const st=$('stage');const w=Math.max(1,st.clientWidth);const mob=document.body.classList.contains('mob')||document.body.classList.contains('full');const narrow=w<620;const h=mob?Math.max(160,st.clientHeight):Math.round(Math.min(narrow?w*1.1:w*0.62,narrow?560:640));const d0=renderScale();dpr=d0*ZOOM;
-  cv.width=Math.round(w*d0);cv.height=Math.round(h*d0);cv.style.height=h+'px';lc.width=Math.ceil(cv.width/2);lc.height=Math.ceil(cv.height/2);VW=w/ZOOM;VH=h/ZOOM;camInit=false}
+function resize(){const st=$('stage');const w=Math.max(1,st.clientWidth);const mob=document.body.classList.contains('mob')||document.body.classList.contains('full');const narrow=w<620;const h=mob?Math.max(160,st.clientHeight):Math.round(Math.min(narrow?w*1.1:w*0.62,narrow?560:640));if(S?.L?.townLand)ZOOM=Math.max(ZOOM,Math.ceil(w/(T*28)*4)/4,Math.ceil(h/(T*28)*4)/4);const d0=renderScale(),sceneZoom=ZOOM;dpr=d0*sceneZoom;
+  cv.width=Math.round(w*d0);cv.height=Math.round(h*d0);cv.style.height=h+'px';lc.width=Math.ceil(cv.width/2);lc.height=Math.ceil(cv.height/2);VW=w/sceneZoom;VH=h/sceneZoom;camInit=false}
 
 /* ---------- drawing ---------- */
 let lastT=0;
@@ -4692,7 +4665,7 @@ function townGround(){if(TTILE.ok)return;TTILE.ok=1;const mk=f=>{const[c,x]=tcv(
 {const t0=tileImg;tileImg=function(TS,t,x,y,wf){const L=S.L;if(L.town&&!L.interior){const i=I(x,y);const bt=L.bart&&L.bart[i];if(bt&&bt.getContext)return bt;townGround();
     if(t===FLOOR&&!(L.bld&&L.bld[i])){if(x>=29&&x<=37&&y>=7&&y<=13)return TTILE.grass[(L.deco[i]%7===0)?2:L.deco[i]%2];if(y===14||y===19)return TTILE.kerb[(x+y)%2];if(y>=15&&y<=18||x>=53)return t0(TS,t,x,y,wf);return TTILE.mud[L.deco[i]%4]}
     if(t===WALL&&!(L.bld&&L.bld[i])){const n=inb(x,y+1)&&L.map[I(x,y+1)]!==WALL;if(n)return TTILE.wall[(x+y)%2]}}return t0(TS,t,x,y,wf)}}
-{const g0=genTown;genTown=function(){g0();try{buildTown()}catch(e){console.error(e)}}}
+{const g0=genTown;genTown=function(){g0();try{if(!S.L.townScene)buildTown()}catch(e){console.error(e)}}}
 // doors are painted into each facade; closed ones get boarded over
 {const d0=drawObj;drawObj=function(o){const L=S.L;if(L.town&&!L.interior){const x=Math.round(o.x*T),y=Math.round(o.y*T);
   if((o.type==='door'||o.type==='house')&&L.bart&&L.bart[I(o.x,o.y)]&&L.bart[I(o.x,o.y)].getContext){if(o.type==='house'?o.boarded:o.closed){ctx.fillStyle='#5a3e22';ctx.fillRect(x+3,y+6,T-6,5);ctx.fillRect(x+3,y+18,T-6,5);ctx.fillStyle='#3a2614';ctx.fillRect(x+6,y+2,3,T-4);ctx.fillRect(x+T-9,y+2,3,T-4)}return}
@@ -5133,7 +5106,7 @@ UI.lift=()=>{if(!(S.L&&S.L.town)){return}const ds=startDepths();if(!liftSel)lift
   const cl=Object.entries(CLASSES).map(([k,c])=>{const open=classOpen(k);return`<button class="itm${liftSel.cls===k?' eq':''}${open?'':' lock'}" data-cls="${k}" ${open?'':'disabled'} style="text-align:left;cursor:${open?'pointer':'default'}"><div class="t"><img src="${ICON[c.spr]}" alt=""><div><b>${c.name}</b><div class="r" style="color:var(--dim)">${c.role} · ${c.res}</div></div></div><ul><li>${esc(open?c.blurb:CLASS_UNLOCK[k].txt)}</li>${open?`<li>${esc(c.passive)}</li>`:''}</ul></button>`}).join('');
   const gear=META.stash.filter(i=>i.kind!=='x');const rSel=liftSel.items.filter(id=>{const i=META.stash.find(x=>x.id===id);return i&&i.kind==='relic'}).length;liftSel.omens=liftSel.omens||[];
   const kits=Object.keys(META.kits||{});if(liftSel.kit&&!kits.includes(liftSel.kit))liftSel.kit=null;const wSel=liftSel.items.filter(id=>{const i=META.stash.find(x=>x.id===id);return i&&i.kind==='weapon'}).length,tSel=liftSel.items.filter(id=>{const i=META.stash.find(x=>x.id===id);return i&&i.kind==='tome'}).length;const aSel=sl=>liftSel.items.filter(id=>{const i=META.stash.find(x=>x.id===id);return i&&i.kind==='armor'&&i.slot===sl}).length;
-  const el=modal(`${head(ICON_N('n_mara'),'The Lift Head','Choose who goes down, how deep, and what they carry')}
+  const el=modal(`${head(ICON_N('n_mara'),'Wharf Lift','Choose who goes down, how deep, and what they carry')}
     <p class="purse">Going down: <b>${CLASSES[liftSel.cls].name}</b>, ${CLASSES[liftSel.cls].role.toLowerCase()}.</p>
     <p class="sect">Depth</p><div class="tabs">${ds.map(d=>`<button class="btn${liftSel.d===d?' on':''}" data-d="${d}">Depth ${d} · ${BIOMES[biomeOf(d)].name}${d>1?` (start at level ${1+Math.floor((d-1)/2)})`:''}</button>`).join('')}</div>
     ${kits.length?`<p class="sect">Kit</p><div class="tabs"><button class="btn${!liftSel.kit?' on':''}" data-kit="">None</button>${kits.map(k=>`<button class="btn${liftSel.kit===k?' on':''}" data-kit="${k}" title="${esc(KITS[k].desc)}">${KITS[k].name}</button>`).join('')}</div>`:''}
@@ -5291,7 +5264,7 @@ function clickTile(x,y){if(!S||S.over||!$('overlay').hidden||!inb(x,y))return;
     if(cheb(x,y,P.x,P.y)===1&&blockObjAt(x,y)){combatStep(x-P.x,y-P.y);return}
     if(x===P.x&&y===P.y)return;combatWalkTo(x,y);return}
   if(x===P.x&&y===P.y){exploreStep(0,0);return}
-  if(cheb(x,y,P.x,P.y)===1){walkQ=null;exploreStep(x-P.x,y-P.y);return}
+  if(cheb(x,y,P.x,P.y)===1){const n=S.L.townScene&&npcAt(x,y);if(n){UI.talk(n.key);return}walkQ=null;exploreStep(x-P.x,y-P.y);return}
   if(S.L.npcs&&npcAt(x,y)){const np=npcAt(x,y),a=nearestAdj(x,y);if(a){walkTalk=np.key;startWalk(a.x,a.y)}return}
   const m=monAt(x,y);if(m&&monVisible(m)){const id=defaultAttack(x,y);if(id&&AB[id].kind==='ranged'){useAbility(id,x,y);return}}
   if(!S.L.seen[I(x,y)])return;let tx=x,ty=y;if(blockObjAt(x,y)||(m&&monVisible(m))){const a=nearestAdj(x,y);if(!a)return;tx=a.x;ty=a.y}startWalk(tx,ty)}
@@ -5362,7 +5335,7 @@ hb.addEventListener('click',ev=>{if(ev.target.closest('#zoomIn,#zoomOut,#zoomInD
 document.addEventListener('pointerdown',ev=>{if(menuOpen()&&!hb.contains(ev.target)&&ev.target!==$('menuBtn'))toggleMenu(false)});
 $('gearBtnM').onclick=()=>{if(S&&S.L&&!S.L.town)UI.gear();else if(S)UI.cottage()};
 $('padBtn').onclick=()=>{UIP.pad=!UIP.pad;saveUIP();applyMob();setTimeout(resize,0)};
-function setZoom(z){const mob=document.body.classList.contains('mob');ZOOM=Math.round(Math.max(mob?0.6:0.75,Math.min(mob?2.2:3,z))*4)/4;if(mob)UIP.zoom=ZOOM;else UIP.zoomD=ZOOM;saveUIP();resize()}
+function setZoom(z){const mob=document.body.classList.contains('mob');ZOOM=Math.round(Math.max(mob?0.6:0.75,Math.min(mob?2.2:S?.L?.townLand?6:3,z))*4)/4;if(mob)UIP.zoom=ZOOM;else UIP.zoomD=ZOOM;saveUIP();resize()}
 $('layBtn').onclick=()=>{UIP.layout=UIP.layout==='side'?'bottom':'side';saveUIP();applyMob();setTimeout(resize,30)};
 $('zoomInD').onclick=()=>setZoom(ZOOM+0.25);$('zoomOutD').onclick=()=>setZoom(ZOOM-0.25);
 cv.addEventListener('wheel',ev=>{if(document.body.classList.contains('mob'))return;ev.preventDefault();setZoom(ZOOM+(ev.deltaY<0?0.25:-0.25))},{passive:false});
@@ -7151,8 +7124,9 @@ const ISO={
 renderScale=()=>1;
 cv.style.imageRendering='pixelated';
 const isoResize=resize;resize=function(){isoResize();ISO.camera.ready=false};
-const isoAnimate=animate;animate=function(dt){if(ISO.level!==S.L){ISO.level=S.L;ISO.camera.ready=false}isoAnimate(dt);const p=ISO.project((S.P.rx+.5)*T,(S.P.ry+.5)*T);
+const isoAnimate=animate;animate=function(dt){if(ISO.level!==S.L){ISO.level=S.L;resize();ISO.camera.ready=false}isoAnimate(dt);const p=ISO.project((S.P.rx+.5)*T,(S.P.ry+.5)*T);
   const target={x:p.x-VW/2+PAN.x,y:p.y-VH/2+PAN.y},c=ISO.camera;
+  if(S.L.townScene){target.x=Math.max(0,Math.min(W*T-VW,target.x));target.y=Math.max(0,Math.min(H*T-VH,target.y))}
   if(!c.ready){Object.assign(c,target);c.ready=true}else{const k=Math.min(1,dt*8);c.x+=(target.x-c.x)*k;c.y+=(target.y-c.y)*k}
   c.x=Math.round(c.x);c.y=Math.round(c.y)};
 tileFromEvent=function(ev){const r=cv.getBoundingClientRect();return ISO.pick((ev.clientX-r.left)*VW/r.width,(ev.clientY-r.top)*VH/r.height)};
@@ -7180,7 +7154,24 @@ function isoBridgeEdge(x,y){
 function isoPixelLight(x,y,r,col,alpha){const p=ISO.project(x,y);ctx.save();ctx.globalCompositeOperation='screen';
   // Discrete bands on a 4px lattice keep lantern pools pixelated rather than blurred.
   for(let yy=-r;yy<=r;yy+=4)for(let xx=-r;xx<=r;xx+=4){const d=Math.hypot(xx,yy*1.35)/r;if(d>=1)continue;ctx.globalAlpha=alpha*Math.floor((1-d)*5)/5;ctx.fillStyle=col;ctx.fillRect(Math.round((p.x+xx)/4)*4,Math.round((p.y+yy)/4)*4,4,4)}ctx.restore()}
-draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Math.floor(NOW/380);
+function drawUnifiedTown(){
+ const L=S.L,P=S.P,c=ISO.camera;
+ for(let i=DYING.length-1;i>=0;i--)if(DYING[i].level!==L||NOW-DYING[i].t0>=DYING[i].duration)DYING.splice(i,1);
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.imageSmoothingEnabled=false;ctx.globalAlpha=1;ctx.fillStyle='#10252f';ctx.fillRect(0,0,VW,VH);
+ ctx.save();ctx.translate(-c.x,-c.y);SaltmarrowCoast.draw(ctx,L);
+ if(!SaltmarrowCoast.loaded){ctx.fillStyle='#c8b68c';ctx.font='16px Georgia';ctx.fillText('Loading Saltmarrow…',c.x+24,c.y+40);ctx.restore();return}
+ SaltmarrowCoast.changes(ctx,L);
+ const people=[...(L.npcs||[]).map(e=>({e,npc:true})),{e:P,hero:true}].sort((a,b)=>ISO.depth(a.e)-ISO.depth(b.e));
+ for(const {e,hero}of people){ctx.save();isoUpright(e,()=>drawSprite(hero?SPR[S.cls]:npcImg(e),hero?SPRW[S.cls]:null,e,T,hero&&P.hidden?.5:1));ctx.restore()}
+ for(const it of L.items){const im=SPR[it.kind==='gear'?gearSpr(it.item):it.kind];if(im)ctx.drawImage(im,it.x*T,it.y*T,T,T)}
+ drawOverlays(0,W-1,0,H-1);
+ // The authored lights establish the scene. A small lantern pool follows the live actor.
+ if(P.lantern)isoPixelLight((P.rx+.5)*T,(P.ry+.5)*T,T*1.8,'#d5b17a',.075);
+ const near=BUILDINGS.filter(b=>cheb(P.x,P.y,b.dx,b.dy)<=3);
+ for(const b of near)tag(ctx,(b.dx+.5)*T,(b.dy+1.1)*T,b.name,'#d8c599');
+ ctx.restore();ctx.setTransform(dpr,0,0,dpr,0,0);drawAtmos(0,0);
+}
+draw=function(){if(S?.L?.townScene)return drawUnifiedTown();const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Math.floor(NOW/380);
   ctx.setTransform(dpr,0,0,dpr,0,0);ctx.imageSmoothingEnabled=false;ctx.globalAlpha=1;ctx.fillStyle='#04090e';ctx.fillRect(0,0,VW,VH);
   let shakeX=0,shakeY=0;if(FX.shake.m){const t=(NOW-FX.shake.t)/350;if(t<1&&!REDUCE){shakeX=Math.round((Math.random()-.5)*FX.shake.m*(1-t));shakeY=Math.round((Math.random()-.5)*FX.shake.m*(1-t))}else FX.shake.m=0}
   ctx.save();ctx.translate(-c.x+shakeX,-c.y+shakeY);
@@ -7192,7 +7183,6 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
       // Exposed walkway edges give bridges and chasms visible thickness.
       if(OPENT(L.map[i])){ctx.fillStyle='#8d8064';ctx.globalAlpha*=.55;if(inb(x,y+1)&&L.map[I(x,y+1)]===PIT)ctx.fillRect(x*T,y*T+T-2,T,2);if(inb(x+1,y)&&L.map[I(x+1,y)]===PIT)ctx.fillRect(x*T+T-2,y*T,2,T)}
     }ctx.globalAlpha=1;
-    window.SaltmarrowCoast?.ground(ctx,L,{w:W,h:H,camera:c,viewport:{w:VW,h:VH},now:NOW,reduced:REDUCE});
     if(TS.face&&!L.town)drawDressing(L,TS,0,W-1,0,H-1);
     window.SaltmarrowRooms?.ground(ctx,L,tiles,{w:W,h:H,actors:[P,...L.mons],visible:vis});
     window.SaltmarrowLighting?.detail(ctx,L,tiles,{w:W,types:{floor:FLOOR,wall:WALL,water:WATER},visible:vis,actors:[P,...L.mons]});
@@ -7209,10 +7199,9 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
   if(townPlan)for(const b of townPlan.entries)standing.push({building:b,depth:b.y+b.h});
   for(const scene of window.SaltmarrowScenes?.entries(L,W,H,{wall:WALL,floor:FLOOR},BUILDINGS)||[])if(L.seen[I(scene.x,scene.y)])standing.push({scene,depth:scene.depth});
   for(const focal of window.SaltmarrowRooms?.entries(L,W,H)||[])if(L.seen[I(focal.x,focal.y)])standing.push({roomFocal:focal,depth:focal.depth});
-  for(const d of window.SaltmarrowCoast?.entries(L)||[])standing.push({coast:d,depth:d.y+1});
   standing.push({e:P,depth:ISO.depth(P)+1,hero:true});
   standing.sort((a,b)=>a.depth-b.depth||(a.wall?-1:1)-(b.wall?-1:1));
-  for(const entry of standing){ctx.save();if(entry.coast){window.SaltmarrowCoast.draw(ctx,entry.coast,L,P,NOW,REDUCE)}else if(entry.roomFocal){const f=entry.roomFocal;if(f.depth>P.y+1&&P.x>=f.x-2&&P.x<=f.x+4&&Math.abs(f.y-P.y)<=2)ctx.globalAlpha*=.3;window.SaltmarrowRooms.drawFocal(ctx,L,entry.roomFocal,{w:W,actors:[P,...L.mons,...(L.npcs||[])]})}else if(entry.scene){window.SaltmarrowScenes.draw(ctx,L,entry.scene,{w:W,types:{wall:WALL,floor:FLOOR},visible:vis,actors:[P,...L.mons]})}else if(entry.death){drawPixelDeath(entry.death)}else if(entry.building){drawArtBuilding(entry.building)}else if(entry.wall){ctx.globalAlpha=window.SaltmarrowLighting?1:vis[I(entry.x,entry.y)]?1:.45;
+  for(const entry of standing){ctx.save();if(entry.roomFocal){const f=entry.roomFocal;if(f.depth>P.y+1&&P.x>=f.x-2&&P.x<=f.x+4&&Math.abs(f.y-P.y)<=2)ctx.globalAlpha*=.3;window.SaltmarrowRooms.drawFocal(ctx,L,entry.roomFocal,{w:W,actors:[P,...L.mons,...(L.npcs||[])]})}else if(entry.scene){window.SaltmarrowScenes.draw(ctx,L,entry.scene,{w:W,types:{wall:WALL,floor:FLOOR},visible:vis,actors:[P,...L.mons]})}else if(entry.death){drawPixelDeath(entry.death)}else if(entry.building){drawArtBuilding(entry.building)}else if(entry.wall){ctx.globalAlpha=window.SaltmarrowLighting?1:vis[I(entry.x,entry.y)]?1:.45;
       // Cut away nearby foreground masonry so the hero and target remain readable.
       if(entry.depth>P.y+1&&Math.abs(entry.x-P.x)<=2&&Math.abs(entry.y-P.y)<=2)ctx.globalAlpha*=.3;
       isoWall(TS,entry.x,entry.y,wf);
@@ -7244,7 +7233,7 @@ draw=function(){const L=S.L,P=S.P,TS=tilesFor(L.tset||L.bio),c=ISO.camera,wf=Mat
   for(const l of FX.lights)isoPixelLight(l.x,l.y,l.r,l.c,.22*Math.max(0,1-(NOW-l.t0)/l.dur));
   }
   for(const f of FX.floats){const t=(NOW-f.t0)/1000;if(t<0)continue;const p=ISO.project(f.x,f.y);ctx.globalAlpha=Math.max(0,1-t);ctx.textAlign='center';ctx.font=`700 ${f.huge?24:f.big?17:11}px monospace`;ctx.fillStyle='#04090e';ctx.fillText(f.text,p.x+1,p.y-(REDUCE?0:t*26)+1);ctx.fillStyle=f.c;ctx.fillText(f.text,p.x,p.y-(REDUCE?0:t*26))}ctx.globalAlpha=1;ctx.textAlign='start';
-  if(L.town&&!L.interior){for(const b of BUILDINGS){const p=ISO.project((b.dx+.5)*T,(b.dy+1)*T);tag(ctx,p.x,p.y+12,b.name,'#e3c890')}tag(ctx,31*T,15*T,'Deep Bell Tower','#dccb9d');tag(ctx,58*T,21*T,'Wharf Lift','#dccb9d')}
+  if(L.town&&!L.interior){for(const b of BUILDINGS){if(cheb(P.x,P.y,b.dx,b.dy)>6)continue;const p=ISO.project((b.dx+.5)*T,(b.dy+1)*T);tag(ctx,p.x,p.y+12,b.name,'#e3c890')}if(cheb(P.x,P.y,31,14)<=7)tag(ctx,31*T,15*T,'Deep Bell Tower','#dccb9d');if(cheb(P.x,P.y,56,16)<=7)tag(ctx,58*T,21*T,'Wharf Lift','#dccb9d')}
   ctx.restore();ctx.setTransform(dpr,0,0,dpr,0,0);drawAtmos(0,0);
   if(FX.flash){const t=(NOW-FX.flash.t0)/FX.flash.dur;if(t<1){ctx.fillStyle=`rgba(255,250,235,${.35*(1-t)})`;ctx.fillRect(0,0,VW,VH)}else FX.flash=null}
 };
@@ -7273,13 +7262,12 @@ const DROWNED_ART=SaltmarrowDrownedSprites.create(document,(type,idle)=>{SPR[typ
 const ART=window.SaltmarrowArt;
 const TOWN_ART=new WeakMap();
 function townArtPlan(L){
-  if(!ART?.get('buildings','smith')||!L.town||L.interior)return null;
+  if(L.townScene||!ART?.get('buildings','smith')||!L.town||L.interior)return null;
   if(TOWN_ART.has(L))return TOWN_ART.get(L);
   const entries=BUILDINGS.map(b=>{const door=L.objs.find(o=>o.type==='door'&&o.key===b.key);return{...b,entryX:door?.x??b.dx,entryY:door?.y??b.dy}});
   for(const o of L.objs)if(o.type==='house')entries.push({key:'house',x:o.x-1,y:o.y-2,w:3,h:3,dx:o.x,dy:o.y,entryX:o.x,entryY:o.y,boarded:o.boarded});
   entries.push({key:'lift',x:56,y:13,w:5,h:8,dx:58,dy:20,entryX:56,entryY:16,name:'Wharf Lift'});
   const covered=new Set();for(const b of entries)for(let y=b.y;y<b.y+b.h;y++)for(let x=b.x;x<b.x+b.w;x++)if(inb(x,y))covered.add(I(x,y));
-  if(L.townLand)for(let y=5;y<=13;y++)for(let x=29;x<=32;x++)covered.add(I(x,y));
   const plan={entries,covered};TOWN_ART.set(L,plan);return plan;
 }
 function artBuildingPlacement(b){
@@ -7293,7 +7281,6 @@ function drawArtBuilding(b){
   ctx.save();if(behind)ctx.globalAlpha*=.34;
   if(b.key==='apoth'&&!flag('nellFreed'))ctx.filter='brightness(.55)';
   ctx.drawImage(a.image,r.x,r.y,r.w,r.h);
-  window.SaltmarrowCoast?.facade(ctx,b,r,S.L,NOW,REDUCE);
   ctx.restore();
 }
 function drawArtLift(b){
@@ -7324,7 +7311,6 @@ tileImg=function(TS,t,x,y,wf){
   const L=S.L,plan=townArtPlan(L),v=h4(x,y);
   if(L.town&&!L.interior&&L.bart?.[I(x,y)]&&!plan)return artTileBase(TS,t,x,y,wf);
   if(plan?.covered.has(I(x,y)))return calmTownTile(v);
-  if(L.townLand&&[FLOOR,RUBBLE,GRASS].includes(t)&&window.SaltmarrowCoast)return SaltmarrowCoast.floor(L,x,y,W);
   if(L.town&&!L.interior&&t===FLOOR){const surface=window.SaltmarrowSurfaces?.get(L,t,x,y,{w:W,types:{floor:FLOOR,wall:WALL},buildings:BUILDINGS});if(surface)return surface;}
   if(L.town&&!L.interior&&[FLOOR,RUBBLE,GRASS].includes(t))return calmTownTile(v,t===GRASS?'grass':t===RUBBLE?'yard':'stone');
   const surface=window.SaltmarrowSurfaces?.get(L,t,x,y,{w:W,types:{floor:FLOOR,wall:WALL},buildings:BUILDINGS});if(surface)return surface;
@@ -7571,7 +7557,7 @@ tileFromEvent=function(ev){
     if(S.P.y<b.y+b.h&&S.P.x<b.x+b.w&&hero.x>p.x-12&&hero.x<p.x+p.w+12&&hero.y>p.y&&hero.y<p.y+p.h-12)continue;
     if(ART.hit(a,(mx-p.x)/p.w*a.image.width,(my-p.y)/p.h*a.image.height))candidates.push({depth:b.y+b.h,x:b.entryX,y:b.entryY});
   }
-  candidates.sort((a,b)=>b.depth-a.depth);return candidates[0]?{x:candidates[0].x,y:candidates[0].y}:artPickBase(ev);
+  candidates.sort((a,b)=>b.depth-a.depth);if(candidates[0])return{x:candidates[0].x,y:candidates[0].y};const p=artPickBase(ev);if(S.L.townScene&&S.L.map[I(p.x,p.y)]===WALL){const b=SaltmarrowCoast.hit(S.L,p.x,p.y);if(b)return{x:b.entryX,y:b.entryY}}return p;
 };
 window.__art={ready:ART?.ready,plan:()=>townArtPlan(S.L),placement:artBuildingPlacement,errors:ART?.errors};
 

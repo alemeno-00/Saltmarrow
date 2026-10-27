@@ -1,2 +1,5 @@
 node_modules/
 test-results/
+
+# Reproducible town art registration overlays
+docs/town-v6/grid-*.png

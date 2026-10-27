@@ -1,0 +1,97 @@
+{
+  "tileSize": 32,
+  "source": "town.webp",
+  "description": "Composite sites and terrain swatches from the same master. These include their supporting geology; they are not transparent isolated building sprites or seamless terrain tiles.",
+  "regions": {
+    "chapel": [
+      16,
+      1,
+      15,
+      13
+    ],
+    "hall": [
+      45,
+      3,
+      17,
+      13
+    ],
+    "tower": [
+      34,
+      0,
+      10,
+      14
+    ],
+    "tavern": [
+      12,
+      12,
+      12,
+      11
+    ],
+    "smith": [
+      25,
+      14,
+      10,
+      8
+    ],
+    "apothecary": [
+      34,
+      14,
+      12,
+      9
+    ],
+    "archive": [
+      46,
+      18,
+      13,
+      15
+    ],
+    "cottage": [
+      24,
+      23,
+      12,
+      9
+    ],
+    "wharf": [
+      11,
+      22,
+      13,
+      17
+    ],
+    "paving": [
+      27,
+      20,
+      4,
+      2
+    ],
+    "stairs": [
+      23,
+      10,
+      2,
+      6
+    ],
+    "basalt": [
+      36,
+      25,
+      4,
+      4
+    ],
+    "surf": [
+      2,
+      20,
+      6,
+      6
+    ],
+    "seawall": [
+      25,
+      31,
+      6,
+      2
+    ],
+    "slate": [
+      28,
+      15,
+      5,
+      3
+    ]
+  }
+}
