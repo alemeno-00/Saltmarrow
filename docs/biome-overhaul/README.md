@@ -6,7 +6,7 @@ This branch replaces dungeon floor surfaces, rear wall relief, background prop c
 
 The base revision (696eb52) uses shared terrain/prop atlases, five broad floor materials and one focal image per room family. Mine walls already have custom strata, while the other dungeon families reuse much of the same masonry. The existing `room-composition.js` safely banks gameplay objects and locates three-tile wall slots. The new `biome-art.js` retains that placement and replaces its focal rendering with twenty authored compositions.
 
-The retrieved ChatGPT conversation provided textual prompts but no accessible generated reference images. These assets follow the text specification; exact matching to those unavailable sheets still needs user review.
+The user subsequently supplied both reference sheets. Revision 2 replaces the initial geometric art with four detailed generated modular atlases, using the sheets as visual references. The app consumes 64 separate texture/object cells, not the supplied concept sheets or their example rooms. See [generation prompts](generation-prompts.md) and the saved [sewer](reference/rotwater.png) and [deep-biome](reference/deep-biomes.png) references.
 
 | Biome / runtime ID | Five material fields | Wall/prop kit | Five focal compositions |
 |---|---|---|---|
@@ -17,10 +17,10 @@ The retrieved ChatGPT conversation provided textual prompts but no accessible ge
 
 ## Art and placement
 
-- Each material has four deterministic wear variants and sixteen stepped transition masks. Materials form coherent four-by-four-tile patches rather than independent random coloured squares.
-- Surfaces are cached 32×32 canvases; focal compositions use the existing 96×48 wall footprint. The kit is executable, reusable pixel-art source. `surface()` and `focal()` can export individual assets without resampling.
+- Each material has four deterministic orientation variants and sixteen stepped transition masks. Materials form coherent four-by-four-tile patches rather than independent random coloured squares.
+- Surfaces are cached 32×32 canvases; focal compositions use the existing 96×48 wall footprint. Four packed 256×256 PNG atlases hold 64 reusable texture and object cells. Floor details receive a darkening pass while wall and landmark highlights retain their original emphasis. `surface()` and `focal()` can export individual assets without resampling.
 - Existing eligible room wall slots cycle through the five landmarks per biome. Small rooms, protected rooms, secret faces and missing wall slots retain the existing eligibility rules. A generated floor is not guaranteed to contain all five landmarks.
-- Rear-wall props stay within the rear half of a tile. Actors, objects, items, traps, authored decals and live effects suppress decorative clusters. Landmark art is withheld when an actor overlaps its footprint.
+- Rear-wall props fit a 28×20 pixel region at the rear of a tile. Actors, objects, items, traps, authored decals and live effects suppress decorative clusters. Landmark art is withheld when an actor overlaps its footprint.
 - Low-opacity spore motes, wet highlights and mineral flecks add a separate ground layer. Reduced motion freezes their phase. Existing biome lighting remains responsible for world illumination; art does not create gameplay light or concealment.
 - Town, interiors, tutorials, and the separate abbey biome retain their previous rendering. This kit does not change map generation, collision, RNG, saves, loot, combat or object placement.
 
@@ -30,15 +30,22 @@ Work is isolated in `feat/four-biome-art` in a separate checkout. The ongoing to
 
 ## Review evidence
 
-`evidence/biome-kit.png` shows all twenty floor materials and twenty landmarks at native resolution. The before/after scenes use seed 73819, the same room, population, objects, lighting and camera. The baseline omits only the new module; it retains the prior environment overhaul. FOV is fully revealed for inspection. The files prefixed `mobile-` use a 390×844 viewport; desktop uses 1440×1000.
+`evidence-v2/biome-kit.png` shows all twenty floor material treatments and twenty composed landmarks at native resolution. `evidence/` retains the initial implementation for comparison. `evidence-v2/` records the reference-led revision. The before/after scenes use seed 73819, the same room, population, objects, lighting and camera. The baseline omits only the new module; it retains the prior environment overhaul. FOV is fully revealed for inspection. The files prefixed `mobile-` use a 390×844 viewport; desktop uses 1440×1000.
 
 | Region | Before | After |
 |---|---|---|
-| Salt Pits | [Before](evidence/mine-before.png) | [After](evidence/mine-after.png) |
-| Catacombs | [Before](evidence/crypt-before.png) | [After](evidence/crypt-after.png) |
-| Blooming Deep | [Before](evidence/fungal-before.png) | [After](evidence/fungal-after.png) |
-| Sewers | [Before](evidence/drowned-before.png) | [After](evidence/drowned-after.png) |
+| Salt Pits | [Before](evidence/mine-before.png) | [After](evidence-v2/mine-after.png) |
+| Catacombs | [Before](evidence/crypt-before.png) | [After](evidence-v2/crypt-after.png) |
+| Blooming Deep | [Before](evidence/fungal-before.png) | [After](evidence-v2/fungal-after.png) |
+| Sewers | [Before](evidence/drowned-before.png) | [After](evidence-v2/drowned-after.png) |
 
 Run `npm test`, `node tests/biomes-browser.cjs`, and `node tests/environment-browser.cjs`. Set `SCREENSHOT_DIR` to capture evidence. Browser comparisons assert distinct output, twenty distinct landmark images, identical seeded terrain/population/objects, stable simulation state across repeated rendering, no browser errors, and disabled smoothing. The existing environment browser suite traverses decorated tiles and verifies town service entry/exit and save migration.
 
-Browser evidence covers deterministic fixtures, not every procedural seed. Native mobile APK and macOS packaging are updated but were not built locally. Review the art direction and CI before merging.
+Revision 2 validation: 107 unit tests; eight desktop/mobile seeded render comparisons; all twenty landmarks distinct; all 32 prop/landmark cells with verified real transparency; existing navigation, town service and save-migration checks. Browser evidence covers deterministic fixtures, not every procedural seed. Native mobile APK and macOS packaging are updated but were not built locally. Review the art direction and CI before merging.
+
+
+## Asset production
+
+Built-in ImageGen produced one 4×4 atlas for each biome, followed by one transparency correction for the catacomb atlas. Source generations are retained locally in `/Users/julian/Documents/ChatGPT/Game/outputs/biome-art-v2/source/`; only the four packed production atlases are shipped in `assets/biomes/`. Use `node scripts/pack-biome-atlases.cjs <source-directory>` to regenerate the packed files. Packing samples integer native pixels without smoothing and rejects any prop/landmark cell lacking at least 20% transparency. It does not colour-key a background. Browser tests independently check packed transparency and successful loading.
+
+The source atlas is divided into opaque floor textures (row 1), opaque wall modules (row 2), isolated props (row 3), and isolated landmark parts (row 4). `recipes` in `biome-art.js` defines all twenty compositions. Each combines several independent pieces inside the existing 96×48 wall slot. Floor materials feather the actual neighbouring material through stepped strips; no square border outline is added. No top-down example room or full concept sheet is pasted into gameplay.
