@@ -1,0 +1,6 @@
+// Register approved source images without smoothing or altering the art.
+// node scripts/register-deep-assets.cjs /absolute/path/to/source-directory
+const fs=require('node:fs'),path=require('node:path'),{chromium}=require('playwright');
+const source=process.argv[2],output=path.resolve(__dirname,'../assets/deep-reset');
+if(!source)throw Error('Pass the source directory containing sewer/fungal/crypt/mine/backgrounds/props.png');
+(async()=>{const browser=await chromium.launch({headless:true});try{const page=await browser.newPage();fs.mkdirSync(output,{recursive:true});for(const name of ['sewer','fungal','crypt','mine','backgrounds','props']){const src='data:image/png;base64,'+fs.readFileSync(path.join(source,name+'.png')).toString('base64');const data=await page.evaluate(async({src,name})=>{const image=new Image();image.src=src;await image.decode();const c=document.createElement('canvas');c.width=name==='props'?512:1536;c.height=name==='props'?512:1024;const g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(image,0,0,c.width,c.height);return c.toDataURL('image/webp',.98).split(',')[1]},{src,name});fs.writeFileSync(path.join(output,name+'.webp'),Buffer.from(data,'base64'))}}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

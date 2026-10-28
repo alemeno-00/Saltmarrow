@@ -19,7 +19,7 @@ test('landmarks are deterministic and wall-bound across 60 real seeded mines; no
   assert.equal(JSON.stringify(L),before);total+=p.length;winches+=p.filter(d=>d.kind==='winch').length;
   for(const d of p)for(let dx=0;dx<d.w;dx++){const i=d.y*g.W+d.x+dx;assert.equal(L.map[i],0);assert.equal(L.map[i+g.W],1);assert.ok(!L.decal[i])}
  }
- assert.ok(total>60,'landmarks appear throughout real generation');assert.ok(winches>0,'working rail/storage rooms receive winches');
+ assert.equal(total,0,'retired wall-focal system does not paint over authored platforms');assert.equal(winches,0);
 });
 test('smith fixtures remain inside blocked facade cells and leave its doorway free',()=>{
  const L={town:true},p=scenes.plan(L,64,44,types,buildings),b=buildings[0];assert.equal(p.length,2);assert.deepEqual(p.map(d=>d.kind),['coal','quench']);for(const d of p)for(let dx=0;dx<d.w;dx++){assert.equal(d.y,b.y+b.h-1);assert.notEqual(d.x+dx,b.dx);assert.ok(d.x+dx>=b.x&&d.x+dx<b.x+b.w)}
