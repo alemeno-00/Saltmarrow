@@ -41,15 +41,22 @@ function collect(L,{w,h,hero,visible,now=0,reduced=false,extra=[],effects=[]}){
  return sources;
 }
 function polygon(g,points){g.beginPath();points.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.closePath();g.clip()}
-function seenClip(g,L,w){g.beginPath();if(L.townLand&&!L.interior&&L.seen.every(Boolean)){g.rect(0,0,w*32,Math.ceil(L.map.length/w)*32);g.clip();return}for(let i=0;i<L.map.length;i++)if(L.seen[i])g.rect(i%w*32,Math.floor(i/w)*32,32,32);g.clip()}
+// the explored-area clip is rebuilt only when something new is seen, as merged row runs instead of one rectangle per tile
+const seenPaths=new WeakMap();
+function seenClip(g,L,w){const n=L.map.length;let cnt=0;for(let i=0;i<n;i++)if(L.seen[i])cnt++;
+ if(L.townLand&&!L.interior&&cnt===n){g.beginPath();g.rect(0,0,w*32,Math.ceil(n/w)*32);g.clip();return}
+ let c=seenPaths.get(L);if(!c||c.cnt!==cnt||c.n!==n||typeof Path2D==='undefined'){const P=typeof Path2D!=='undefined'?new Path2D():null;const rects=[];const h=Math.ceil(n/w);
+  for(let y=0;y<h;y++){let x=0;while(x<w){if(!L.seen[y*w+x]){x++;continue}const x0=x;while(x<w&&L.seen[y*w+x])x++;rects.push([x0*32,y*32,(x-x0)*32,32])}}
+  if(P)for(const r of rects)P.rect(r[0],r[1],r[2],r[3]);c={cnt,n,P,rects};seenPaths.set(L,c)}
+ if(c.P){g.clip(c.P);return}g.beginPath();for(const r of c.rects)g.rect(r[0],r[1],r[2],r[3]);g.clip()}
 function point(g,x,y,r,color,alpha){g.save();g.globalCompositeOperation='screen';g.globalAlpha*=alpha;const im=texture(r,color);g.drawImage(im,Math.round(x-im.width/2),Math.round(y-im.height/2));g.restore()}
 function memoryMask(L,w,h,visible){
  const seen=L.deepLayout&&root.SaltmarrowDeepArt?root.SaltmarrowDeepArt.memory(L,w):L.seen;let revision=2166136261;for(let i=0;i<L.map.length;i++)revision=Math.imul(revision^(visible[i]?3:seen[i]?seen[i]:0),16777619);
  let cached=memories.get(L);if(cached?.revision===revision)return cached.image;
- const scale=8,ww=w*scale,hh=h*scale,a=new Float32Array(ww*hh),b=new Float32Array(ww*hh);
+ const scale=4,ww=w*scale,hh=h*scale,a=new Float32Array(ww*hh),b=new Float32Array(ww*hh);
  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x,alpha=visible[i]||seen[i]===2?0:seen[i]?(L.town?72:128):255;for(let yy=0;yy<scale;yy++)a.fill(alpha,(y*scale+yy)*ww+x*scale,(y*scale+yy)*ww+x*scale+scale)}
- // Two separable box passes approximate a soft 12px visibility edge. Only this alpha mask is softened.
- const radius=3,den=radius*2+1;
+ // Two separable box passes at quarter-tile resolution approximate a soft visibility edge (drawn smoothed). Only this alpha mask is softened.
+ const radius=2,den=radius*2+1;
  for(let pass=0;pass<2;pass++){
   for(let y=0;y<hh;y++){const row=y*ww;let sum=a[row]*radius;for(let k=0;k<=radius;k++)sum+=a[row+k];for(let x=0;x<ww;x++){b[row+x]=sum/den;sum+=a[row+Math.min(ww-1,x+radius+1)]-a[row+Math.max(0,x-radius)]}}
   for(let x=0;x<ww;x++){let sum=b[x]*radius;for(let k=0;k<=radius;k++)sum+=b[k*ww+x];for(let y=0;y<hh;y++){a[y*ww+x]=sum/den;sum+=b[Math.min(hh-1,y+radius+1)*ww+x]-b[Math.max(0,y-radius)*ww+x]}}
