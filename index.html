@@ -809,11 +809,15 @@ function townPassageAt(x,y){return S.L.townScene?(S.L.townPassages||[]).find(p=>
 function routeDirs(x,y){const p=townPassageAt(x,y);return p?[...DIR8,[p.toX-x,p.toY-y]]:DIR8}
 function paths(e,sx,sy,max,opt){opt=opt||{};
   const dist=new Float32Array(W*H).fill(Infinity),prev=new Int32Array(W*H).fill(-1),B=[];const s=I(sx,sy);dist[s]=0;B[0]=[s];
-  for(let c=0;c<=max;c++){const b=B[c];if(!b)continue;
+  // look blockers up once per search instead of scanning every object and creature for every neighbour
+  const L=S.L,ob=new Uint8Array(W*H);for(const o of L.objs){const F=FEAT[o.type];if(F&&F.block&&inb(o.x,o.y))ob[I(o.x,o.y)]=1}
+  let mb=null;if(!opt.ignoreMons){mb=new Uint8Array(W*H);for(const m of L.mons)if(m!==e&&inb(m.x,m.y))mb[I(m.x,m.y)]=1;if(e!==S.P&&S.P)mb[I(S.P.x,S.P.y)]=1}
+  const goal=opt.goal;
+  for(let c=0;c<=max;c++){if(goal!=null&&dist[goal]<=c)break;const b=B[c];if(!b)continue;
     for(let k=0;k<b.length;k++){const n=b[k];if(dist[n]!==c)continue;const x=n%W,y=(n/W)|0;
       for(const[dx,dy]of routeDirs(x,y)){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const ni=I(nx,ny);
         const cost=stepCost(S.L.map[ni],e,ni);if(cost===Infinity)continue;
-        if(ni!==opt.goal&&(opt.ignoreMons?!!blockObjAt(nx,ny):occupied(nx,ny,e)))continue;
+        if(ni!==goal&&(ob[ni]||(mb&&mb[ni])))continue;
         const nd=c+cost;if(nd>max||nd>=dist[ni])continue;dist[ni]=nd;prev[ni]=n;(B[nd]||(B[nd]=[])).push(ni)}}}
   return{dist,prev}}
 function pathTo(pr,goal){if(pr.dist[goal]===Infinity)return null;const out=[];let n=goal;while(pr.prev[n]!==-1){out.push(n);n=pr.prev[n]}return out.reverse()}
